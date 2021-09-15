@@ -26,7 +26,7 @@
 int frametime = 1000 / FPS;
 
 std::unordered_map<lua_State*, InterpreterConfig*> statemap;
-std::atomic<std::uint64_t> framecounter = 0;
+std::atomic<std::uint64_t> framecounter = {0};
 
 ws2811_t ledstring =
 {
