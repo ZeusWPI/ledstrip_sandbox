@@ -34,16 +34,14 @@ ws2811_t ledstring =
     .dmanum = DMA,
     .channel =
     {
-        [0] =
-        {
+        [0] = {
             .gpionum = GPIO_PIN,
             .invert = 0,
             .count = LED_COUNT,
             .strip_type = WS2811_STRIP_GBR,
             .brightness = 255,
         },
-        [1] =
-        {
+        [1] = {
             .gpionum = 0,
             .invert = 0,
             .count = 0,
@@ -74,6 +72,7 @@ extern "C" {
   		int green = luaL_checkinteger(L, 3);
   		int blue = luaL_checkinteger(L, 4);
       InterpreterConfig* config = statemap[L];
+      cerr << "Setting led " << virtual_location << " of strip with lenght " << config->length << "\n";
 
       // Lua is one-based, let's keep it consistent and also make our API one-based
       if (virtual_location <= 0 || virtual_location > (int) config->length) {
@@ -203,23 +202,29 @@ void signal_callback_handler(int signum) {
   exit(1);
 }
 
+httplib::Server svr;
+
+void starthttpserver() {
+   svr.listen("0.0.0.0", 8080);
+}
+
+
 
 int main(int argc, char** argv)
 {
   InterpreterConfig* config = new InterpreterConfig {
     .begin = 0,
-    .length = 10,
+    .length = LED_COUNT,
     .enabled = true
   };
-  std::thread t = spawn_lua_tread("while true do\nprint(\"begin\")\nled(1, 0, 0, 0)\ndelay(1000)\nled(1, 0, 255, 0)\ndelay(1000)\nprint(\"done\")\nend", config);
 
-  httplib::Server svr;
+
 
   svr.Get("/hi", [](const httplib::Request &, httplib::Response &res) {
     res.set_content("Hello World!", "text/plain");
   });
 
-  svr.listen("0.0.0.0", 8080);
+  std::thread httpserverthread(starthttpserver);
 
   ws2811_return_t ret;
   if ((ret = ws2811_init(&ledstring)) != WS2811_SUCCESS)
@@ -232,6 +237,7 @@ int main(int argc, char** argv)
   signal(SIGTERM, signal_callback_handler);
 
   ledstring.channel[0].leds[0] = 0x0000ff00;
+  std::thread t = spawn_lua_tread("while true do\nprint(\"begin\")\nled(2, 3, 4, 5)\ndelay(1000)\nled(1, 255, 128, 0)\ndelay(1000)\nprint(\"done\")\nend", config);
 
   while (true) {
     ws2811_render(&ledstring);
