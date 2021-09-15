@@ -18,7 +18,7 @@
 #define TARGET_FREQ             WS2811_TARGET_FREQ
 #define GPIO_PIN                18
 #define DMA                     10
-#define STRIP_TYPE              WS2811_STRIP_GBR		// WS2812/SK6812RGB integrated chip+leds
+#define STRIP_TYPE              WS2812_STRIP		// WS2812/SK6812RGB integrated chip+leds
 #define LED_COUNT               690
 
 #define FPS                     15
@@ -38,7 +38,7 @@ ws2811_t ledstring =
             .gpionum = GPIO_PIN,
             .invert = 0,
             .count = LED_COUNT,
-            .strip_type = WS2811_STRIP_GBR,
+            .strip_type = STRIP_TYPE,
             .brightness = 255,
         },
         [1] = {
@@ -72,7 +72,6 @@ extern "C" {
   		int green = luaL_checkinteger(L, 3);
   		int blue = luaL_checkinteger(L, 4);
       InterpreterConfig* config = statemap[L];
-      cerr << "Setting led " << virtual_location << " of strip with lenght " << config->length << "\n";
 
       // Lua is one-based, let's keep it consistent and also make our API one-based
       if (virtual_location <= 0 || virtual_location > (int) config->length) {
@@ -236,8 +235,11 @@ int main(int argc, char** argv)
   signal(SIGHUP, signal_callback_handler);
   signal(SIGTERM, signal_callback_handler);
 
-  ledstring.channel[0].leds[0] = 0x0000ff00;
-  std::thread t = spawn_lua_tread("while true do\nprint(\"begin\")\nled(2, 3, 4, 5)\ndelay(1000)\nled(1, 255, 128, 0)\ndelay(1000)\nprint(\"done\")\nend", config);
+  ledstring.channel[0].leds[10] = 0x00200000;
+  ledstring.channel[0].leds[11] = 0x00002000;
+  ledstring.channel[0].leds[12] = 0x00000020;
+
+  std::thread t = spawn_lua_tread("while true do\nprint(\"begin\")\nled(2, 3, 4, 5)\ndelay(1000)\nled(2, 255, 128, 0)\ndelay(1000)\nprint(\"done\")\nend", config);
 
   while (true) {
     ws2811_render(&ledstring);
