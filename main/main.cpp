@@ -211,10 +211,8 @@ int main(int argc, char** argv)
     .length = 10,
     .enabled = true
   };
-  std::thread t = spawn_lua_tread("print(\"hi\")\nled(0, 0, 0, 0)\ndelay(0)\nled(0, 0, 0, 0)\nprint(\"hi\")", config);
+  std::thread t = spawn_lua_tread("while true do\nprint(\"begin\")\nled(1, 0, 0, 0)\ndelay(1000)\nled(1, 0, 255, 0)\ndelay(1000)\nprint(\"done\")\nend", config);
 
-
-  t.join();
   httplib::Server svr;
 
   svr.Get("/hi", [](const httplib::Request &, httplib::Response &res) {
