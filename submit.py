@@ -13,7 +13,6 @@ for i in range(10):
             c = codefile.read()
     except:
         continue
-    time.sleep(0.3)
     j = {
         "code": c,
         "owner": "j",

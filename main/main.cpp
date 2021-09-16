@@ -17,6 +17,9 @@
 #include "httplib.h"
 
 using json = nlohmann::json;
+using std::chrono::duration_cast;
+using std::chrono::milliseconds;
+using std::chrono::system_clock;
 
 
 #define TARGET_FREQ             WS2811_TARGET_FREQ
@@ -62,9 +65,28 @@ ws2811_t ledstring =
         },
     },
 };
+void hook(lua_State* L, lua_Debug *ar);
+
+inline bool kill_thread_if_desired(lua_State *L) {
+  if (!statemap[L]->enabled)
+  {
+      cout << "putting errors on the stack" << endl;
+      lua_sethook(L, hook, LUA_MASKLINE, 0);
+      luaL_error(L, "killed by manager");
+      return true;
+  }
+  return false;
+}
+
+// TODO also call this hook about once every second
+void hook(lua_State* L, lua_Debug *ar)
+{
+  kill_thread_if_desired(L);
+}
 
 extern "C" {
   static int c_override_print (lua_State *L) {
+    kill_thread_if_desired(L);
     int n = lua_gettop(L);  /* number of arguments */
     int i;
     for (i = 1; i <= n; i++) {  /* for each argument */
@@ -80,6 +102,7 @@ extern "C" {
   }
 
   static int c_led (lua_State *L) {
+      kill_thread_if_desired(L);
       int virtual_location = luaL_checkinteger(L, 1);
       int red = luaL_checkinteger(L, 2);
   		int green = luaL_checkinteger(L, 3);
@@ -115,17 +138,27 @@ extern "C" {
   }
 
   static int c_ledamount(lua_State *L) {
+    kill_thread_if_desired(L);
     lua_pushinteger(L, statemap[L]->length);
     return 1;
   }
 
   static int c_delay(lua_State *L) {
-    int millis = luaL_checkinteger (L, 1);
-    std::this_thread::sleep_for(std::chrono::milliseconds(millis));
+    if (kill_thread_if_desired(L)) {return 0;}
+    uint64_t millis = luaL_checkinteger (L, 1);
+    uint64_t begin = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+
+    while (duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count() - begin <  millis - 100) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100-5));
+      if (kill_thread_if_desired(L)) {return 0;}
+    }
+    uint64_t passed = (duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count() - begin);
+    std::this_thread::sleep_for(std::chrono::milliseconds(millis-passed));
     return 0;
   }
 
   static int c_waitframes(lua_State *L) {
+    kill_thread_if_desired(L);
     int amount = luaL_checkinteger(L, 1);
     uint64_t destination = amount + framecounter;
     if (amount >= 2 * FPS) {
@@ -186,6 +219,8 @@ lua_State* setup_lua_sandbox(const char* luacode) {
   lua_setglobal(L, "print");
 
   luaL_loadbuffer(L, luacode, strlen(luacode), "script");
+  lua_sethook(L, hook, LUA_MASKCOUNT, 1000);
+
   return L;
 }
 
@@ -258,7 +293,6 @@ int main(int argc, char** argv)
   });
 
   svr.Put("/api/code.json", [](const httplib::Request &req, httplib::Response &res, const httplib::ContentReader &content_reader) {
-    cout << "put request" << endl;
     if (req.is_multipart_form_data()) {
       res.set_content("No multipart forms allowed", "text/plain");
       return true;
@@ -266,15 +300,16 @@ int main(int argc, char** argv)
       content_reader([&](const char *raw_data, size_t data_length) {
         std::string data(raw_data, data_length);
         auto j = json::parse(data);
-        cout << j << endl;
         LedSegment* selected = ledsegments.at(j["id"].get<unsigned int>());
         if (selected->lua_thread.has_value()) {
-          // TODO kill lua thread
+          selected->interpreter_config->enabled = false;
+          selected->lua_thread.value().join();
         }
         selected->owner = j["owner"].get<std::string>();
         selected->lua_code = j["code"].get<std::string>();
+        selected->interpreter_config->enabled = true;
         selected->lua_thread = spawn_lua_tread(selected->lua_code.c_str(), selected->interpreter_config);
-
+        cout << "Uploaded new code from " << selected->owner << " to segment " << j["id"].get<unsigned int>() << endl;
         return true;
       });
     }

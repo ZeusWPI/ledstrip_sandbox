@@ -1,4 +1,5 @@
 .build/
+build/
 editor/.idea/
 editor/.cache
 editor/dist

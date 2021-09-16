@@ -5,7 +5,6 @@ function all_leds(red, green, blue)
 end
 
 while true do
-  print(ledamount())
   all_leds(255, 128, 0)
   delay(1000)
   all_leds(0, 128, 255)
