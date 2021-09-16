@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width">
+		<title>LED strip control</title>
+		<style type="text/css">
+html, body {
+	background-color: white;
+}
+
+body {
+	font-family: sans-serif;
+}
+
+svg {
+	width: 100%;
+	max-width: 600px;
+	height: 50px;
+}
+
+.yesscript {
+	display: none;
+}
+		</style>
+		<script type="application/javascript">
+(function() {
+	"use strict";
+
+	var styleObject = document.createElement("style");
+	styleObject.innerHTML = ".yesscript { display: initial; }";
+	document.head.appendChild(styleObject);
+})();
+		</script>
+	</head>
+	<body>
+		<h1>LED strip control</h1>
+
+		<p class="noscript">This application requires JavaScript.</p>
+		<div class="yesscript"><input type="text" name="us" id="us" onchange="ledStripControl.updateUs()"></div>
+		<svg id="segments" class="yesscript">
+
+		</svg>
+
+		<script type="application/javascript">
+
+var ledStripControl = (function() {
+	"use strict";
+
+	var objects = document.getElementsByClassName("noscript");
+	for (var i in objects) {
+		if (objects.hasOwnProperty(i)) {
+			objects[i].parentElement.removeChild(objects[i]);
+		}
+	}
+
+	var HOST = "http://10.1.0.212:8080";
+
+	function getJson(url, callback) {
+		function reqListener() {
+			callback(JSON.parse(this.responseText));
+		}
+
+		var oReq = new XMLHttpRequest();
+		oReq.addEventListener("load", reqListener);
+		oReq.open("GET", url);
+		oReq.send();
+	}
+
+	var us = null;
+	function updateUs() {
+		us = document.getElementById("us").value;
+		showSegments();
+	}
+	updateUs();
+
+	var segments = null;
+
+	function saveAndShowSegments(segs) {
+		segments = segs;
+		showSegments();
+	}
+
+	function showSegments() {
+		var segmentsContent = "";
+		if (segments !== null) for (var i in segments) {
+			var seg = segments[i];
+			var color = seg.owner == "" ? "gray" : seg.owner == us ? "green" : "red";
+			var left = 12.5 + (7 * parseFloat(seg.begin));
+			console.log(left);
+			segmentsContent += '<rect' +
+				' width="100" height="25"' +
+				' x="' + left + '"    y="12.5"' +
+				' rx="12.5"   ry="12.5"' +
+				' id="segment' + seg.id + '" ' +
+				' fill="' + color + '"/>';
+		}
+		document.getElementById("segments").innerHTML = segmentsContent;
+	}
+
+	getJson(HOST + "/api/segments.json", saveAndShowSegments);
+
+	return {
+		updateUs: updateUs,
+	};
+})();
+		</script>
+	</body>
+</html>
