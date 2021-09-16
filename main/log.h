@@ -50,7 +50,6 @@ private:
     std::vector<std::string> buffer;
     std::stringstream os;
     unsigned int size = 255;
-    bool last_char_is_newline = true;
 };
 
 #endif

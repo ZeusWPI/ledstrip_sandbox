@@ -6,28 +6,41 @@
 #include <csignal>
 #include <unordered_map>
 #include <atomic>
+#include <optional>
 
 #include "lua.hpp"
 #include "ws2811.h"
 #include "interpreter_config.h"
 #include "log.h"
+#include "json.hpp"
 
 #include "httplib.h"
+
+using json = nlohmann::json;
 
 
 #define TARGET_FREQ             WS2811_TARGET_FREQ
 #define GPIO_PIN                18
 #define DMA                     10
 #define STRIP_TYPE              WS2812_STRIP		// WS2812/SK6812RGB integrated chip+leds
-#define LED_COUNT               690
+#define LED_COUNT               30*5
 
 #define FPS                     15
 
 int frametime = 1000 / FPS;
 
+struct LedSegment {
+  std::optional<std::thread> lua_thread;
+  InterpreterConfig* interpreter_config;
+  std::string owner;
+  std::string lua_code;
+};
+
+std::vector<LedSegment*> ledsegments;
+
+// this map is used to be able to see allowed leds from lua
 std::unordered_map<lua_State*, InterpreterConfig*> statemap;
 std::atomic<std::uint64_t> framecounter = {0};
-
 ws2811_t ledstring =
 {
     .freq = TARGET_FREQ,
@@ -39,7 +52,7 @@ ws2811_t ledstring =
             .invert = 0,
             .count = LED_COUNT,
             .strip_type = STRIP_TYPE,
-            .brightness = 255,
+            .brightness = 10,
         },
         [1] = {
             .gpionum = 0,
@@ -97,7 +110,6 @@ extern "C" {
       }
       unsigned int real_location = config->begin + virtual_location - 1;
       // TODO remove this debugging line
-      printf("Setting led %d to %d %d %d\n", real_location, red, green, blue);
       ledstring.channel[0].leds[real_location] = (red << 16) | (green << 8)| blue;
       return 0;
   }
@@ -211,16 +223,62 @@ void starthttpserver() {
 
 int main(int argc, char** argv)
 {
-  InterpreterConfig* config = new InterpreterConfig {
-    .begin = 0,
-    .length = LED_COUNT,
-    .enabled = true
-  };
+  unsigned int amount = 10;
+  unsigned int leds_per_segment = LED_COUNT / amount;
+  for (unsigned int i = 0; i < amount; i++) {
+    InterpreterConfig* config = new InterpreterConfig {
+      .begin = leds_per_segment*i,
+      .length = leds_per_segment,
+      .enabled = true
+    };
+    cout << config->begin << endl;
+    LedSegment* segment = new LedSegment {
+      .lua_thread = std::nullopt,
+      .interpreter_config = config,
+      .owner = "",
+      .lua_code = ""
+    };
+    ledsegments.push_back(segment);
+  }
 
+  svr.Get("/api/segments.json", [](const httplib::Request &, httplib::Response &res) {
+    json j;
+    int i = 0;
+    for (LedSegment* ledsegment : ledsegments) {
+      json o;
+      o["begin"] = ledsegment->interpreter_config->begin;
+      o["length"] = ledsegment->interpreter_config->length;
+      o["owner"] = ledsegment->owner;
+      o["code"] = ledsegment->lua_code;
+      o["id"] = i;
+      i++;
+      j.push_back(o);
+    }
+    res.set_content(j.dump(), "text/json");
+  });
 
+  svr.Put("/api/code.json", [](const httplib::Request &req, httplib::Response &res, const httplib::ContentReader &content_reader) {
+    cout << "put request" << endl;
+    if (req.is_multipart_form_data()) {
+      res.set_content("No multipart forms allowed", "text/plain");
+      return true;
+    } else {
+      content_reader([&](const char *raw_data, size_t data_length) {
+        std::string data(raw_data, data_length);
+        auto j = json::parse(data);
+        cout << j << endl;
+        LedSegment* selected = ledsegments.at(j["id"].get<unsigned int>());
+        if (selected->lua_thread.has_value()) {
+          // TODO kill lua thread
+        }
+        selected->owner = j["owner"].get<std::string>();
+        selected->lua_code = j["code"].get<std::string>();
+        selected->lua_thread = spawn_lua_tread(selected->lua_code.c_str(), selected->interpreter_config);
 
-  svr.Get("/hi", [](const httplib::Request &, httplib::Response &res) {
-    res.set_content("Hello World!", "text/plain");
+        return true;
+      });
+    }
+    return true;
   });
 
   std::thread httpserverthread(starthttpserver);
@@ -238,8 +296,6 @@ int main(int argc, char** argv)
   ledstring.channel[0].leds[10] = 0x00200000;
   ledstring.channel[0].leds[11] = 0x00002000;
   ledstring.channel[0].leds[12] = 0x00000020;
-
-  std::thread t = spawn_lua_tread("while true do\nprint(\"begin\")\nled(2, 3, 4, 5)\ndelay(1000)\nled(2, 255, 128, 0)\ndelay(1000)\nprint(\"done\")\nend", config);
 
   while (true) {
     ws2811_render(&ledstring);
