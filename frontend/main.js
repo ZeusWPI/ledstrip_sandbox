@@ -77,7 +77,7 @@ var ledStripControl = (function() {
 		if (owner) {
 			document.getElementById("owner_label").innerText = owner;
 		} else {
-			document.getElementById("owner_label").innerHTML = "<i>Vrij</i>";
+			document.getElementById("owner_label").innerHTML = "<i>vrij</i>";
 		}
 		document.getElementById("owner_label").style.display = "block";
 		document.getElementById("owner_label").style.left = (e.currentTarget.clientWidth/2 + e.currentTarget.offsetLeft - document.getElementById("owner_label").clientWidth/2) + "px";
@@ -97,7 +97,7 @@ var ledStripControl = (function() {
 			document.getElementById("publish-button").innerText = "Gepubliceerd";
 			document.getElementById("publish-button").setAttribute("disabled", "disabled");
 		} else {
-			document.getElementById("publish-button").innerText = "Publiceren";
+			document.getElementById("publish-button").innerText = "Publiceer";
 			document.getElementById("publish-button").removeAttribute("disabled");
 		}
 	}
