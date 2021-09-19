@@ -159,6 +159,7 @@ extern "C" {
 
   static int c_waitframes(lua_State *L) {
     kill_thread_if_desired(L);
+    // TODO this is incorrect, fix this
     int amount = luaL_checkinteger(L, 1);
     uint64_t destination = amount + framecounter;
     if (amount >= 2 * FPS) {
@@ -227,6 +228,8 @@ lua_State* setup_lua_sandbox(const char* luacode) {
 int execute_lua_sandbox(lua_State* L) {
   int ret = lua_pcall(L, 0, 0, 0);
   if (ret != 0) {
+    // TODO get full stacktrace
+    luaL_traceback(L, L, lua_tostring(L, -1), 1);
     statemap[L]->logger << "CRASH: " << lua_tostring(L, -1) << '\n';
     lua_close(L);
     return 1;
