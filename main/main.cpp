@@ -280,6 +280,8 @@ int main(int argc, char** argv)
   }
 
   svr.Get("/api/segments.json", [](const httplib::Request &, httplib::Response &res) {
+    res.set_header("Access-Control-Allow-Origin", "*");
+    res.set_header("Access-Control-Allow-Methods", "GET");
     json j;
     int i = 0;
     for (LedSegment* ledsegment : ledsegments) {
@@ -296,6 +298,8 @@ int main(int argc, char** argv)
   });
 
   svr.Put("/api/code.json", [](const httplib::Request &req, httplib::Response &res, const httplib::ContentReader &content_reader) {
+    res.set_header("Access-Control-Allow-Origin", "*");
+    res.set_header("Access-Control-Allow-Methods", "PUT");
     if (req.is_multipart_form_data()) {
       res.set_content("No multipart forms allowed", "text/plain");
       return true;
@@ -316,6 +320,12 @@ int main(int argc, char** argv)
         return true;
       });
     }
+    return true;
+  });
+
+  svr.Options("/api/code.json", [](const httplib::Request &req, httplib::Response &res) {
+    res.set_header("Access-Control-Allow-Origin", "*");
+    res.set_header("Access-Control-Allow-Methods", "PUT");
     return true;
   });
 
