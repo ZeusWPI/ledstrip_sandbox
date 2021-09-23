@@ -1,7 +1,7 @@
 var ledStripControl = (function() {
 	"use strict";
 
-	var HOST = "http://localhost:8080";
+	var HOST = "http://10.1.0.212";
 
 	var segments = null;
 	var activeSegmentId = null;
