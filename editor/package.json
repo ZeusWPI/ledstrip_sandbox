@@ -6,7 +6,7 @@
   "bugs": "https://github.com/ZeusWPI/ledstrip_sandbox/issues",
   "scripts": {
     "start": "parcel *.html *.js *.ts",
-    "build": "rm -rf dist/ && npm run generate && parcel build --public-url ./ *.html *.ts *.js"
+    "build": "rm -rf dist/ && parcel build --public-url ./ *.html *.ts *.js"
   },
   "keywords": [
     "Editor"
