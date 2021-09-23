@@ -144,7 +144,6 @@ var ledStripControl = (function() {
 			document.getElementById("active_segment_id").innerText = activeSegmentId;
 			document.getElementById("active_segment_begin").innerText = activeSegment.begin;
 			document.getElementById("active_segment_end").innerText = activeSegment.begin + activeSegment.length - 1;
-			document.getElementById("active_segment_last_virtual").innerText = activeSegment.length - 1;
 
 			updatePublishButton();
 
