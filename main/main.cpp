@@ -7,9 +7,11 @@
 #include <optional>
 #include <thread>
 #include <unordered_map>
+#include <memory>
 
 #include "interpreter_config.h"
 #include "json.hpp"
+#include "safequeue.hpp"
 #include "log.h"
 #include "lua.hpp"
 #include "ws2811.h"
@@ -25,7 +27,7 @@ using std::chrono::system_clock;
 #define GPIO_PIN 18
 #define DMA 10
 #define STRIP_TYPE WS2812_STRIP // WS2812/SK6812RGB integrated chip+leds
-#define LED_COUNT 30 * 5
+#define LED_COUNT 690
 
 #define FPS 15
 
@@ -36,6 +38,7 @@ struct LedSegment {
   InterpreterConfig *interpreter_config;
   std::string owner;
   std::string lua_code;
+  SafeQueue<std::string> mailbox;
 };
 
 std::vector<LedSegment *> ledsegments;
@@ -54,7 +57,7 @@ ws2811_t ledstring = {
                     .invert = 0,
                     .count = LED_COUNT,
                     .strip_type = STRIP_TYPE,
-                    .brightness = 10,
+                    .brightness = 255,
                 },
             [1] =
                 {
@@ -81,6 +84,21 @@ inline bool kill_thread_if_desired(lua_State *L) {
 void hook(lua_State *L, lua_Debug *ar) { kill_thread_if_desired(L); }
 
 extern "C" {
+
+static int c_getmessage(lua_State *L) {
+  kill_thread_if_desired(L);
+  InterpreterConfig *config = statemap[L];
+
+  std::shared_ptr<std::string> element = ledsegments[config->id]->mailbox.pop_front();
+  if (element == nullptr) {
+    lua_pushnil(L);
+  } else {
+    const char* m = element.get()->c_str();
+    lua_pushlstring(L, m, strlen(m));
+  }
+  return 1;
+}
+
 static int c_override_print(lua_State *L) {
   kill_thread_if_desired(L);
   int n = lua_gettop(L); /* number of arguments */
@@ -132,7 +150,6 @@ static int c_led(lua_State *L) {
     return 0;
   }
   unsigned int real_location = config->begin + virtual_location - 1;
-  // TODO remove this debugging line
   ledstring.channel[0].leds[real_location] = (red << 16) | (green << 8) | blue;
   return 0;
 }
@@ -234,6 +251,8 @@ lua_State *setup_lua_sandbox(const char *luacode) {
   lua_setglobal(L, "waitframes");
   lua_pushcfunction(L, c_override_print);
   lua_setglobal(L, "print");
+  lua_pushcfunction(L, c_getmessage);
+  lua_setglobal(L, "getmessage");
 
   luaL_loadbuffer(L, luacode, strlen(luacode), "script");
   lua_sethook(L, hook, LUA_MASKCOUNT, 1000);
@@ -278,7 +297,8 @@ int main(int argc, char **argv) {
     InterpreterConfig *config =
         new InterpreterConfig{.begin = leds_per_segment * i,
                               .length = leds_per_segment,
-                              .enabled = true};
+                              .enabled = true,
+                              .id = i};
     cout << config->begin << endl;
     LedSegment *segment = new LedSegment{.lua_thread = std::nullopt,
                                          .interpreter_config = config,
@@ -342,6 +362,28 @@ int main(int argc, char **argv) {
                 res.set_header("Access-Control-Allow-Methods", "PUT");
                 return true;
               });
+
+  svr.Put("/api/mailbox.json", [](const httplib::Request &req,
+                               httplib::Response &res,
+                               const httplib::ContentReader &content_reader) {
+    res.set_header("Access-Control-Allow-Origin", "*");
+    res.set_header("Access-Control-Allow-Methods", "PUT");
+    if (req.is_multipart_form_data()) {
+      res.set_content("No multipart forms allowed", "text/plain");
+      return true;
+    } else {
+      content_reader([&](const char *raw_data, size_t data_length) {
+        std::string data(raw_data, data_length);
+        auto j = json::parse(data);
+        LedSegment *selected = ledsegments.at(j["id"].get<unsigned int>());
+        if (selected->lua_thread.has_value()) {
+          selected->mailbox.push(std::make_shared<std::string>(j["message"].get<std::string>()));
+        }
+        return true;
+      });
+    }
+    return true;
+  });
 
   std::thread httpserverthread(starthttpserver);
 

@@ -10,4 +10,5 @@ struct InterpreterConfig {
                          // and get logger output
   std::string persistkey; // To persist the current running script to disk
   Log logger;
+  unsigned int id;
 };
