@@ -6,7 +6,7 @@ import requests
 import time
 
 
-SERVER = os.getenv("LEDSTRIP_SERVER", "http://10.1.0.212:8080")
+SERVER = os.getenv("LEDSTRIP_SERVER", "http://10.0.0.10:8080")
 
 
 for i in range(10):
@@ -21,6 +21,7 @@ for i in range(10):
         "owner": "j",
         "id": i
     }
+    print(c)
     r = requests.put(SERVER + '/api/code.json', json=payload)
     print(r)
     print(r.text)
