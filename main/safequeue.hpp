@@ -1,11 +1,11 @@
 #include <mutex>
-#include <queue>
+#include <deque>
 #include <memory>
 
 
 template<class T>
 class SafeQueue {
-    std::queue<std::shared_ptr<T>> q;
+    std::deque<std::shared_ptr<T>> q;
     std::mutex m;
 
 public:
@@ -17,7 +17,7 @@ public:
         return;
       }
       std::lock_guard<std::mutex> lock(m);
-      q.push(elem);
+      q.push_back(elem);
     }
 
     std::shared_ptr<T> pop_front() {
@@ -26,7 +26,12 @@ public:
           return nullptr;
       }
       std::shared_ptr<T> elem = q.front();
-      q.pop();
+      q.pop_front();
       return elem;
+    }
+
+    void clear() {
+      std::lock_guard<std::mutex> lock(m);
+      q.clear();
     }
 };

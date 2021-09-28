@@ -343,6 +343,8 @@ int main(int argc, char **argv) {
           selected->interpreter_config->enabled = false;
           selected->lua_thread.value().join();
         }
+        selected->mailbox.clear();
+        selected->interpreter_config->logger.clear();
         selected->owner = j["owner"].get<std::string>();
         selected->lua_code = j["code"].get<std::string>();
         selected->interpreter_config->enabled = true;

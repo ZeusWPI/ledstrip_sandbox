@@ -41,6 +41,10 @@ public:
     return result;
   }
 
+  void clear() {
+    buffer.clear();
+  }
+
 private:
   unsigned int current = 0;
   unsigned int ctr = 0;
