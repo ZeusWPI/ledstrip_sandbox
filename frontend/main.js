@@ -7,6 +7,8 @@ var ledStripControl = (function() {
 	var activeSegmentId = null;
 	var us = null;
 
+	var sendingKeystrokes = false;
+
 	function xhr(url, method, data, callback) {
 		var oReq = new XMLHttpRequest();
 
@@ -165,6 +167,7 @@ var ledStripControl = (function() {
 				document.getElementById("not-your-own").style.display = "block";
 				document.getElementById("program-controls").style.display = "none";
 				document.getElementById("program-instructions").style.display = "none";
+				document.getElementById("keystrokes-checkbox").checked = false;
 			}
 
 			if (activeSegment.owner !== "") {
@@ -219,11 +222,18 @@ var ledStripControl = (function() {
 		}, fetchSegments);
 	});
 
+	document.getElementById("keystrokes-checkbox").addEventListener('change', function(event) {
+		sendingKeystrokes = event.currentTarget.checked;
+	});
+
 	document.getElementById("lua_editor").addEventListener("keyup", updatePublishButton);
 	document.getElementById("lua_editor").addEventListener("change", updatePublishButton);
 
 	fetchSegments();
 
+  window.addEventListener('keydown', function(e) {
+		putJson(HOST + "/api/mailbox.json", {'id': activeSegmentId, 'message': `KEYDOWN ${e.keyCode} ignoreme ignoreme`}, function() {});
+	});
 	return {
 		updateUs: updateUs,
 	};
