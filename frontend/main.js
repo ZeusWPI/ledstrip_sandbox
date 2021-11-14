@@ -194,7 +194,8 @@ var ledStripControl = (function() {
 		putJson(HOST + "/api/code.json", {
 			"id": activeSegmentId,
 			"owner": us,
-			"code": activeSegment.code
+			"code": activeSegment.code,
+			"languageid": "lua"
 		}, fetchSegments);
 	});
 
@@ -206,7 +207,8 @@ var ledStripControl = (function() {
 		putJson(HOST + "/api/code.json", {
 			"id": activeSegmentId,
 			"owner": "",
-			"code": activeSegment.code
+			"code": activeSegment.code,
+			"languageid": "lua"
 		}, fetchSegments);
 	});
 
@@ -218,7 +220,8 @@ var ledStripControl = (function() {
 		putJson(HOST + "/api/code.json", {
 			"id": activeSegmentId,
 			"owner": activeSegment.owner,
-			"code": document.getElementById("lua_editor").value
+			"code": document.getElementById("lua_editor").value,
+			"languageid": "lua"
 		}, fetchSegments);
 	});
 
