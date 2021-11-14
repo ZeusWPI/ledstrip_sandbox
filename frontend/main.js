@@ -232,7 +232,9 @@ var ledStripControl = (function() {
 	fetchSegments();
 
   window.addEventListener('keydown', function(e) {
-		putJson(HOST + "/api/mailbox.json", {'id': activeSegmentId, 'message': `KEYDOWN ${e.keyCode} ignoreme ignoreme`}, function() {});
+		if (sendingKeystrokes) {
+			putJson(HOST + "/api/mailbox.json", {'topic': 'keystroke.' + activeSegmentId, 'message': `KEYDOWN ${e.keyCode} ignoreme ignoreme`}, function() {});
+		}
 	});
 	return {
 		updateUs: updateUs,
