@@ -9,9 +9,8 @@
 #include <unordered_map>
 #include <memory>
 
-#include "interpreter_config.h"
+#include "config.hpp"
 #include "json.hpp"
-#include "safequeue.hpp"
 #include "log.h"
 #include "lua.hpp"
 #include "ws2811.h"
@@ -36,14 +35,6 @@ using std::chrono::system_clock;
 #define FPS 15
 
 int frametime = 1000 / FPS;
-
-struct LedSegment {
-  std::optional<std::thread> lua_thread;
-  InterpreterConfig *interpreter_config;
-  std::string owner;
-  std::string lua_code;
-  SafeQueue<std::string> mailbox;
-};
 
 std::vector<LanguageBackend*> languagebackends;
 
@@ -82,11 +73,16 @@ httplib::Server svr;
 void starthttpserver() { svr.listen("0.0.0.0", 8080); }
 
 int main(int argc, char **argv) {
-  unsigned int amount = 10;
-  unsigned int leds_per_segment = LED_COUNT / amount;
-  for (unsigned int i = 0; i < amount; i++) {
-    LanguageBackend* l = new LedstripLanguageBackend(ledstring, leds_per_segment * i, leds_per_segment);
+  Config c;
+  std::ifstream configfile("config.json");
+  if (!configfile.fail()) {
+    c.from_json(json::parse(configfile));
+  }
+  int start = 0;
+  for (int length : c.lengths) {
+    LanguageBackend* l = new LedstripLanguageBackend(ledstring, start, length);
     languagebackends.push_back(l);
+    start += length;
   }
 
   svr.Get("/api/segments.json",
@@ -127,11 +123,12 @@ int main(int argc, char **argv) {
           selected->languagethread->join();
         }
         selected->reset();
+        // TODO use languageid parameter to determine language, don't hardcode Lua
         Language* language = new LuaLanguage(selected, j["code"].get<std::string>());
         selected->start(language);
         selected->owner = j["owner"].get<std::string>();
-        cout << "Uploaded new code from " << j["owner"].get<std::string>() << " to segment "
-             << j["id"].get<unsigned int>() << endl;
+        std::cout << "Uploaded new code from " << j["owner"].get<std::string>() << " to segment "
+             << j["id"].get<unsigned int>() << std::endl;
         return true;
       });
     }

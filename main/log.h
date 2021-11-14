@@ -1,9 +1,8 @@
+#pragma once
+
 #include <iostream>
 #include <sstream>
 #include <vector>
-
-#ifndef _LOG_
-#define _LOG_
 
 class Log {
 public:
@@ -53,5 +52,3 @@ private:
   std::stringstream os;
   unsigned int size = 255;
 };
-
-#endif

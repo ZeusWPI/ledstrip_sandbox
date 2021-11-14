@@ -133,7 +133,7 @@ static std::map<lua_State*, LuaLanguage> lua_state_to_lualanguage_map;
 inline bool kill_thread_if_desired(lua_State* L) {
   LanguageBackend* backend = lua_state_to_lualanguage_map[L].backend;
   if (backend->should_stop()) {
-    cout << "putting errors on the stack" << endl;
+    std::cout << "putting errors on the stack" << std::endl;
     lua_sethook(L, hook, LUA_MASKLINE, 0);
     luaL_error(L, "killed");
     return true;
