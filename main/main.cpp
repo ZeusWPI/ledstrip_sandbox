@@ -8,6 +8,7 @@
 #include <thread>
 #include <unordered_map>
 #include <memory>
+#include <filesystem>
 
 #include "config.hpp"
 #include "json.hpp"
@@ -72,7 +73,26 @@ httplib::Server svr;
 
 void starthttpserver() { svr.listen("0.0.0.0", 8080); }
 
+void startLanguage(unsigned int id, std::string code, std::string languageid, std::string owner) {
+  LanguageBackend* selected = languagebackends.at(id);
+  if (selected->languagethread != nullptr) {
+    selected->stop();
+    selected->languagethread->join();
+  }
+  selected->reset();
+  Language* language;
+  if (languageid == "lua") {
+    language = new LuaLanguage(selected, code);
+  } else {
+    return;
+  }
+  selected->start(language);
+  selected->owner = owner;
+  std::cout << "Uploaded new code from " << owner << " to segment " << id << std::endl;
+}
+
 int main(int argc, char **argv) {
+  // read config and initialize led strips
   Config c;
   std::ifstream configfile("config.json");
   if (!configfile.fail()) {
@@ -83,6 +103,20 @@ int main(int argc, char **argv) {
     LanguageBackend* l = new LedstripLanguageBackend(ledstring, start, length);
     languagebackends.push_back(l);
     start += length;
+  }
+
+  for(auto const& dir_entry: std::filesystem::directory_iterator{std::filesystem::path{"saved"}}) {
+    if (dir_entry.is_regular_file()) {
+      std::string segment_id = dir_entry.path().stem().string();
+      if (std::all_of(segment_id.begin(), segment_id.end(), ::isdigit)) {
+        std::string languageid = dir_entry.path().extension().string();
+        int id = std::stoi(segment_id);
+        std::ifstream saved_code_file(dir_entry.path());
+        std::stringstream buffer;
+        buffer << saved_code_file.rdbuf();
+        startLanguage(id, buffer.str(), languageid, "SAVED");
+      }
+    }
   }
 
   svr.Get("/api/segments.json",
@@ -117,18 +151,7 @@ int main(int argc, char **argv) {
       content_reader([&](const char *raw_data, size_t data_length) {
         std::string data(raw_data, data_length);
         auto j = json::parse(data);
-        LanguageBackend* selected = languagebackends.at(j["id"].get<unsigned int>());
-        if (selected->languagethread != nullptr) {
-          selected->stop();
-          selected->languagethread->join();
-        }
-        selected->reset();
-        // TODO use languageid parameter to determine language, don't hardcode Lua
-        Language* language = new LuaLanguage(selected, j["code"].get<std::string>());
-        selected->start(language);
-        selected->owner = j["owner"].get<std::string>();
-        std::cout << "Uploaded new code from " << j["owner"].get<std::string>() << " to segment "
-             << j["id"].get<unsigned int>() << std::endl;
+        startLanguage(j["id"].get<unsigned int>(), j["code"].get<std::string>(), j["languageid"].get<std::string>(), j["owner"].get<std::string>());
         return true;
       });
     }
