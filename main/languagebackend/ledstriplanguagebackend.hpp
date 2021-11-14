@@ -12,17 +12,13 @@ using std::chrono::system_clock;
 class LedstripLanguageBackend : public LanguageBackend {
 
   ws2811_t ledstring;
-  int begin;
-  int length;
 
 public:
   // all function below
   // called from language implementation
   //
-  LedstripLanguageBackend(ws2811_t ledstring, int begin, int length) {
+  LedstripLanguageBackend(ws2811_t ledstring, int begin, int length) : LanguageBackend(begin, length) {
     this->ledstring = ledstring;
-    this->begin = begin;
-    this->length = length;
   }
 
   void log(std::string s) override {

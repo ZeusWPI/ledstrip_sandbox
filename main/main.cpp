@@ -89,24 +89,25 @@ int main(int argc, char **argv) {
     languagebackends.push_back(l);
   }
 
-  // svr.Get("/api/segments.json",
-  //         [](const httplib::Request &, httplib::Response &res) {
-  //           res.set_header("Access-Control-Allow-Origin", "*");
-  //           res.set_header("Access-Control-Allow-Methods", "GET");
-  //           json j;
-  //           int i = 0;
-  //           for (LanguageBackend *backend : languagebackends) {
-  //             json o;
-  //             o["begin"] = ledsegment->interpreter_config->begin;
-  //             o["length"] = ledsegment->interpreter_config->length;
-  //             o["owner"] = ledsegment->owner;
-  //             o["code"] = ledsegment->lua_code;
-  //             o["id"] = i;
-  //             i++;
-  //             j.push_back(o);
-  //           }
-  //           res.set_content(j.dump(), "text/json");
-  //         });
+  svr.Get("/api/segments.json",
+          [](const httplib::Request &, httplib::Response &res) {
+            res.set_header("Access-Control-Allow-Origin", "*");
+            res.set_header("Access-Control-Allow-Methods", "GET");
+            json j;
+            int i = 0;
+            for (LanguageBackend *backend : languagebackends) {
+              json o;
+              o["begin"] = backend->begin;
+              o["length"] = backend->length;
+              o["owner"] = backend->owner;
+              o["code"] = backend->currentcode;
+              o["languageid"] = backend->languageid;
+              o["id"] = i;
+              i++;
+              j.push_back(o);
+            }
+            res.set_content(j.dump(), "text/json");
+          });
 
   svr.Put("/api/code.json", [](const httplib::Request &req,
                                httplib::Response &res,
@@ -128,6 +129,7 @@ int main(int argc, char **argv) {
         selected->reset();
         Language* language = new LuaLanguage(selected, j["code"].get<std::string>());
         selected->start(language);
+        selected->owner = j["owner"].get<std::string>();
         cout << "Uploaded new code from " << j["owner"].get<std::string>() << " to segment "
              << j["id"].get<unsigned int>() << endl;
         return true;

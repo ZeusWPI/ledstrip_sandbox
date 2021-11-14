@@ -12,6 +12,17 @@ class LanguageBackend {
 
 public:
   std::thread* languagethread = nullptr;
+  std::string owner = "";
+  std::string currentcode = "";
+  std::string languageid = "";
+  int begin;
+  int length;
+
+  LanguageBackend(int begin, int length) {
+    this->begin = begin;
+    this->length = length;
+  }
+
   // all function below
   // called from language implementation
   //
@@ -61,6 +72,8 @@ public:
   }
 
   void start(Language* l) {
+    this->languageid = l->getLanguageID();
+    this->currentcode = l->getCode();
     this->languagethread = new std::thread([l]{l->run();});
   }
 };

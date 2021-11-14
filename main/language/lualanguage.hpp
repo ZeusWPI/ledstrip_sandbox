@@ -31,6 +31,7 @@ class LuaLanguage : public Language {
 private:
 
 lua_State* L = nullptr;
+std::string code;
 
 // Thanks to https://www.stefanmisik.com/post/sandboxing-lua-from-c.html
 static void LuaLoadAndUndefine(lua_State* L, lua_CFunction openFunction, const char *moduleName, const char *functions[]) {
@@ -48,6 +49,7 @@ static void LuaLoadAndUndefine(lua_State* L, lua_CFunction openFunction, const c
 }
 
 lua_State* setup_lua_sandbox(const char *luacode) {
+  this->code = std::string(luacode);
   L = luaL_newstate();
   if (!L) {
     return nullptr;
@@ -115,6 +117,14 @@ public:
       backend->log(crashdump);
     }
     lua_close(L);
+  }
+
+  std::string getLanguageID() override {
+    return "lua";
+  }
+
+  std::string getCode() override {
+    return this->code;
   }
 };
 
