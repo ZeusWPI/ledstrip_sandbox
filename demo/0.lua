@@ -9,8 +9,10 @@ end
 
 all_leds(0, 0, 255)
 
+subscribe("co2measurement")
+
 while true do
-  msg = getmessage()
+  msg = getmessage("co2measurement")
   if msg ~= nil then
     value = tonumber(msg)
     if value < 900 then

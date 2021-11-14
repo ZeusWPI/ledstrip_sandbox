@@ -55,8 +55,10 @@ end
 
 colors = {{255, 0, 0}, {255, 128, 0}, {255, 255, 0}, {0, 255, 0}, {0, 0, 255}, {148, 0, 211}}
 
+subscribe("morsemessage")
+
 while true do
-  msg = getmessage()
+  msg = getmessage("morsemessage")
   if msg ~= nil then
     all_leds(255, 255, 255)
     translated = {}

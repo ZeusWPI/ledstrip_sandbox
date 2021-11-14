@@ -10,6 +10,10 @@ extern "C" {
 
 static int c_getmessage(lua_State* L);
 
+static int c_subscribe(lua_State* L);
+
+static int c_unsubscribe(lua_State* L);
+
 static int c_override_print(lua_State* L);
 
 static int c_led(lua_State* L);
@@ -76,6 +80,10 @@ lua_State* setup_lua_sandbox(const char *luacode) {
   lua_setglobal(L, "print");
   lua_pushcfunction(L, c_getmessage);
   lua_setglobal(L, "getmessage");
+  lua_pushcfunction(L, c_subscribe);
+  lua_setglobal(L, "subscribe");
+  lua_pushcfunction(L, c_unsubscribe);
+  lua_setglobal(L, "unsubscribe");
 
   luaL_loadbuffer(L, luacode, strlen(luacode), "script");
   lua_sethook(L, hook, LUA_MASKCOUNT, 1000);
@@ -141,6 +149,24 @@ static int c_getmessage(lua_State* L) {
     lua_pushnil(L);
   }
   return 1;
+}
+
+static int c_subscribe(lua_State* L) {
+  kill_thread_if_desired(L);
+  const char* c_topic = luaL_checkstring(L, 1);
+  std::string topic(c_topic);
+  LanguageBackend* backend = lua_state_to_lualanguage_map[L].backend;
+  backend->subscribe(topic);
+  return 0;
+}
+
+static int c_unsubscribe(lua_State* L) {
+  kill_thread_if_desired(L);
+  const char* c_topic = luaL_checkstring(L, 1);
+  std::string topic(c_topic);
+  LanguageBackend* backend = lua_state_to_lualanguage_map[L].backend;
+  backend->unsubscribe(topic);
+  return 0;
 }
 
 static int c_override_print(lua_State* L) {
