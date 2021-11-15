@@ -25,6 +25,9 @@ static int c_delay(lua_State* L);
 static int c_waitframes(lua_State* L);
 }
 
+class LuaLanguage;
+
+static std::map<lua_State*, LuaLanguage*> lua_state_to_lualanguage_map;
 
 class LuaLanguage : public Language {
 
@@ -105,6 +108,7 @@ public:
   LuaLanguage(LanguageBackend* backend, std::string sourcecode) {
     this->backend = backend;
     this->L = this->setup_lua_sandbox(sourcecode.c_str());
+    lua_state_to_lualanguage_map[this->L] = this;
   }
 
   void run() override {
@@ -128,12 +132,11 @@ public:
   }
 };
 
-static std::map<lua_State*, LuaLanguage> lua_state_to_lualanguage_map;
-
 inline bool kill_thread_if_desired(lua_State* L) {
-  LanguageBackend* backend = lua_state_to_lualanguage_map[L].backend;
+  LanguageBackend* backend = lua_state_to_lualanguage_map[L]->backend;
   if (backend->should_stop()) {
-    std::cout << "putting errors on the stack" << std::endl;
+    std::cout << "killing thread; putting errors on the stack" << std::endl;
+    lua_state_to_lualanguage_map.erase(L);
     lua_sethook(L, hook, LUA_MASKLINE, 0);
     luaL_error(L, "killed");
     return true;
@@ -149,7 +152,7 @@ static int c_getmessage(lua_State* L) {
   kill_thread_if_desired(L);
   const char* c_topic = luaL_checkstring(L, 1);
   std::string topic(c_topic);
-  LanguageBackend* backend = lua_state_to_lualanguage_map[L].backend;
+  LanguageBackend* backend = lua_state_to_lualanguage_map[L]->backend;
 
   std::optional<std::string> element = backend->get_message(topic);
   if (element.has_value()) {
@@ -165,7 +168,8 @@ static int c_subscribe(lua_State* L) {
   kill_thread_if_desired(L);
   const char* c_topic = luaL_checkstring(L, 1);
   std::string topic(c_topic);
-  LanguageBackend* backend = lua_state_to_lualanguage_map[L].backend;
+  LanguageBackend* backend = lua_state_to_lualanguage_map[L]->backend;
+  std::cout << "lua: subscribing to " << c_topic << std::endl;
   backend->subscribe(topic);
   return 0;
 }
@@ -174,7 +178,7 @@ static int c_unsubscribe(lua_State* L) {
   kill_thread_if_desired(L);
   const char* c_topic = luaL_checkstring(L, 1);
   std::string topic(c_topic);
-  LanguageBackend* backend = lua_state_to_lualanguage_map[L].backend;
+  LanguageBackend* backend = lua_state_to_lualanguage_map[L]->backend;
   backend->unsubscribe(topic);
   return 0;
 }
@@ -204,7 +208,7 @@ static int c_led(lua_State* L) {
   int green = luaL_checkinteger(L, 3);
   int blue = luaL_checkinteger(L, 4);
 
-  LanguageBackend* backend = lua_state_to_lualanguage_map[L].backend;
+  LanguageBackend* backend = lua_state_to_lualanguage_map[L]->backend;
   // Lua is one-based, let's keep it consistent and also make our API one-based
   if (virtual_location <= 0 || virtual_location > (int)backend->led_amount()) {
     std::ostringstream errstream;
@@ -233,7 +237,7 @@ static int c_led(lua_State* L) {
 
 static int c_ledamount(lua_State* L) {
   kill_thread_if_desired(L);
-  LanguageBackend* backend = lua_state_to_lualanguage_map[L].backend;
+  LanguageBackend* backend = lua_state_to_lualanguage_map[L]->backend;
   lua_pushinteger(L, backend->led_amount());
   return 1;
 }
@@ -241,7 +245,7 @@ static int c_ledamount(lua_State* L) {
 static int c_delay(lua_State* L) {
   kill_thread_if_desired(L);
   uint64_t millis = luaL_checkinteger(L, 1);
-  LanguageBackend* backend = lua_state_to_lualanguage_map[L].backend;
+  LanguageBackend* backend = lua_state_to_lualanguage_map[L]->backend;
   backend->delay(millis);
   kill_thread_if_desired(L);
   return 0;
@@ -251,7 +255,7 @@ static int c_delay(lua_State* L) {
 static int c_waitframes(lua_State* L) {
   kill_thread_if_desired(L);
   int amount = luaL_checkinteger(L, 1);
-  LanguageBackend* backend = lua_state_to_lualanguage_map[L].backend;
+  LanguageBackend* backend = lua_state_to_lualanguage_map[L]->backend;
   backend->wait_frames(amount);
   kill_thread_if_desired(L);
   return 0;

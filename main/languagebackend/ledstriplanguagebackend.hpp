@@ -26,7 +26,11 @@ public:
   };
 
   bool set_led(int virtual_location, uint8_t red, uint8_t green, uint8_t blue) override {
-    if (virtual_location <= 0 || virtual_location > this->length) return false;
+    if (virtual_location < 0 || virtual_location >= this->length) {
+      std::cout << "virtual " << virtual_location << "out of range on strip with lenght " << this->length << std::endl;
+      std::cout << "this should have been caught in the language implementation" << std::endl;
+      return false;
+    }
     int real_location = begin + virtual_location;
     this->ledstring.channel[0].leds[real_location] = (((uint32_t)red) << 16) | (((uint32_t)green) << 8) | (uint32_t)blue;
     return true;
@@ -62,6 +66,7 @@ public:
 
   void reset() override {
     LanguageBackend::reset();
+    std::cout << "resetting ledstrip from " << this->begin << " with lenght " << this->length << std::endl;
     for (int i = 0; i < this->length; i++) {
       this->ledstring.channel[0].leds[this->begin + i] = 0;
     }

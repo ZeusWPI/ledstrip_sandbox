@@ -39,7 +39,7 @@ int frametime = 1000 / FPS;
 
 std::vector<LanguageBackend*> languagebackends;
 
-std::atomic<std::uint64_t> framecounter = {0};
+std::atomic<std::uint64_t> framecounter {0};
 ws2811_t ledstring = {
     .freq = TARGET_FREQ,
     .dmanum = DMA,
@@ -74,8 +74,10 @@ httplib::Server svr;
 void starthttpserver() { svr.listen("0.0.0.0", 8080); }
 
 void startLanguage(unsigned int id, std::string code, std::string languageid, std::string owner) {
+  std::cout << "owner=" << owner << " languageid=" << languageid << " id=" << id << std::endl;
   LanguageBackend* selected = languagebackends.at(id);
   if (selected->languagethread != nullptr) {
+    std::cout << "there was still a language running, killing it" << std::endl;
     selected->stop();
     selected->languagethread->join();
   }
@@ -84,9 +86,12 @@ void startLanguage(unsigned int id, std::string code, std::string languageid, st
   if (languageid == "lua") {
     language = new LuaLanguage(selected, code);
   } else {
+    std::cout << "(!) languageid not found, not running code " << std::endl;
     return;
   }
+  std::cout << "starting language..." << std::endl;
   selected->start(language);
+  std::cout << "language started" << std::endl;
   selected->owner = owner;
   std::cout << "Uploaded new code from " << owner << " to segment " << id << std::endl;
 }
@@ -97,12 +102,6 @@ int main(int argc, char **argv) {
   std::ifstream configfile("config.json");
   if (!configfile.fail()) {
     c.from_json(json::parse(configfile));
-  }
-  int start = 0;
-  for (int length : c.lengths) {
-    LanguageBackend* l = new LedstripLanguageBackend(ledstring, start, length);
-    languagebackends.push_back(l);
-    start += length;
   }
 
   for(auto const& dir_entry: std::filesystem::directory_iterator{std::filesystem::path{"saved"}}) {
@@ -203,8 +202,17 @@ int main(int argc, char **argv) {
   ledstring.channel[0].leds[11] = 0x00002000;
   ledstring.channel[0].leds[12] = 0x00000020;
 
+  int start = 0;
+  for (int length : c.lengths) {
+    LanguageBackend* l = new LedstripLanguageBackend(ledstring, start, length);
+    languagebackends.push_back(l);
+    start += length;
+  }
+
+  std::cout << "starting render loop" << std::endl;
   while (true) {
     ws2811_render(&ledstring);
+    framecounter++;
     std::this_thread::sleep_for(std::chrono::milliseconds(frametime));
   }
 }

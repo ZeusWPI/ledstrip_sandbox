@@ -19,7 +19,8 @@ for i in range(10):
     payload = {
         "code": c,
         "owner": "j",
-        "id": i
+        "id": i,
+        "languageid": "lua"
     }
     print(c)
     r = requests.put(SERVER + '/api/code.json', json=payload)

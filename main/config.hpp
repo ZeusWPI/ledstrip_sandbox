@@ -11,8 +11,8 @@ public:
 
   Config() {
     int segments = 10;
-    for (int i = 0; i < ledamount; i +=ledamount/segments) {
-      lengths.push_back(i);
+    for (int i = 0; i < segments; i++) {
+      lengths.push_back(ledamount/segments);
     }
   }
 

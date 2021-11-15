@@ -7,7 +7,7 @@
 
 class LanguageBackend {
 
-  std::atomic<bool> should_stop_var = {false};
+  std::atomic<bool> should_stop_var {false};
   MessageContainer messagecontainer;
 
 public:
@@ -50,7 +50,7 @@ public:
   }
 
   bool should_stop() {
-    return should_stop_var;
+    return this->should_stop_var.load();
   }
 
   // all functions below
@@ -60,7 +60,7 @@ public:
   void stop() {
     // signal the language interpreter thread to stop
     // after that, you should call .join() on the interpreter
-    should_stop_var = true;
+    this->should_stop_var.store(true);
   }
 
   void offer_message(std::string topic, std::string message) {
@@ -69,6 +69,7 @@ public:
 
   virtual void reset() {
     messagecontainer.clear();
+    this->should_stop_var.store(false);
   }
 
   void start(Language* l) {
