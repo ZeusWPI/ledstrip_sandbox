@@ -169,7 +169,6 @@ static int c_subscribe(lua_State* L) {
   const char* c_topic = luaL_checkstring(L, 1);
   std::string topic(c_topic);
   LanguageBackend* backend = lua_state_to_lualanguage_map[L]->backend;
-  std::cout << "lua: subscribing to " << c_topic << std::endl;
   backend->subscribe(topic);
   return 0;
 }

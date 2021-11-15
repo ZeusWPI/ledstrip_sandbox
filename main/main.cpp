@@ -104,19 +104,6 @@ int main(int argc, char **argv) {
     c.from_json(json::parse(configfile));
   }
 
-  for(auto const& dir_entry: std::filesystem::directory_iterator{std::filesystem::path{"saved"}}) {
-    if (dir_entry.is_regular_file()) {
-      std::string segment_id = dir_entry.path().stem().string();
-      if (std::all_of(segment_id.begin(), segment_id.end(), ::isdigit)) {
-        std::string languageid = dir_entry.path().extension().string();
-        int id = std::stoi(segment_id);
-        std::ifstream saved_code_file(dir_entry.path());
-        std::stringstream buffer;
-        buffer << saved_code_file.rdbuf();
-        startLanguage(id, buffer.str(), languageid, "SAVED");
-      }
-    }
-  }
 
   svr.Get("/api/segments.json",
           [](const httplib::Request &, httplib::Response &res) {
@@ -207,6 +194,21 @@ int main(int argc, char **argv) {
     LanguageBackend* l = new LedstripLanguageBackend(ledstring, start, length);
     languagebackends.push_back(l);
     start += length;
+  }
+
+  for(auto const& dir_entry: std::filesystem::directory_iterator{std::filesystem::path{"saved"}}) {
+    if (dir_entry.is_regular_file()) {
+      std::string segment_id = dir_entry.path().stem().string();
+      if (std::all_of(segment_id.begin(), segment_id.end(), ::isdigit)) {
+        std::string languageid = dir_entry.path().extension().string();
+        languageid.erase(0, 1); // remove dot from filename
+        int id = std::stoi(segment_id);
+        std::ifstream saved_code_file(dir_entry.path());
+        std::stringstream buffer;
+        buffer << saved_code_file.rdbuf();
+        startLanguage(id, buffer.str(), languageid, "SAVED");
+      }
+    }
   }
 
   std::cout << "starting render loop" << std::endl;
