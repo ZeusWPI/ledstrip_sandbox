@@ -102,6 +102,9 @@ int main(int argc, char **argv) {
   std::ifstream configfile("config.json");
   if (!configfile.fail()) {
     c.from_json(json::parse(configfile));
+    std::cout << "parsed logfile, lenght=" << c.ledamount << std::endl;
+  } else {
+    std::cout << "no configfile found" << std::endl;
   }
 
 

@@ -21,6 +21,7 @@ public:
       this->ledamount = j["amount"].get<int>();
     }
     if (j.contains("segments")) {
+      lengths.clear();
       int current = 0;
       for (int i : j["segments"].get<std::vector<int>>()) {
         lengths.push_back(i);
