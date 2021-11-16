@@ -46,12 +46,6 @@ all_leds(10, 0, 0)
 delay(1000)
 all_leds(100, 0, 10)
 
-i = 0
-while getmessage() ~= nil do
-  all_leds(0, 0, i)
-  i = i + 1
-  delay(1000)
-end
 
 colors = {{255, 0, 0}, {255, 128, 0}, {255, 255, 0}, {0, 255, 0}, {0, 0, 255}, {148, 0, 211}}
 

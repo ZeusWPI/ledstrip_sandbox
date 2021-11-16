@@ -23,6 +23,7 @@ public:
 
   void log(std::string s) override {
     // TODO wait for swamp to finish logging code
+    std::cout << s << std::endl;
   };
 
   bool set_led(int virtual_location, uint8_t red, uint8_t green, uint8_t blue) override {
