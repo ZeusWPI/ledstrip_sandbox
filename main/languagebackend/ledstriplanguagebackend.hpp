@@ -12,18 +12,22 @@ using std::chrono::system_clock;
 class LedstripLanguageBackend : public LanguageBackend {
 
   ws2811_t ledstring;
+  int frametime;
+  std::atomic<uint64_t> *framecounter;
 
 public:
   // all function below
   // called from language implementation
   //
-  LedstripLanguageBackend(ws2811_t ledstring, int begin, int length) : LanguageBackend(begin, length) {
+  LedstripLanguageBackend(ws2811_t ledstring, int ft, std::atomic<uint64_t> *fc, int begin, int length) : LanguageBackend(begin, length) {
     this->ledstring = ledstring;
+    this->frametime = ft;
+    this->framecounter = fc;
   }
 
   bool set_led(int virtual_location, uint8_t red, uint8_t green, uint8_t blue) override {
     if (virtual_location < 0 || virtual_location >= this->length) {
-      std::cout << "virtual " << virtual_location << "out of range on strip with lenght " << this->length << std::endl;
+      std::cout << "virtual " << virtual_location << "out of range on strip with length " << this->length << std::endl;
       std::cout << "this should have been caught in the language implementation" << std::endl;
       return false;
     }
@@ -56,8 +60,16 @@ public:
   }
 
   void wait_frames(int frames) override {
-    // TODO fixme to use atomic counter
-    this->delay(frames * 100);
+    std::uint64_t start = this->framecounter->load();
+
+    while (start + frames > this->framecounter->load()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds((this->frametime)/2));
+      if (this->should_stop()) {
+        return;
+      }
+    }
+
+    return;
   };
 
   void reset() override {

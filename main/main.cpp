@@ -207,7 +207,7 @@ int main(int argc, char **argv) {
 
   int start = 0;
   for (int length : c.lengths) {
-    LanguageBackend* l = new LedstripLanguageBackend(ledstring, start, length);
+    LanguageBackend* l = new LedstripLanguageBackend(ledstring, frametime, &framecounter, start, length);
     languagebackends.push_back(l);
     start += length;
   }
