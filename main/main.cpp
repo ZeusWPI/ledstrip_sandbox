@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
               i++;
               j.push_back(o);
             }
-            res.set_content(j.dump(), "text/json");
+            res.set_content(j.dump(), "application/json");
           });
 
   svr.Put("/api/code.json", [](const httplib::Request &req,
