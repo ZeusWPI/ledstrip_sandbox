@@ -21,11 +21,6 @@ public:
     this->ledstring = ledstring;
   }
 
-  void log(std::string s) override {
-    // TODO wait for swamp to finish logging code
-    std::cout << s << std::endl;
-  };
-
   bool set_led(int virtual_location, uint8_t red, uint8_t green, uint8_t blue) override {
     if (virtual_location < 0 || virtual_location >= this->length) {
       std::cout << "virtual " << virtual_location << "out of range on strip with lenght " << this->length << std::endl;

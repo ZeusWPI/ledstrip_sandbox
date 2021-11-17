@@ -4,11 +4,13 @@
 
 #include "messagecontainer.hpp"
 #include "../language/language.hpp"
+#include "log.h"
 
 class LanguageBackend {
 
   std::atomic<bool> should_stop_var {false};
   MessageContainer messagecontainer;
+  Log logger;
 
 public:
   std::thread* languagethread = nullptr;
@@ -27,7 +29,9 @@ public:
   // called from language implementation
   //
 
-  virtual void log(std::string s) = 0;
+  void log(std::string s) {
+    this->logger << s;
+  };
 
   virtual bool set_led(int virtual_location, unsigned char red, unsigned char green, unsigned char blue) = 0;
 
@@ -76,5 +80,9 @@ public:
     this->languageid = l->getLanguageID();
     this->currentcode = l->getCode();
     this->languagethread = new std::thread([l]{l->run();});
+  }
+
+  std::map<unsigned int, std::string> get_logs() {
+    return this->logger.getLogs();
   }
 };

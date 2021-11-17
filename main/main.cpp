@@ -12,7 +12,6 @@
 
 #include "config.hpp"
 #include "json.hpp"
-#include "log.h"
 #include "lua.hpp"
 #include "ws2811.h"
 
@@ -153,6 +152,16 @@ int main(int argc, char **argv) {
                 res.set_header("Access-Control-Allow-Methods", "PUT");
                 return true;
               });
+
+  svr.Get(R"(/api/logs/(\d+).json)",
+         [&](const httplib::Request &req, httplib::Response &res) {
+            res.set_header("Access-Control-Allow-Origin", "*");
+            res.set_header("Access-Control-Allow-Methods", "GET");
+            int id = std::stoi(req.matches[1]);
+            LanguageBackend* selected = languagebackends.at(id);
+            json j(selected->get_logs());
+            res.set_content(j.dump(), "application/json");
+          });
 
   svr.Put("/api/mailbox.json", [](const httplib::Request &req,
                                httplib::Response &res,
