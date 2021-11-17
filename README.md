@@ -1,3 +1,7 @@
+# ledstrip_sandbox: a multi-program programmable LED strip
+
+To see what this does and how it works, see [this blog post](https://zeus.ugent.be/blog/21-22/ledstrip_sandbox/).
+
 Get started:
 ```
 # Fetch/update submodules:
