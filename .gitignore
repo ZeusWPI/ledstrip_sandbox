@@ -4,3 +4,4 @@ editor/.idea/
 editor/.cache
 editor/dist
 editor/node_modules
+*.zip
