@@ -86,7 +86,7 @@ lua_State* setup_lua_sandbox(const char *luacode) {
   lua_pushcfunction(L, c_waitframes);
   lua_setglobal(L, "waitframes");
   lua_pushcfunction(L, c_override_print);
-  lua_setglobal(L, "printa");
+  lua_setglobal(L, "print");
   lua_pushcfunction(L, c_getmessage);
   lua_setglobal(L, "getmessage");
   lua_pushcfunction(L, c_subscribe);
