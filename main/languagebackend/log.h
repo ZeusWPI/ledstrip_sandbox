@@ -50,6 +50,9 @@ public:
   }
 
   void clear() {
+    std::lock_guard<std::mutex> lock(buffer_guard);
     buffer.clear();
+    os.str("");
+    num_strings_seen = 0;
   }
 };

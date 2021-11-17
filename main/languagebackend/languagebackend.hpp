@@ -69,6 +69,7 @@ public:
 
   virtual void reset() {
     messagecontainer.clear();
+    logger.clear();
     this->should_stop_var.store(false);
   }
 
