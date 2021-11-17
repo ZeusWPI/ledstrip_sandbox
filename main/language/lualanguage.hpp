@@ -66,8 +66,12 @@ lua_State* setup_lua_sandbox(const char *luacode) {
                                       "rawset",     "setmetatable",
                                       "print",      NULL};
   LuaLoadAndUndefine(L, luaopen_base, "_G", remove_base);
+
   static const char *remove_str[] = {"dump", NULL};
   LuaLoadAndUndefine(L, luaopen_string, LUA_STRLIBNAME, remove_str);
+
+  static const char *remove_os[] = {"execute", "exit", "getenv", "remove", "rename", "tmpname", NULL};
+  LuaLoadAndUndefine(L, luaopen_os, LUA_OSLIBNAME, remove_os);
 
   static const char *all_allowed[] = {NULL};
   LuaLoadAndUndefine(L, luaopen_table, LUA_TABLIBNAME, all_allowed);
