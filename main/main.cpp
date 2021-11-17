@@ -39,28 +39,7 @@ int frametime = 1000 / FPS;
 std::vector<LanguageBackend*> languagebackends;
 
 std::atomic<std::uint64_t> framecounter {0};
-ws2811_t ledstring = {
-    .freq = TARGET_FREQ,
-    .dmanum = DMA,
-    .channel =
-        {
-            [0] =
-                {
-                    .gpionum = GPIO_PIN,
-                    .invert = 0,
-                    .count = LED_COUNT,
-                    .strip_type = STRIP_TYPE,
-                    .brightness = 255,
-                },
-            [1] =
-                {
-                    .gpionum = 0,
-                    .invert = 0,
-                    .count = 0,
-                    .brightness = 0,
-                },
-        },
-};
+ws2811_t ledstring;
 
 void signal_callback_handler(int signum) {
   (void)signum;
@@ -105,6 +84,20 @@ int main(int argc, char **argv) {
   } else {
     std::cout << "no configfile found" << std::endl;
   }
+
+  // set ledstrip settings
+  ledstring.freq = TARGET_FREQ;
+  ledstring.dmanum = DMA;
+  ledstring.channel[0].gpionum = GPIO_PIN;
+  ledstring.channel[0].invert = 0;
+  ledstring.channel[0].count = c.ledamount;
+  ledstring.channel[0].strip_type = STRIP_TYPE;
+  ledstring.channel[0].brightness = 255;
+  // disable channel 1 by setting fields to 0 (as per the docs)
+  ledstring.channel[1].gpionum = 0;
+  ledstring.channel[1].invert = 0;
+  ledstring.channel[1].count = 0;
+  ledstring.channel[1].brightness = 0;
 
 
   svr.Get("/api/segments.json",
