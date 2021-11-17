@@ -116,6 +116,7 @@ var ledStripControl = (function() {
 		if (lastSelectedId != activeSegmentId) {
 			lastSelectedId = activeSegmentId;
 			lastSeenLogId = -1;
+			document.getElementById("logs").value = '';
 		}
 		const controller = new AbortController()
 		setTimeout(() => {controller.abort(); allowedToUpdate = true}, 3000);
