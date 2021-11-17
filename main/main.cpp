@@ -159,7 +159,11 @@ int main(int argc, char **argv) {
             res.set_header("Access-Control-Allow-Methods", "GET");
             int id = std::stoi(req.matches[1]);
             LanguageBackend* selected = languagebackends.at(id);
-            json j(selected->get_logs());
+            json j;
+            for (const auto &pair : selected->get_logs()) {
+              j[std::to_string(pair.first)] = pair.second;
+            }
+
             res.set_content(j.dump(), "application/json");
           });
 

@@ -39,8 +39,12 @@ public:
   std::map<unsigned int, std::string> getLogs() {
     std::lock_guard<std::mutex> lock(buffer_guard);
     std::map<unsigned int, std::string> result;
-    for (unsigned int i = std::max((unsigned int)0, num_strings_seen - size); i < num_strings_seen; i++) {
-      result[i] = buffer[num_strings_seen % size];
+    int begin = 0;
+    if (num_strings_seen > size) {
+      begin = num_strings_seen - size;
+    }
+    for (unsigned int i = begin; i < num_strings_seen; i++) {
+      result[i] = buffer[i % size];
     }
     return result;
   }

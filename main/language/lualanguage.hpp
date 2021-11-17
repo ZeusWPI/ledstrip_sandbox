@@ -86,7 +86,7 @@ lua_State* setup_lua_sandbox(const char *luacode) {
   lua_pushcfunction(L, c_waitframes);
   lua_setglobal(L, "waitframes");
   lua_pushcfunction(L, c_override_print);
-  lua_setglobal(L, "print");
+  lua_setglobal(L, "printa");
   lua_pushcfunction(L, c_getmessage);
   lua_setglobal(L, "getmessage");
   lua_pushcfunction(L, c_subscribe);
@@ -122,7 +122,7 @@ public:
       luaL_traceback(L, L, lua_tostring(L, -1), 1);
       std::string crashdump = "CRASH: ";
       crashdump.append(lua_tostring(L, -1));
-      backend->log(crashdump);
+      backend->logger << crashdump << '\n';
     }
     lua_close(L);
   }
@@ -188,19 +188,18 @@ static int c_unsubscribe(lua_State* L) {
 
 static int c_override_print(lua_State* L) {
   kill_thread_if_desired(L);
-  // TODO implement this when swamp finishes the logger
-
-  // int n = lua_gettop(L); /* number of arguments */
-  // int i;
-  // for (i = 1; i <= n; i++) { /* for each argument */
-  //   size_t l;
-  //   const char *s = luaL_tolstring(L, i, &l); /* convert it to string */
-  //   if (i > 1)                                /* not the first element? */
-  //     statemap[L]->logger << '\t';            /* add a tab before it */
-  //   statemap[L]->logger << s;                 /* print it */
-  //   lua_pop(L, 1);                            /* pop result */
-  // }
-  // statemap[L]->logger << '\n';
+  LanguageBackend* backend = lua_state_to_lualanguage_map[L]->backend;
+  int n = lua_gettop(L); /* number of arguments */
+  int i;
+  for (i = 1; i <= n; i++) { /* for each argument */
+    size_t l;
+    const char *s = luaL_tolstring(L, i, &l); /* convert it to string */
+    if (i > 1)                                /* not the first element? */
+      backend->logger << '\t';            /* add a tab before it */
+    backend->logger << s;                 /* print it */
+    lua_pop(L, 1);                            /* pop result */
+  }
+  backend->logger << '\n';
   return 0;
 }
 

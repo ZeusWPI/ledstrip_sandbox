@@ -10,7 +10,6 @@ class LanguageBackend {
 
   std::atomic<bool> should_stop_var {false};
   MessageContainer messagecontainer;
-  Log logger;
 
 public:
   std::thread* languagethread = nullptr;
@@ -19,6 +18,7 @@ public:
   std::string languageid = "";
   int begin;
   int length;
+  Log logger;
 
   LanguageBackend(int begin, int length) {
     this->begin = begin;
@@ -28,10 +28,6 @@ public:
   // all function below
   // called from language implementation
   //
-
-  void log(std::string s) {
-    this->logger << s;
-  };
 
   virtual bool set_led(int virtual_location, unsigned char red, unsigned char green, unsigned char blue) = 0;
 
