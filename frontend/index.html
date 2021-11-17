@@ -130,7 +130,7 @@ h1 {
 	line-height: 3em;
 }
 
-#lua_editor {
+#lua_editor, #log {
 	width: 100%;
 	height: 200px;
 }
@@ -184,6 +184,8 @@ h1 {
 				<p>De code wordt niet bestendig bewaard. <strong>Sla ze zelf op op je computer.</strong> Gebruik dit veld bij voorkeur enkel om naar te kopiëren-en-plakken.</p>
 				<input type="checkbox" id="keystrokes-checkbox" name="keystrokes" checked><label for="keystrokes">Send keystrokes as message to program</label>
 			</div>
+			<h2>Output</h2>
+			<textarea disabled id="logs" spellcheck="false"></textarea>
 			<div id="program-instructions">
 				<p>Programmeer je segment in Lua. Voor je code lijkt het alsof je led 1 tot <code>ledamount()</code> hebt. Extra beschikbare functies:</p>
 				<dl>

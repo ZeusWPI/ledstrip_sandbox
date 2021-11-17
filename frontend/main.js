@@ -9,6 +9,10 @@ var ledStripControl = (function() {
 
 	var sendingKeystrokes = false;
 
+	var lastSelectedId = null;
+	var lastSeenLogId = -1;
+	var allowedToUpdate = true;
+
 	function xhr(url, method, data, callback) {
 		var oReq = new XMLHttpRequest();
 
@@ -102,6 +106,37 @@ var ledStripControl = (function() {
 			document.getElementById("publish-button").innerText = "Publiceer";
 			document.getElementById("publish-button").removeAttribute("disabled");
 		}
+	}
+
+	function updateLogs() {
+		if (!allowedToUpdate || activeSegmentId == null) {
+			return;
+		}
+		allowedToUpdate = false;
+		if (lastSelectedId != activeSegmentId) {
+			lastSelectedId = activeSegmentId;
+			lastSeenLogId = -1;
+		}
+		const controller = new AbortController()
+		setTimeout(() => {controller.abort(); allowedToUpdate = true}, 3000);
+
+		// API data looks like this:
+		// {'0': "line 0", '1': "line 1"}
+		fetch(HOST + '/api/logs/' + activeSegmentId + '.json')
+	  .then(response => response.json())
+	  .then(data => {
+			let minimal_key = Object.keys(data).reduce((a, b) => Number(a) < Number(b) ? a : b);
+			if (minimal_key < lastSeenLogId + 1) {
+				minimal_key = lastSeenLogId + 1;
+			}
+			var node = document.getElementById("logs");
+			while (minimal_key in data) {
+				node.value += data[minimal_key];
+				lastSeenLogId = minimal_key;
+				minimal_key++;
+			}
+			allowedToUpdate = true;
+		});
 	}
 
 	function showSegments() {
@@ -233,6 +268,7 @@ var ledStripControl = (function() {
 	document.getElementById("lua_editor").addEventListener("change", updatePublishButton);
 
 	fetchSegments();
+	setInterval(updateLogs, 1000);
 
   window.addEventListener('keydown', function(e) {
 		if (sendingKeystrokes) {
