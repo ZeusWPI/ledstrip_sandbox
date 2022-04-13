@@ -46,7 +46,7 @@ public:
     }
     uint64_t begin = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 
-    while (duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count() - begin < millis - 100) {
+    while ((duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count() - begin) + 100 < millis) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100 - 5));
       if (this->should_stop()) {
         return;
