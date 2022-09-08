@@ -1,0 +1,5 @@
+http://localhost:3000
+
+root * frontend
+reverse_proxy /api/* localhost:8080
+file_server

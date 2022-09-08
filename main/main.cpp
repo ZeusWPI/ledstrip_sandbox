@@ -18,6 +18,7 @@
 #include "httplib.h"
 #include "languagebackend/ledstriplanguagebackend.hpp"
 #include "languagebackend/languagebackend.hpp"
+#include "languagebackend/virtuallanguagebackend.hpp"
 #include "language/language.hpp"
 #include "language/lualanguage.hpp"
 
@@ -85,21 +86,6 @@ int main(int argc, char **argv) {
     std::cout << "no configfile found" << std::endl;
   }
 
-  // set ledstrip settings
-  ledstring.freq = TARGET_FREQ;
-  ledstring.dmanum = DMA;
-  ledstring.channel[0].gpionum = GPIO_PIN;
-  ledstring.channel[0].invert = 0;
-  ledstring.channel[0].count = c.ledamount;
-  ledstring.channel[0].strip_type = STRIP_TYPE;
-  ledstring.channel[0].brightness = 255;
-  // disable channel 1 by setting fields to 0 (as per the docs)
-  ledstring.channel[1].gpionum = 0;
-  ledstring.channel[1].invert = 0;
-  ledstring.channel[1].count = 0;
-  ledstring.channel[1].brightness = 0;
-
-
   svr.Get("/api/segments.json",
           [](const httplib::Request &, httplib::Response &res) {
             res.set_header("Access-Control-Allow-Origin", "*");
@@ -121,20 +107,16 @@ int main(int argc, char **argv) {
           });
 
   svr.Put("/api/code.json", [](const httplib::Request &req,
-                               httplib::Response &res,
-                               const httplib::ContentReader &content_reader) {
+                               httplib::Response &res) {
     res.set_header("Access-Control-Allow-Origin", "*");
     res.set_header("Access-Control-Allow-Methods", "PUT");
     if (req.is_multipart_form_data()) {
       res.set_content("No multipart forms allowed", "text/plain");
       return true;
     } else {
-      content_reader([&](const char *raw_data, size_t data_length) {
-        std::string data(raw_data, data_length);
-        auto j = json::parse(data);
-        startLanguage(j["id"].get<unsigned int>(), j["code"].get<std::string>(), j["languageid"].get<std::string>(), j["owner"].get<std::string>());
-        return true;
-      });
+      auto j = json::parse(req.body);
+      startLanguage(j["id"].get<unsigned int>(), j["code"].get<std::string>(), j["languageid"].get<std::string>(), j["owner"].get<std::string>());
+      return true;
     }
     return true;
   });
@@ -161,48 +143,69 @@ int main(int argc, char **argv) {
           });
 
   svr.Put("/api/mailbox.json", [](const httplib::Request &req,
-                               httplib::Response &res,
-                               const httplib::ContentReader &content_reader) {
+                               httplib::Response &res) {
     res.set_header("Access-Control-Allow-Origin", "*");
     res.set_header("Access-Control-Allow-Methods", "PUT");
     if (req.is_multipart_form_data()) {
       res.set_content("No multipart forms allowed", "text/plain");
       return true;
     } else {
-      content_reader([&](const char *raw_data, size_t data_length) {
-        std::string data(raw_data, data_length);
-        auto j = json::parse(data);
-        std::string topic = j["topic"].get<std::string>();
-        std::string message = j["message"].get<std::string>();
-        for (LanguageBackend* backend : languagebackends) {
-          backend->offer_message(topic, message);
-        }
-        return true;
-      });
+      auto j = json::parse(req.body);
+      std::string topic = j["topic"].get<std::string>();
+      std::string message = j["message"].get<std::string>();
+      for (LanguageBackend* backend : languagebackends) {
+        backend->offer_message(topic, message);
+      }
+      return true;
     }
     return true;
   });
 
   std::thread httpserverthread(starthttpserver);
 
-  ws2811_return_t ret;
-  if ((ret = ws2811_init(&ledstring)) != WS2811_SUCCESS) {
-    fprintf(stderr, "ws2811_init failed: %s\n", ws2811_get_return_t_str(ret));
-    return ret;
-  }
-  signal(SIGINT, signal_callback_handler);
-  signal(SIGHUP, signal_callback_handler);
-  signal(SIGTERM, signal_callback_handler);
+  if (c.backend == "ws2811") {
+    // set ledstrip settings
+    ledstring.freq = TARGET_FREQ;
+    ledstring.dmanum = DMA;
+    ledstring.channel[0].gpionum = GPIO_PIN;
+    ledstring.channel[0].invert = 0;
+    ledstring.channel[0].count = c.ledamount;
+    ledstring.channel[0].strip_type = STRIP_TYPE;
+    ledstring.channel[0].brightness = 255;
+    // disable channel 1 by setting fields to 0 (as per the docs)
+    ledstring.channel[1].gpionum = 0;
+    ledstring.channel[1].invert = 0;
+    ledstring.channel[1].count = 0;
+    ledstring.channel[1].brightness = 0;
+    ws2811_return_t ret;
+    if ((ret = ws2811_init(&ledstring)) != WS2811_SUCCESS) {
+      fprintf(stderr, "ws2811_init failed: %s\n", ws2811_get_return_t_str(ret));
+      return ret;
+    }
+    signal(SIGINT, signal_callback_handler);
+    signal(SIGHUP, signal_callback_handler);
+    signal(SIGTERM, signal_callback_handler);
 
-  ledstring.channel[0].leds[10] = 0x00200000;
-  ledstring.channel[0].leds[11] = 0x00002000;
-  ledstring.channel[0].leds[12] = 0x00000020;
+    ledstring.channel[0].leds[10] = 0x00200000;
+    ledstring.channel[0].leds[11] = 0x00002000;
+    ledstring.channel[0].leds[12] = 0x00000020;
 
-  int start = 0;
-  for (int length : c.lengths) {
-    LanguageBackend* l = new LedstripLanguageBackend(ledstring, frametime, &framecounter, start, length);
-    languagebackends.push_back(l);
-    start += length;
+    int start = 0;
+    for (int length : c.lengths) {
+      LanguageBackend* l = new LedstripLanguageBackend(ledstring, frametime, &framecounter, start, length);
+      languagebackends.push_back(l);
+      start += length;
+    }
+  } else if (c.backend == "virtual") {
+    int start = 0;
+    for (int length : c.lengths) {
+      LanguageBackend* l = new VirtualLanguageBackend(frametime, &framecounter, start, length);
+      languagebackends.push_back(l);
+      start += length;
+    }
+  } else {
+    std::cout << "Unknown backend " << c.backend << std::endl;
+    exit(1);
   }
 
   for(auto const& dir_entry: std::filesystem::directory_iterator{std::filesystem::path{"saved"}}) {
@@ -222,7 +225,9 @@ int main(int argc, char **argv) {
 
   std::cout << "starting render loop" << std::endl;
   while (true) {
-    ws2811_render(&ledstring);
+    if (c.backend == "ws2811") {
+      ws2811_render(&ledstring);
+    }
     framecounter++;
     std::this_thread::sleep_for(std::chrono::milliseconds(frametime));
   }

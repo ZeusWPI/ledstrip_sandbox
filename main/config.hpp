@@ -8,6 +8,7 @@ class Config {
 public:
   int ledamount = 600;
   std::vector<int> lengths;
+  std::string backend = "ws2811";
 
   Config() {
     int segments = 10;
@@ -30,6 +31,9 @@ public:
       if (current > this->ledamount) {
         throw std::overflow_error("segments added longer than total length");
       }
+    }
+    if (j.contains("backend")) {
+      this->backend = j["backend"].get<std::string>();
     }
   }
 };
