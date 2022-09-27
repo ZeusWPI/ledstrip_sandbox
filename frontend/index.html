@@ -130,7 +130,11 @@ h1 {
 	line-height: 3em;
 }
 
-#lua_editor, #logs {
+#lua_editor {
+	width: 100%;
+	height: 400px;
+}
+#logs {
 	width: 100%;
 	height: 200px;
 }
@@ -178,7 +182,7 @@ h1 {
 		<div id="program">
 			<h2>Programma</h2>
 			<p id="not-your-own">Dit segment is niet van jou. Je kunt de code enkel bekijken.</p>
-			<textarea id="lua_editor" spellcheck="false"></textarea>
+			<div id='lua_editor'></div>
 			<div id="program-controls">
 				<button id="publish-button">Publiceer</button>
 				<p>De code wordt niet bestendig bewaard. <strong>Sla ze zelf op op je computer.</strong> Gebruik dit veld bij voorkeur enkel om naar te kopiëren-en-plakken.</p>
@@ -223,5 +227,9 @@ h1 {
 		</script>
 
 		<script type="application/javascript" src="main.js"></script>
+		<script type="application/javascript" src="https://unpkg.com/monaco-editor@0.34.0/min/vs/loader.js"></script>
+		<script>
+			require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@0.34.0/min/vs' }});
+		</script>
 	</body>
 </html>
