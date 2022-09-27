@@ -126,7 +126,7 @@ var ledStripControl = (function() {
 		fetch(HOST + '/api/logs/' + activeSegmentId + '.json')
 	  .then(response => response.json())
 	  .then(data => {
-			let minimal_key = Object.keys(data).reduce((a, b) => Number(a) < Number(b) ? a : b);
+			let minimal_key = Object.keys(data).reduce((a, b) => Number(a) < Number(b) ? a : b, lastSeenLogId + 1);
 			if (minimal_key < lastSeenLogId + 1) {
 				minimal_key = lastSeenLogId + 1;
 			}
