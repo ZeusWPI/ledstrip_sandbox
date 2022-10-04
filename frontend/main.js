@@ -13,6 +13,8 @@ var ledStripControl = (function() {
 	var lastSeenLogId = -1;
 	var allowedToUpdate = true;
 
+	var editor = null;
+
 	function xhr(url, method, data, callback) {
 		var oReq = new XMLHttpRequest();
 
@@ -99,7 +101,7 @@ var ledStripControl = (function() {
 
 	function updatePublishButton() {
 		var activeSegment = activeSegmentId !== null ? segments[activeSegmentId] : null;
-		if (document.getElementById("lua_editor").value == activeSegment.code) {
+		if (editor && editor.getModel().getValue() == activeSegment.code) {
 			document.getElementById("publish-button").innerText = "Gepubliceerd";
 			document.getElementById("publish-button").setAttribute("disabled", "disabled");
 		} else {
@@ -185,21 +187,55 @@ var ledStripControl = (function() {
 
 			updatePublishButton();
 
-			document.getElementById("lua_editor").value = activeSegment.code;
+			if (!editor) {
+				require(["vs/editor/editor.main"], () => {
+					if (editor) return;
+					monaco.languages.registerCompletionItemProvider('lua', {
+						provideCompletionItems: function (model, position) {
+							var word = model.getWordUntilPosition(position);
+							var range = {
+								startLineNumber: position.lineNumber,
+								endLineNumber: position.lineNumber,
+								startColumn: word.startColumn,
+								endColumn: word.endColumn
+							};
+							return {
+								suggestions: createDependencyProposals(range)
+							};
+						}
+					})
+					editor = monaco.editor.create(document.getElementById('lua_editor'), {
+						value: activeSegment.code,
+						language: 'lua',
+						theme: 'vs-dark',
+						readOnly: activeSegment ? !(activeSegment.owner !== "" && activeSegment.owner === us) : true
+					});
+				});
+			} else if (activeSegment) {
+				editor.getModel().setValue(activeSegment.code)
+			}
 
 			if (activeSegment.owner !== "" && activeSegment.owner === us) {
 				document.getElementById("release_button").style.display = "";
 				document.getElementById("release_button").innerText = "Onteigen";
 				document.getElementById("release_button").removeAttribute("disabled");
 
-				document.getElementById("lua_editor").removeAttribute("disabled");
+				if (editor) {
+					editor.updateOptions({
+						readOnly: false 
+					})
+				}
 				document.getElementById("not-your-own").style.display = "none";
 				document.getElementById("program-controls").style.display = "block";
 				document.getElementById("program-instructions").style.display = "block";
 			} else {
 				document.getElementById("release_button").style.display = "none";
 
-				document.getElementById("lua_editor").setAttribute("disabled", "disabled");
+				if (editor) {
+					editor.updateOptions({
+						readOnly: true
+					})
+				}
 				document.getElementById("not-your-own").style.display = "block";
 				document.getElementById("program-controls").style.display = "none";
 				document.getElementById("program-instructions").style.display = "none";
@@ -222,7 +258,76 @@ var ledStripControl = (function() {
 		}
 	}
 
-	document.getElementById("claim_button").addEventListener("click", function() {
+
+	function createDependencyProposals(range) {
+		return [
+			{
+				label: 'led',
+				kind: monaco.languages.CompletionItemKind.Function,
+				documentation: 'Stel led op led_nr in op de kleur met gegeven RGB-waarden (0-255)',
+				insertText: 'led(${1:led_nr}, ${2:r}, ${3:g}, ${4:b})',
+				insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+				range: range
+			},
+			{
+				label: 'ledamount',
+				kind: monaco.languages.CompletionItemKind.Function,
+				documentation: 'Retourneert het aantal leds',
+				insertText: 'ledamount()',
+				range: range
+			},
+			{
+				label: 'delay',
+				kind: monaco.languages.CompletionItemKind.Function,
+				documentation: 'Wachten voor een gedurend aantal ms',
+				insertText: 'delay(${1:ms})',
+				insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+				range: range
+			},
+			{
+				label: 'waitframes',
+				kind: monaco.languages.CompletionItemKind.Function,
+				documentation: 'Wachten voor een gedurend aantal frames',
+				insertText: 'delay(${1:frames})',
+				insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+				range: range
+			},
+			{
+				label: 'print',
+				kind: monaco.languages.CompletionItemKind.Function,
+				documentation: 'Stuur message naar de console',
+				insertText: 'print(${1:msg})',
+				insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+				range: range
+			},
+			{
+				label: 'subscribe',
+				kind: monaco.languages.CompletionItemKind.Function,
+				documentation: 'Subscribe op de berichten van het gespecifieerde topic. Topic is een string',
+				insertText: 'subscribe(${1:topic})',
+				insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+				range: range
+			},
+			{
+				label: 'unsubscribe',
+				kind: monaco.languages.CompletionItemKind.Function,
+				documentation: 'Unsubscribe op de berichten van het gespecifieerde topic. Topic is een string',
+				insertText: 'subscribe(${1:topic})',
+				insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+				range: range
+			},
+			{
+				label: 'getmessage',
+				kind: monaco.languages.CompletionItemKind.Function,
+				documentation: 'Dit geeft, indien er een bericht met een bepaalde topic is en je subscribed bent, het bericht terug, anders nil. Je kan berichten sturen door bvb met HTTPie http PUT 10.0.0.10/api/mailbox.json message="hello there" topic="hellomsg" uit te voeren',
+				insertText: 'getmessage(${1:topic})',
+				insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+				range: range
+			},
+		];
+	}
+
+	document.getElementById("claim_button").addEventListener("click", function () {
 		document.getElementById("claim_button").innerText = "Bezig met toe-eigenen...";
 		document.getElementById("claim_button").setAttribute("disabled", "disabled");
 		var activeSegment = segments[activeSegmentId];
@@ -256,7 +361,7 @@ var ledStripControl = (function() {
 		putJson(HOST + "/api/code.json", {
 			"id": activeSegmentId,
 			"owner": activeSegment.owner,
-			"code": document.getElementById("lua_editor").value,
+			"code": editor ? editor.getModel().getValue() : '',
 			"languageid": "lua"
 		}, fetchSegments);
 	});
