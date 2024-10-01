@@ -37,6 +37,7 @@ class LuaScript : Script
     void reset()
     {
         super.reset;
+        // TODO: stop task
     }
 
     override

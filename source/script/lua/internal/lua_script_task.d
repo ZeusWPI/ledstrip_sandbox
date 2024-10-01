@@ -3,7 +3,6 @@ module script.lua.internal.lua_script_task;
 
 import script.lua.lua_script : LuaScript;
 import script.lua.internal.lua_lib : LuaLib;
-import script.script;
 
 import core.time : Duration;
 
@@ -11,11 +10,10 @@ import std.array : array;
 import std.conv : to;
 import std.stdio : writefln, writeln;
 import std.string : toStringz;
-import std.traits : isInstanceOf;
 
 import lumars : LuaFunc, LuaState, LuaTable, LuaValue, LuaVariadic, LuaNil;
 
-import vibe.core.core : InterruptException, yield, Task;
+import vibe.core.core : Task;
 import vibe.core.concurrency : Tid, thisTid;
 import vibe.core.log;
 
