@@ -1,0 +1,37 @@
+{
+	"httpPort": 80,
+	"httpBindAddresses": ["0.0.0.0"],
+	"ledCount": 690,
+	"fps": 15,
+	"dmaNumber": 10,
+	"gpioPin": 18,
+	"states": {
+		"default": [
+			{
+				"begin": 30,
+				"end": 90,
+				"scriptFileName": "cammie_watch_count.lua"
+			},
+			{
+				"begin": 138,
+				"end": 207,
+				"scriptFileName": "cammiechat_morse.lua"
+			},
+			{
+				"begin": 345,
+				"end": 413,
+				"scriptFileName": "weather.lua"
+			},
+			{
+				"begin": 450,
+				"end": 482,
+				"scriptFileName": "binary_clock.lua"
+			},
+			{
+				"begin": 552,
+				"end": 621,
+				"scriptFileName": "zeus3d.lua"
+			}
+		]
+	}
+}

@@ -1,0 +1,20 @@
+name "ledstrip"
+authors "Zeus WPI"
+copyright "Copyright © 2024, Zeus WPI"
+license "MIT"
+
+dependency "vibe-d" version="~>0.10.1"
+dependency "lumars" version="~>1.12.1"
+dependency "vibe-stream:tls" version="~>1"
+
+configuration "local-testing" {
+	targetType "executable"
+	versions "LedstripVirtual"
+}
+
+configuration "rpi2-bookworm" {
+	targetType "staticLibrary"
+	subConfiguration "vibe-stream:tls" "openssl-3.0"
+	dflags "--preview=shortenedMethods"
+	versions "LedstripVirtual" "LedstripWs2811"
+}

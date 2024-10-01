@@ -1,0 +1,23 @@
+{
+	"fileVersion": 1,
+	"versions": {
+		"argparse": "1.3.0",
+		"bindbc-loader": "1.0.3",
+		"bindbc-lua": "0.5.1",
+		"diet-ng": "1.8.2",
+		"eventcore": "0.9.34",
+		"lumars": "1.12.1",
+		"mir-linux-kernel": "1.0.1",
+		"openssl": "3.3.3",
+		"openssl-static": "1.0.5+3.0.8",
+		"stdx-allocator": "2.77.5",
+		"taggedalgebraic": "0.11.23",
+		"vibe-container": "1.3.1",
+		"vibe-core": "2.9.3",
+		"vibe-d": "0.10.1",
+		"vibe-http": "1.1.1",
+		"vibe-inet": "1.0.0",
+		"vibe-serialization": "1.0.5",
+		"vibe-stream": "1.1.0"
+	}
+}
