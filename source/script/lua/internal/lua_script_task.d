@@ -1,8 +1,8 @@
 module script.lua.internal.lua_script_task;
 // dfmt off
 
-import script.lua.lua_script : LuaScript;
 import script.lua.internal.lua_lib : LuaLib;
+import script.lua.lua_script : LuaScript;
 
 import core.time : Duration;
 
@@ -11,11 +11,11 @@ import std.conv : to;
 import std.stdio : writefln, writeln;
 import std.string : toStringz;
 
-import lumars : LuaFunc, LuaState, LuaTable, LuaValue, LuaVariadic, LuaNil;
+import lumars : LuaFunc, LuaNil, LuaState, LuaTable, LuaValue, LuaVariadic;
 
 import vibe.core.concurrency : thisTid, Tid;
-import vibe.core.core : InterruptException, Task;
 import vibe.core.log;
+import vibe.core.task : InterruptException, Task;
 
 @safe:
 package:
@@ -71,6 +71,11 @@ class LuaScriptTask
         {
             m_luaState.doString(m_script.scriptString, m_env);
         }
+        catch (InterruptException e)
+        {
+            logInfo("lua script task interrupted");
+            return;
+        }
         catch (Exception e)
         {
             logError("Caught exception in LuaScriptTask.run: %s", e.toString);
@@ -86,11 +91,6 @@ class LuaScriptTask
         try
         {
             m_luaState = LuaState(null);
-        }
-        catch (InterruptException e)
-        {
-            logInfo("lua script task interrupted");
-            return;
         }
         catch (Exception e)
         {

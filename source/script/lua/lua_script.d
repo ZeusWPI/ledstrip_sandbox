@@ -9,22 +9,23 @@ import core.time : Duration;
 
 import vibe.core.core : runWorkerTaskH;
 import vibe.core.task : Task;
+import vibe.core.taskpool : TaskPool;
 
 @safe:
 
 final shared
 class LuaScript : Script
 {
-    this(string scriptString, size_t ledCount)
+    this(string scriptFileName, string scriptString, size_t ledCount)
     {
-        super(scriptString, ledCount);
+        super(scriptFileName, scriptString, ledCount);
     }
 
     override
-    Task start()
+    Task start(TaskPool taskPool)
     {
-        super.start;
-        return runWorkerTaskH(&LuaScriptTask.entrypoint, this);
+        super.start(taskPool);
+        return taskPool.runTaskH(&LuaScriptTask.entrypoint, this);
     }
 
     override

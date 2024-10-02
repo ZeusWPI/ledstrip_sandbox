@@ -44,7 +44,7 @@ class Ledstrip
     @disable this(ref typeof(this));
 
     final
-    void startRenderLoop()
+    void startRenderLoopTask()
     {
         runTask(&renderLoop);
     }

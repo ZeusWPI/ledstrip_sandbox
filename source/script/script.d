@@ -5,10 +5,13 @@ import ledstrip.led : Led;
 import core.atomic;
 import core.time : Duration, seconds;
 
+import std.algorithm : any, canFind, endsWith;
 import std.datetime : Clock, SysTime;
+import std.exception : enforce;
 
-import vibe.core.core : Task;
 import vibe.core.log;
+import vibe.core.task : Task;
+import vibe.core.taskpool : TaskPool;
 
 @safe:
 
@@ -17,15 +20,18 @@ class Script
 {
     private long m_lastStartTime;
 
+    protected string m_scriptFileName;
     protected string m_scriptString;
     protected Led[] m_leds;
     protected bool m_running;
-    
+
     @disable this(ref typeof(this));
 
     protected
-    this(string scriptString, size_t ledCount)
+    this(string scriptFileName, string scriptString, size_t ledCount)
     {
+        enforce(scriptFileName.isValidScriptFileName);
+        m_scriptFileName = scriptFileName;
         m_scriptString = scriptString;
         m_leds = new Led[ledCount];
         reset;
@@ -43,7 +49,7 @@ class Script
     shared(Led[]) leds()
         => m_leds;
 
-    Task start()
+    Task start(TaskPool taskPool)
     {
         m_running = false;
         m_lastStartTime = Clock.currTime.stdTime;
@@ -66,10 +72,22 @@ class Script
         if (running)
         {
             try
-                return (runtimeSinceLastPause / (Clock.currTime.stdTime - m_lastStartTime)) / 1.seconds;
+                return (runtimeSinceLastPause / (Clock.currTime.stdTime - m_lastStartTime)) / 1
+                    .seconds;
             catch (Exception e)
                 logError("Failed to get average cpu usage: %s", (() @trusted => e.toString)());
         }
         return 0.0;
     }
+}
+
+bool isValidScriptFileName(string name)
+{
+    if (name.canFind("/"))
+        return false;
+
+    if (![".lua", ".bf"].any!(ext => name.endsWith(ext)))
+        return false;
+
+    return true;
 }

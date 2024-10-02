@@ -20,6 +20,7 @@ class LedAssignments
 
     @disable this(ref typeof(this));
 
+    pure nothrow
     this(size_t ledCount)
     in (ledCount > 0)
     {

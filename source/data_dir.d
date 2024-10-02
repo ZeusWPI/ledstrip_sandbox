@@ -1,8 +1,8 @@
 module data_dir;
 
 import config : Config;
+import script.script : isValidScriptFileName;
 
-import std.algorithm : canFind;
 import std.exception : basicExceptionCtors, enforce;
 import std.file : exists, isDir, isFile, mkdir, readText, write;
 import std.format : f = format;
@@ -64,8 +64,8 @@ static:
     {
         createIfNeeded;
         enforce!DataDirException(
-            !scriptFileName.canFind("/"),
-            f!`Script file name "%s" cannot contain /`(scriptFileName),
+            scriptFileName.isValidScriptFileName,
+            f!`Invalid script file name "%s"`(scriptFileName),
         );
         return buildPath(ct_dirName, scriptFileName);
     }

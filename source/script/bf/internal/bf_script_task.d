@@ -15,7 +15,8 @@ import std.format : f = format;
 import std.math : abs;
 import std.range : chunks, enumerate;
 
-import vibe.core.core : InterruptException, Task, yield;
+import vibe.core.core : yield;
+import vibe.core.task : InterruptException, Task;
 import vibe.core.log;
 
 @safe:

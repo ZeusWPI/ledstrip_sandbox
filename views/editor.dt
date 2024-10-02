@@ -24,6 +24,6 @@ html(lang="en")
   body
     h1 Test
     - foreach (i, led; ledPositions.leds)
-      div.led(style="left: #{32 + led.x * 12}px; top: #{88 + led.y * 12}px;")
+      div.led(id="led_#{i}", style="left: #{32 + led.x * 12}px; top: #{88 + led.y * 12}px;")
     - foreach (label; ledPositions.labels)
       div.label(style="left: #{32 + label.x * 12 + 6}px; top: #{64 + label.y * 12}px;") #{label.text}
