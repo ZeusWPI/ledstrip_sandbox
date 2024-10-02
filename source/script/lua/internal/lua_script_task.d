@@ -13,8 +13,8 @@ import std.string : toStringz;
 
 import lumars : LuaFunc, LuaState, LuaTable, LuaValue, LuaVariadic, LuaNil;
 
-import vibe.core.core : Task;
-import vibe.core.concurrency : Tid, thisTid;
+import vibe.core.concurrency : thisTid, Tid;
+import vibe.core.core : InterruptException, Task;
 import vibe.core.log;
 
 @safe:
@@ -75,6 +75,7 @@ class LuaScriptTask
         {
             logError("Caught exception in LuaScriptTask.run: %s", e.toString);
         }
+        logInfo("lua script task exited normally");
     }
 
     private nothrow @trusted
@@ -85,6 +86,11 @@ class LuaScriptTask
         try
         {
             m_luaState = LuaState(null);
+        }
+        catch (InterruptException e)
+        {
+            logInfo("lua script task interrupted");
+            return;
         }
         catch (Exception e)
         {

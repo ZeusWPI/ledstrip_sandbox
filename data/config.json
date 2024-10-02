@@ -8,6 +8,11 @@
 	"states": {
 		"default": [
 			{
+				"begin": 0,
+				"end": 30,
+				"scriptFileName": "test.bf"
+			},
+			{
 				"begin": 30,
 				"end": 90,
 				"scriptFileName": "cammie_watch_count.lua"

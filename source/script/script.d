@@ -7,6 +7,7 @@ import core.time : Duration, seconds;
 
 import std.datetime : Clock, SysTime;
 
+import vibe.core.core : Task;
 import vibe.core.log;
 
 @safe:
@@ -42,10 +43,11 @@ class Script
     shared(Led[]) leds()
         => m_leds;
 
-    void start()
+    Task start()
     {
         m_running = false;
         m_lastStartTime = Clock.currTime.stdTime;
+        return Task.init;
     }
 
     nothrow

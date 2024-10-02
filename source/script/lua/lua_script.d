@@ -15,29 +15,16 @@ import vibe.core.task : Task;
 final shared
 class LuaScript : Script
 {
-    private Task m_task;
-
     this(string scriptString, size_t ledCount)
     {
         super(scriptString, ledCount);
     }
 
-    ~this()
-    {
-    }
-
     override
-    void start()
+    Task start()
     {
         super.start;
-        m_task = runWorkerTaskH(&LuaScriptTask.entrypoint, this);
-    }
-
-    override nothrow
-    void reset()
-    {
-        super.reset;
-        // TODO: stop task
+        return runWorkerTaskH(&LuaScriptTask.entrypoint, this);
     }
 
     override

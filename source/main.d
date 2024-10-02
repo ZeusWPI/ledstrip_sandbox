@@ -5,6 +5,7 @@ import config : Config, ConfigSegment;
 import data_dir : DataDir;
 import ledstrip;
 import ledstrip.led_assignments : LedAssignments, Segment;
+import script.bf.bf_script : BfScript;
 import script.lua.lua_script : LuaScript;
 import script.script : Script;
 import webserver.webserver : Webserver;
@@ -17,7 +18,7 @@ import std.format : f = format;
 
 import bindbc.rpi_ws281x.rpi_ws281x : WS2811_TARGET_FREQ, WS2812_STRIP;
 
-import vibe.core.core : runEventLoop;
+import vibe.core.core : runEventLoop, Task;
 import vibe.core.log;
 
 @safe:
@@ -53,15 +54,19 @@ int main()
         );
     }
     scope (exit) (() @trusted => destroy(ledstrip))();
+    ledstrip.startRenderLoop;
 
     Script[] scripts;
+    Task[] scriptTasks;
     foreach (string state, ConfigSegment[] segments; config.states)
         foreach (ConfigSegment segment; segments)
         {
             string scriptString = DataDir.loadScript(segment.scriptFileName);
             enforce(Segment(segment.begin, segment.end).isValid(config.ledCount, /*ignoreSlice:*/ true));
             Script script;
-            if (segment.scriptFileName.endsWith(".lua"))
+            if (segment.scriptFileName.endsWith(".bf"))
+                script = new BfScript(scriptString, segment.end - segment.begin);
+            else if (segment.scriptFileName.endsWith(".lua"))
                 script = new LuaScript(scriptString, segment.end - segment.begin);
             else
                 throw new Exception(f!`Unknown script type for filename "%s"`(segment.scriptFileName));
@@ -69,8 +74,8 @@ int main()
             ledAssignments.assign(state, segment.begin, segment.end, script.leds);
         }
 
-    ledstrip.startRenderLoop;
-    scripts.each!(s => s.start);
+    scripts.each!(s => scriptTasks ~= s.start);
+    scope (exit) scriptTasks.each!(t => t.interrupt);
 
     Webserver webserver = new Webserver(config.httpBindAddresses, config.httpPort);
     webserver.start;
