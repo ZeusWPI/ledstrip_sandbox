@@ -2,6 +2,7 @@ module ledstrip.led_assignments;
 // dfmt off
 
 import ledstrip.led : Led;
+import script.script : Script;
 import util : inRange;
 
 import std.algorithm.mutation : remove;
@@ -50,13 +51,13 @@ class LedAssignments
     in (m_state in m_states)
         => m_states[m_state];
     
-    void assign(string state, size_t begin, size_t end, shared(Led[]) slice)
+    void assign(string state, size_t begin, size_t end, Script script)
     {
         if (state !in m_states)
             m_states[state] = [];
         
-        Segment toAssign = Segment(begin, end, slice);
-        enforce!LedAssignmentsException(toAssign.isValid(ledCount), f!"assign: Invalid section %s"(toAssign));
+        Segment toAssign = Segment(begin, end, script);
+        toAssign.enforceIsValid(ledCount);
 
         foreach (i, seg; m_states[state])
             if (seg.overlapsWith(toAssign))
@@ -76,10 +77,7 @@ class LedAssignments
         );
 
         Segment toUnassign = Segment(begin, end);
-        enforce!LedAssignmentsException(
-            toUnassign.isValid(ledCount, /*ignoreSlice:*/ true),
-            f!"unassign: Invalid section %s"(toUnassign)
-        );
+        toUnassign.enforceIsValid(ledCount, /*ignoreScript:*/ true);
 
         foreach (i, seg; m_states[state])
             if (seg.begin == toUnassign.begin && seg.end == toUnassign.end)
@@ -95,27 +93,27 @@ shared
 struct Segment
 {
     size_t begin, end;
-    Led[] slice;
+    Script script;
 
-    pure nothrow @nogc
-    bool isValid(size_t ledCount, bool ignoreSlice = false) const
+    pure
+    void enforceIsValid(size_t ledCount, bool ignoreScript = false) const
     {
         if (end <= begin)
         {
-            debug logInfo("Invalid segment due to end <= begin");
-            return false;
+            throw new LedAssignmentsException("Invalid segment due to end <= begin");
         }
         if (ledCount < end)
         {
-            debug logInfo("Invalid segment due to ledCount < end");
-            return false;
+            throw new LedAssignmentsException("Invalid segment due to ledCount < end");
         }
-        if (!ignoreSlice && slice.length != end - begin)
+        if (!ignoreScript && script is null)
         {
-            debug logInfo("Invalid segment due to slice.length != end - begin");
-            return false;
+            throw new LedAssignmentsException("Invalid segment due to script is null");
         }
-        return true;
+        if (!ignoreScript && script.leds.length != end - begin)
+        {
+            throw new LedAssignmentsException("Invalid segment due to script.leds.length != end - begin");
+        }
     }
 
     pure nothrow @nogc

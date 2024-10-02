@@ -142,7 +142,7 @@ class Main
 
     void loadScript(string scriptFileName, string scriptString, string state, uint begin, uint end, bool start = false)
     {
-        enforce(Segment(begin, end).isValid(m_config.ledCount, /*ignoreSlice:*/ true));
+        Segment(begin, end).enforceIsValid(m_config.ledCount, /*ignoreSlice:*/ true);
 
         Script script;
         if (scriptFileName.endsWith(".bf"))
@@ -160,7 +160,7 @@ class Main
 
         m_scripts ~= script;
 
-        m_ledAssignments.assign(state, begin, end, script.leds);
+        m_ledAssignments.assign(state, begin, end, script);
 
         if (start)
             startScript(script);
@@ -184,43 +184,14 @@ class Main
         m_scripts.each!(s => startScript(s));
         m_webserver.start;
 
-        while (!m_doCleanup)
-            runEventLoopOnce(100.msecs);
-
-        logInfo("Starting cleanup");
-        runTask(&cleanup);
-
-        while (!m_stopEventLoop)
+        while (true)
         {
-            runEventLoopOnce(100.msecs);
-            foreach (t; m_scriptTasks)
-            {
-                if (t.running)
-                {
-                    logInfo("Task %s still running", t);
-                }
-            }
+            runEventLoopOnce;
         }
-
-        logInfo("run done");
     }
 
-    private nothrow @trusted
-    void cleanup()
-    {
-        logInfo("Cleanup entry");
-        try
-        {
-            destroy(m_ledstrip);
-            m_scriptTasks.each!(t => t.interrupt);
-            stdout.flush;
-            stderr.flush;
-        }
-        catch (Exception e)
-        {
-        }
-        m_stopEventLoop = true;
-    }
+    inout(LedAssignments) ledAssignments() inout
+        => m_ledAssignments;
 }
 
 void main()

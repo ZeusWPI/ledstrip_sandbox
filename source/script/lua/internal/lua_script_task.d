@@ -59,7 +59,7 @@ class LuaScriptTask
         tls_tidInstanceMap.remove(m_task.tid);
     }
 
-    private nothrow @trusted
+    private nothrow
     void run()
     {
         scope (exit) m_script.reset;
@@ -69,17 +69,14 @@ class LuaScriptTask
 
         try
         {
-            m_luaState.doString(m_script.scriptString, m_env);
-        }
-        catch (InterruptException e)
-        {
-            logInfo("lua script task interrupted");
-            return;
+            (() @trusted => m_luaState.doString(m_script.scriptString, m_env))();
         }
         catch (Exception e)
         {
-            logError("Caught exception in LuaScriptTask.run: %s", e.toString);
+            logError("Caught exception in LuaScriptTask.run: %s", e.msg);
+            return;
         }
+
         logInfo("lua script task exited normally");
     }
 

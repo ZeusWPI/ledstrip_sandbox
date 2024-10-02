@@ -58,11 +58,11 @@ class Ledstrip
             {
                 SysTime entryTime = Clock.currTime;
                 foreach (seg; ledAssignments.currSegments)
-                    leds[seg.begin .. seg.end] = seg.slice[];
+                    leds[seg.begin .. seg.end] = seg.script.leds[];
                 render();
                 g_frameCount.atomicOp!"+="(1);
 
-                Duration timeToSleep =  entryTime - Clock.currTime + m_frameTime;
+                Duration timeToSleep = entryTime - Clock.currTime + m_frameTime;
                 if (timeToSleep.isNegative)
                     logWarn("Passed frame time before sleeping. Consider lowering fps.");
                 else

@@ -46,8 +46,12 @@ class Script
         => m_scriptString;
 
     final pure nothrow @nogc
-    shared(Led[]) leds()
+    inout(shared(Led[])) leds() inout
         => m_leds;
+    
+    final pure nothrow @nogc
+    string scriptFileName() const
+        => m_scriptFileName;
 
     Task start(TaskPool taskPool)
     {
