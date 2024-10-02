@@ -1,9 +1,11 @@
 module webserver.webserver;
 
+import ledstrip.led_positions : getKelderLedPositions, LedPositions;
 import webserver.mailbox : Mailbox;
 
 import vibe.http.router : URLRouter;
-import vibe.http.server : HTTPListener, HTTPServerOption, HTTPServerSettings, listenHTTP;
+import vibe.http.server : HTTPListener, HTTPServerOption, HTTPServerRequest,
+    HTTPServerResponse, HTTPServerSettings, listenHTTP, render;
 import vibe.web.rest : path, registerRestInterface, RestInterfaceSettings;
 
 @safe:
@@ -30,9 +32,10 @@ class Webserver
         m_restApiSettings = new RestInterfaceSettings;
 
         m_router = new URLRouter;
-        m_router.get("/", (req, res) => res.writeBody("Frontend is WIP"));
+        m_router.get("/", &handleRequest);
         m_router.registerRestInterface(m_restApi, m_restApiSettings);
     }
+
 
     ~this()
     {
@@ -42,6 +45,15 @@ class Webserver
     void start()
     {
         m_listener = listenHTTP(m_httpServerSettings, m_router);
+    }
+
+    private static
+    void handleRequest(scope HTTPServerRequest req, scope HTTPServerResponse res)
+    {
+        LedPositions ledPositions = getKelderLedPositions;
+
+        res.headers["Content-Type"] = "text/html";
+        res.render!("editor.dt", ledPositions);
     }
 }
 
@@ -55,10 +67,6 @@ interface IRestApi
 private final
 class RestApi : IRestApi
 {
-    this()
-    {
-    }
-
     void putMailbox(string topic, string message)
     {
         Mailbox.putMailbox(topic, message);

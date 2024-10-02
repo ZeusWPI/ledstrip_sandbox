@@ -1,0 +1,29 @@
+doctype html
+html(lang="en")
+  head
+    title="pageTitle"
+    :css
+      body {
+        font-family: sans-serif;
+      }
+      div {
+        margin: 0px;
+        padding: 0px;
+      }
+      div.led {
+        position: absolute;
+        width: 11px;
+        height: 11px;
+        border: 1px solid;
+      }
+      div.label {
+        position: absolute;
+        width: max-content;
+        transform: translateX(-50%);
+      }
+  body
+    h1 Test
+    - foreach (i, led; ledPositions.leds)
+      div.led(style="left: #{32 + led.x * 12}px; top: #{88 + led.y * 12}px;")
+    - foreach (label; ledPositions.labels)
+      div.label(style="left: #{32 + label.x * 12 + 6}px; top: #{64 + label.y * 12}px;") #{label.text}

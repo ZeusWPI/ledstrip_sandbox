@@ -25,6 +25,7 @@ import vibe.core.log;
 
 // TODO: store filename in script
 // TODO: editor
+// TODO: only copy segment leds that changed
 
 enum uint ct_targetFreq = WS2811_TARGET_FREQ;
 enum uint ct_ledStripType = WS2812_STRIP;
