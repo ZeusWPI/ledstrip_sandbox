@@ -30,7 +30,7 @@ class Webserver
         m_restApiSettings = new RestInterfaceSettings;
 
         m_router = new URLRouter;
-        
+        m_router.get("/", (req, res) => res.writeBody("Frontend is WIP"));
         m_router.registerRestInterface(m_restApi, m_restApiSettings);
     }
 
