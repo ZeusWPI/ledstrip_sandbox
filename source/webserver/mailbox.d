@@ -26,13 +26,16 @@ class Mailbox
     string consumeMailbox(string topic)
     {
         debug (mailbox) logDiagnostic(`consumeMailbox: topic="%s"`, topic);
-        synchronized
+        if (topic.length)
         {
-            if (topic in g_mailbox)
+            synchronized
             {
-                string message = g_mailbox[topic];
-                g_mailbox.remove(topic);
-                return message;
+                if (topic in g_mailbox)
+                {
+                    string message = g_mailbox[topic];
+                    g_mailbox.remove(topic);
+                    return message;
+                }
             }
         }
         return null;

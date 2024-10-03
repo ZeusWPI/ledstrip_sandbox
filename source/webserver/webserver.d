@@ -4,6 +4,8 @@ import ledstrip.led_assignments : LedAssignments, Segment;
 import ledstrip.led_positions : getKelderLedPositions, LedPositions;
 import main : Main;
 import webserver.mailbox : Mailbox;
+import webserver.rest_api;
+import webserver.rest_api_impl;
 
 import vibe.http.router : URLRouter;
 import vibe.http.server : HTTPListener, HTTPServerOption, HTTPServerRequest,
@@ -34,6 +36,8 @@ class Webserver
 
         m_restApiSettings = new RestInterfaceSettings;
 
+        m_restApi = new RestApiImpl;
+
         m_router = new URLRouter;
         m_router.get("/", &handleRequest);
         m_router.registerRestInterface(m_restApi, m_restApiSettings);
@@ -60,35 +64,4 @@ class Webserver
     }
 }
 
-@path("/api")
-interface IRestApi
-{
-    @path("/mailbox.json")
-    void putMailbox(string topic, string message);
 
-    Json getSegments();
-}
-
-private final
-class RestApi : IRestApi
-{
-    void putMailbox(string topic, string message)
-    {
-        Mailbox.putMailbox(topic, message);
-    }
-
-    Json getSegments()
-    {
-        Json j = Json.emptyArray;
-        const LedAssignments ledAssignments = Main.instance.ledAssignments;
-        foreach (seg; ledAssignments.currSegments)
-        {
-            Json o = Json.emptyObject;
-            o["begin"] = seg.begin;
-            o["end"] = seg.end;
-            o["scriptFileName"] = seg.script.scriptFileName;
-            j ~= o;
-        }
-        return j;
-    }
-}
