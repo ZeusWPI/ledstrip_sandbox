@@ -2,13 +2,13 @@ module ledstrip.ledstrip;
 // dfmt off
 
 import ledstrip.led : Led;
-import ledstrip.led_assignments : LedAssignments;
+import ledstrip.ledstrip_states : LedstripStates;
 
 import core.atomic : atomicOp;
 import core.time : Duration;
 
 import std.datetime : Clock, SysTime;
-import std.exception : basicExceptionCtors;
+import std.exception : basicExceptionCtors, enforce;
 import std.format : f = format;
 import std.stdio : stderr, stdout, write, writef, writefln, writeln;
 import std.traits : isInstanceOf;
@@ -24,21 +24,26 @@ nothrow @nogc
 ulong frameCount()
     => g_frameCount;
 
+shared
 class Ledstrip
 {
-    private const LedAssignments m_ledAssignments;
-    private const size_t m_ledCount;
+    alias enf = enforce!LedStripException;
+
+    private LedstripStates m_states;
+    private const uint m_ledCount;
     private Duration m_frameTime;
     private bool m_stopRenderLoop;
 
-    this(LedAssignments ledAssignments, Duration frameTime)
-    in (ledAssignments !is null)
-    in (ledAssignments.ledCount > 0)
-    in (frameTime > Duration.zero)
+    this(LedstripStates states, Duration frameTime)
     {
-        m_ledAssignments = ledAssignments;
-        m_ledCount = ledAssignments.ledCount;
+        enf(states !is null);
+        enf(frameTime > Duration.zero);
+
+        m_states = states;
+        m_ledCount = states.ledCount;
         m_frameTime = frameTime;
+
+        m_states.setOnActiveStateChange(&onActiveStateChange);
     }
 
     @disable this(ref typeof(this));
@@ -57,7 +62,7 @@ class Ledstrip
             while (!m_stopRenderLoop)
             {
                 SysTime entryTime = Clock.currTime;
-                foreach (seg; ledAssignments.currSegments)
+                foreach (seg; m_states.activeState.segments)
                     leds[seg.begin .. seg.end] = seg.script.leds[];
                 render();
                 g_frameCount.atomicOp!"+="(1);
@@ -75,16 +80,13 @@ class Ledstrip
         }
     }
 
-    protected abstract
-    void render();
-
     final pure nothrow @nogc
-    size_t ledCount() const
+    uint ledCount() const
         => m_ledCount;
 
     final pure nothrow @nogc
-    const(LedAssignments) ledAssignments() const
-        => m_ledAssignments;
+    const(LedstripStates) states() const
+        => m_states;
 
     final nothrow @nogc
     ulong frameCount() const
@@ -96,8 +98,17 @@ class Ledstrip
         m_stopRenderLoop = true;
     }
 
-    abstract pure nothrow @nogc
-    Led[] leds();
+    private nothrow
+    void onActiveStateChange()
+    {
+        leds[] = Led(0, 0, 0);
+    }
+
+    protected abstract
+    void render();
+
+    abstract nothrow @nogc
+    shared(Led)[] leds();
 }
 
 class LedStripException : Exception

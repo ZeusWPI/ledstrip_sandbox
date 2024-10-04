@@ -35,6 +35,7 @@ interface StateApi
 
     struct State
     {
+        string name;
         bool active;
     }
 

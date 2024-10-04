@@ -4,7 +4,7 @@ module main;
 import config : Config, ConfigSegment;
 import data_dir : DataDir;
 import ledstrip;
-import ledstrip.led_assignments : LedAssignments, Segment;
+import ledstrip.ledstrip_states : LedstripStates;
 import script.bf.bf_script : BfScript;
 import script.lua.lua_script : LuaScript;
 import script.script : Script;
@@ -13,7 +13,7 @@ import webserver.webserver : Webserver;
 import core.sys.posix.signal : SIGHUP, SIGINT, signal, SIGTERM;
 import core.time : Duration, msecs, seconds;
 
-import std.algorithm : canFind, each, endsWith, any;
+import std.algorithm : any, canFind, each, endsWith;
 import std.exception : enforce;
 import std.format : f = format;
 import std.stdio : stderr, stdout;
@@ -31,7 +31,7 @@ import vibe.core.taskpool : TaskPool;
 // TODO: editor
 // TODO: only copy segment leds that changed
 
-final
+final shared
 class Main
 {
     private enum uint ct_targetFreq = WS2811_TARGET_FREQ;
@@ -41,14 +41,12 @@ class Main
 
     private Config m_config;
     private Duration m_frameTime;
-    private LedAssignments m_ledAssignments;
+    private LedstripStates m_states;
     private Ledstrip m_ledstrip;
     private TaskPool m_scriptTaskPool;
     private Script[] m_scripts;
     private Task[] m_scriptTasks;
-    private Webserver m_webserver;
-    private bool m_doCleanup;
-    private bool m_stopEventLoop;
+    private __gshared Webserver m_webserver;
 
     @disable this(ref typeof(this));
 
@@ -61,7 +59,7 @@ class Main
     }
 
     static nothrow @nogc
-    typeof(this) instance()
+    Main instance()
     in (s_instance !is null)
         => s_instance;
 
@@ -72,37 +70,25 @@ class Main
 
         // setupSignalHandlers;
         loadConfig;
-        createLedAssignments;
+        createLedstripStates;
         createLedstrip;
         createScriptTaskPool;
-        loadScripts;
+        loadConfigSegments;
+        m_states.setActiveState("default");
         createWebserver;
-    }
-
-    private @trusted nothrow @nogc
-    void setupSignalHandlers()
-    {
-        foreach(sig; [SIGHUP, SIGINT, SIGTERM])
-            signal(sig, &signalHandler);
-    }
-
-    private static nothrow @nogc extern (C)
-    void signalHandler(int sig)
-    {
-        typeof(this).instance.m_doCleanup = true;
     }
 
     private
     void loadConfig()
     {
-        m_config = DataDir.loadConfig;
+        m_config = (() @trusted => cast(shared) DataDir.loadConfig)();
         m_frameTime = 1.seconds / m_config.fps;
     }
 
-    private pure nothrow
-    void createLedAssignments()
+    private pure
+    void createLedstripStates()
     {
-        m_ledAssignments = new LedAssignments(m_config.ledCount);
+        m_states = new LedstripStates(m_config.ledCount);
     }
 
     private
@@ -111,14 +97,14 @@ class Main
         version (LedstripWs2811)
         {
             m_ledstrip = new LedstripWs2811(
-                m_ledAssignments, m_frameTime,
+                m_states, m_frameTime,
                 ct_targetFreq, m_config.dmaNumber, m_config.gpioPin, ct_ledStripType,
             );
         }
         else
         {
             m_ledstrip = new LedstripVirtual(
-                m_ledAssignments, m_frameTime,
+                m_states, m_frameTime,
             );
         }
     }
@@ -130,51 +116,50 @@ class Main
     }
 
     private
-    void loadScripts()
+    void loadConfigSegments()
     {
-        foreach (string state, ConfigSegment[] configSegments; m_config.states)
+        foreach (string state, shared(ConfigSegment[]) configSegments; m_config.states)
             foreach (ConfigSegment seg; configSegments)
             {
-                string scriptString = DataDir.loadScript(seg.scriptFileName);
-                loadScript(seg.scriptFileName, scriptString, state, seg.begin, seg.end);
+                try
+                {
+                    loadConfigSegment(state, seg.scriptFileName, seg.begin, seg.end);
+                }
+                catch (Exception e)
+                {
+                    logError(
+                        "Failed to load config segment %s: %s",
+                        seg, (() @trusted => e.toString)(),
+                    );
+                }
             }
     }
 
-    void loadScript(string scriptFileName, string scriptString, string state, uint begin, uint end, bool start = false)
+    private
+    void loadConfigSegment(string state, string scriptFileName, uint begin, uint end)
     {
-        Segment(begin, end).enforceIsValid(m_config.ledCount, /*ignoreSlice:*/ true);
+        string scriptString = DataDir.loadScript(scriptFileName);
 
         Script script;
         if (scriptFileName.endsWith(".bf"))
-        {
-            script = new BfScript(scriptFileName, scriptString, end - begin);
-        }
+            script = new BfScript(state, scriptFileName, scriptString, end - begin);
         else if (scriptFileName.endsWith(".lua"))
-        {
-            script = new LuaScript(scriptFileName, scriptString, end - begin);
-        }
+            script = new LuaScript(state, scriptFileName, scriptString, end - begin);
         else
-        {
             throw new Exception(f!`loadScript: Unknown script type for filename "%s"`(scriptFileName));
-        }
+
+        if (state !in m_states.states)
+            m_states.addState(state);
+        
+        m_states.states[state].assignSegment(begin, end, script);
 
         m_scripts ~= script;
-
-        m_ledAssignments.assign(state, begin, end, script);
-
-        if (start)
-            startScript(script);
     }
 
-    void startScript(Script script)
-    {
-        enforce(m_scripts.canFind!"a is b"(script), f!`startScript: Unknown script "%s"`(script));
-        m_scriptTasks ~= script.start(m_scriptTaskPool);
-    }
-
+    private @trusted
     void createWebserver()
     {
-        m_webserver = new Webserver(m_config.httpBindAddresses, m_config.httpPort);
+        m_webserver = new Webserver(cast(string[]) m_config.httpBindAddresses, m_config.httpPort);
     }
 
     private
@@ -182,7 +167,7 @@ class Main
     {
         m_ledstrip.startRenderLoopTask;
         m_scripts.each!(s => startScript(s));
-        m_webserver.start;
+        (() @trusted => m_webserver.start)();
 
         while (true)
         {
@@ -190,8 +175,16 @@ class Main
         }
     }
 
-    inout(LedAssignments) ledAssignments() inout
-        => m_ledAssignments;
+    private
+    void startScript(Script script)
+    {
+        enforce(m_scripts.canFind!"a is b"(script), f!`startScript: Unknown script "%s"`(script));
+        m_scriptTasks ~= script.start(m_scriptTaskPool);
+    }
+
+    pure nothrow @nogc
+    inout(LedstripStates) states() inout
+        => m_states;
 }
 
 void main()

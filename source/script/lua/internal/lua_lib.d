@@ -3,6 +3,8 @@ module script.lua.internal.lua_lib;
 
 import ledstrip.led : Led;
 import ledstrip.ledstrip : frameCount;
+import ledstrip.ledstrip_states : LedstripStates;
+import main : Main;
 import script.lua.internal.lua_script_task : LuaScriptTask;
 import webserver.mailbox : Mailbox;
 
@@ -89,6 +91,8 @@ static:
                 led["set"] = &LedModule.set;
                 led["setSlice"] = &LedModule.setSlice;
                 led["setAll"] = &LedModule.setAll;
+                led["isStateActive"] = &LedModule.isStateActive;
+                led["setActiveState"] = &LedModule.setActiveState;
                 return led;
             }();
             env["time"] = ()
@@ -98,6 +102,8 @@ static:
                 time["unixTimeSeconds"] = &TimeModule.unixTimeSeconds;
                 time["sleepMsecs"] = &TimeModule.sleepMsecs;
                 time["waitFrames"] = &TimeModule.waitFrames;
+                time["waitActiveState"] = &TimeModule.waitActiveState;
+                time["waitInactiveState"] = &TimeModule.waitInactiveState;
                 return time;
             }();
             env["mailbox"] = ()
@@ -150,10 +156,10 @@ static:
         shared(Led[]) leds()
             => LuaScriptTask.instance.script.leds;
 
-        size_t count()
-            => leds.length;
+        uint count()
+            => cast(uint) leds.length;
 
-        void set(size_t index, ubyte r, ubyte g, ubyte b)
+        void set(uint index, ubyte r, ubyte g, ubyte b)
         {
             enforce!LuaLibException(
                 index < leds.length,
@@ -162,7 +168,7 @@ static:
             leds[index] = Led(r, g, b);
         }
 
-        void setSlice(size_t begin, size_t end, ubyte r, ubyte g, ubyte b)
+        void setSlice(uint begin, uint end, ubyte r, ubyte g, ubyte b)
         {
             enforce!LuaLibException(
                 begin <= end,
@@ -178,6 +184,14 @@ static:
         void setAll(ubyte r, ubyte g, ubyte b)
         {
             leds[] = Led(r, g, b);
+        }
+        
+        bool isStateActive()
+            => Main.instance.states.activeState.name != LuaScriptTask.instance.script.state;
+
+        void setActiveState(string state)
+        {
+            Main.instance.states.setActiveState(state);
         }
     }
 
@@ -203,7 +217,19 @@ static:
         {
             ulong frameCountAtEntry = frameCount;
             while (frameCount < frameCountAtEntry + frames)
-                yield;
+                sleepMsecs(5);
+        }
+
+        void waitActiveState()
+        {
+            while (Main.instance.states.activeState.name != LuaScriptTask.instance.script.state)
+                sleepMsecs(5);
+        }
+
+        void waitInactiveState()
+        {
+            while (Main.instance.states.activeState.name == LuaScriptTask.instance.script.state)
+                sleepMsecs(5);
         }
     }
 

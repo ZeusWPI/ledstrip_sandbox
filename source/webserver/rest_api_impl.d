@@ -1,6 +1,8 @@
 module webserver.rest_api_impl;
 
-import ledstrip.led_assignments : LedAssignments, Segment;
+import ledstrip.ledstrip_states;
+import ledstrip.ledstrip_state;
+import ledstrip.ledstrip_segment;
 import ledstrip.led_positions : getKelderLedPositions, LedPositions;
 import main : Main;
 import webserver.mailbox : Mailbox;
@@ -8,6 +10,7 @@ import webserver.rest_api : RestApi, ScriptApi, SegmentApi, SourceFileApi, State
 
 import vibe.data.json : Json, serializeToJson;
 import vibe.web.rest : Collection;
+import vibe.http.common : enforceHTTP, HTTPStatus;
 
 @safe:
 
@@ -26,15 +29,15 @@ class RestApiImpl : RestApi
     }
 
     override
-	Collection!StateApi states()
+    Collection!StateApi states()
         => Collection!StateApi(m_stateApi);
 
     override
-	Collection!ScriptApi scripts()
+    Collection!ScriptApi scripts()
         => Collection!ScriptApi(m_scriptApi);
 
     override
-	Collection!SourceFileApi sourceFiles()
+    Collection!SourceFileApi sourceFiles()
         => Collection!SourceFileApi(m_sourceFileApi);
 
     override
@@ -46,8 +49,6 @@ class RestApiImpl : RestApi
     override
     Json getLedPositions()
         => getKelderLedPositions.serializeToJson;
-
-
 }
 
 class StateApiImpl : StateApi
@@ -61,16 +62,24 @@ class StateApiImpl : StateApi
 
     State[string] get()
     {
-        return null;
+        const LedstripStates states = Main.instance.states;
+        State[string] aa;
+        foreach (key, value; states.states)
+            aa[key] = State(key, false);
+        aa[states.activeState.name].active = true;
+        return aa;
     }
 
     State get(string _state)
     {
-        return State.init;
+        const LedstripStates states = Main.instance.states;
+        enforceHTTP(_state in states.states, HTTPStatus.notFound, "No such state");
+        return State(_state, states.activeState.name == _state);
     }
 
     void postActivate(string _state)
     {
+        Main.instance.states.setActiveState(_state);
     }
 
     Collection!SegmentApi segments(string _state)
@@ -79,14 +88,25 @@ class StateApiImpl : StateApi
 
 class SegmentApiImpl : SegmentApi
 {
-	Segment[] get(string _state)
+    Segment[] get(string _state)
     {
-        return [];
+        const LedstripStates states = Main.instance.states;
+        enforceHTTP(_state in states.states, HTTPStatus.notFound, "No such state");
+        const LedstripState state = states.states[_state];
+        Segment[] arr;
+        foreach (const LedstripSegment seg; state.segments)
+            arr ~= Segment(seg.begin, seg.end, /*seg.script.uuid*/ "someid");
+        return arr;
     }
 
-	Segment get(string _state, uint _begin)
+    Segment get(string _state, uint _begin)
     {
-        return Segment.init;
+        const LedstripStates states = Main.instance.states;
+        enforceHTTP(_state in states.states, HTTPStatus.notFound, "No such state");
+        const LedstripState state = states.states[_state];
+        enforceHTTP(_begin in state.segments, HTTPStatus.notFound, "No segment with provided begin led");
+        const LedstripSegment seg = state.segments[_begin];
+        return Segment(seg.begin, seg.end, /*seg.script.uuid*/ "someid");
     }
 }
 

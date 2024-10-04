@@ -29,9 +29,9 @@ import vibe.core.taskpool : TaskPool;
 final shared
 class BfScript : Script
 {
-    this(string scriptFileName, string scriptString, size_t ledCount)
+    this(string state, string scriptFileName, string scriptString, uint ledCount)
     {
-        super(scriptFileName, scriptString, ledCount);
+        super(state, scriptFileName, scriptString, ledCount);
     }
 
     override

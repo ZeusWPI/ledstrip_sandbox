@@ -20,6 +20,7 @@ class Script
 {
     private long m_lastStartTime;
 
+    protected string m_state;
     protected string m_scriptFileName;
     protected string m_scriptString;
     protected Led[] m_leds;
@@ -28,14 +29,23 @@ class Script
     @disable this(ref typeof(this));
 
     protected
-    this(string scriptFileName, string scriptString, size_t ledCount)
+    this(string state, string scriptFileName, string scriptString, uint ledCount)
     {
+        enforce(state.length);
         enforce(scriptFileName.isValidScriptFileName);
+        enforce(ledCount > 0);
+
+        m_state = state;
         m_scriptFileName = scriptFileName;
         m_scriptString = scriptString;
         m_leds = new Led[ledCount];
+
         reset;
     }
+
+    final pure nothrow @nogc
+    string state() const
+        => m_state;
 
     final pure nothrow @nogc
     bool running() const

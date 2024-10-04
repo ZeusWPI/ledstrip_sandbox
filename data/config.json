@@ -12,11 +12,11 @@
 				"end": 30,
 				"scriptFileName": "binary_counter.bf"
 			},
-            {
-                "begin": 30,
-                "end": 90,
-                "scriptFileName": "cammie_watch_count.lua"
-            },
+			{
+				"begin": 30,
+				"end": 90,
+				"scriptFileName": "cammie_watch_count.lua"
+			},
 			{
 				"begin": 138,
 				"end": 207,
@@ -36,6 +36,20 @@
 				"begin": 552,
 				"end": 621,
 				"scriptFileName": "zeus3d.lua"
+			}
+		],
+		"flashlight": [
+			{
+				"begin": 0,
+				"end": 690,
+				"scriptFileName": "flashlight.lua"
+			}
+		],
+		"flashbang": [
+			{
+				"begin": 0,
+				"end": 690,
+				"scriptFileName": "flashbang.lua"
 			}
 		]
 	}

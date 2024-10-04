@@ -11,7 +11,7 @@ struct Config
     string[] httpBindAddresses = ["0.0.0.0"];
     ushort httpPort = 80;
 
-    size_t ledCount = 690;
+    uint ledCount = 690;
     uint fps = 15;
     int dmaNumber = 10;
     int gpioPin = 18;

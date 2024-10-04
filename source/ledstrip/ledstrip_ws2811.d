@@ -3,7 +3,7 @@ module ledstrip.ledstrip_ws2811;
 version (LedstripWs2811):
 
 import ledstrip.led : Led;
-import ledstrip.led_assignments : LedAssignments;
+import ledstrip.ledstrip_states : LedstripStates;
 import ledstrip.ledstrip : Ledstrip, LedStripException;
 
 import core.time : Duration;
@@ -14,40 +14,41 @@ import bindbc.rpi_ws281x;
 
 @safe:
 
+shared
 class LedstripWs2811 : Ledstrip
 {
-    private ws2811_t m_ws2811;
+    private __gshared ws2811_t m_ws2811;
     private bool m_setupWs2811Done;
 
     @disable this(ref typeof(this));
 
-    this(LedAssignments ledAssignments, Duration frameTime,
+    this(LedstripStates states, Duration frameTime,
         int targetFreq, int dmaNumber, int gpioPin, uint stripType)
     {
-        super(ledAssignments, frameTime);
+        super(states, frameTime);
         setupWs2811(targetFreq, dmaNumber, gpioPin, stripType);
     }
 
-    nothrow
+    nothrow @trusted
     ~this()
     {
         if (m_setupWs2811Done)
             ws2811_fini(&m_ws2811);
     }
 
-    protected override
+    protected override @trusted
     void render()
     in (m_setupWs2811Done)
     {
         ws2811_render(&m_ws2811);
     }
 
-    override pure nothrow @nogc @trusted
-    Led[] leds()
+    override nothrow @nogc @trusted
+    shared(Led[]) leds()
     in (m_setupWs2811Done)
-        => cast(Led[]) m_ws2811.channel[0].leds[0 .. ledCount];
+        => cast(shared(Led)[]) m_ws2811.channel[0].leds[0 .. ledCount];
 
-    private
+    private @trusted
     void setupWs2811(int targetFreq, int dmaNumber, int gpioPin, uint stripType)
     in (!m_setupWs2811Done)
     out (; m_setupWs2811Done)
