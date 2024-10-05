@@ -27,10 +27,9 @@ import vibe.core.taskpool : TaskPool;
 
 @safe:
 
-// TODO: editor
 // TODO: only copy segment leds that changed
-// TODO: better lua logging
-// TODO: catch lua taskinterrupt with canFind("interrupt") and test
+// TODO: editor
+// TODO: scripting api for segments
 
 final shared
 class Main
@@ -73,6 +72,7 @@ class Main
     this()
     {
         setLogLevel(LogLevel.diagnostic);
+        setLogFormat(FileLogger.Format.thread, FileLogger.Format.thread);
 
         // setupSignalHandlers;
         loadConfig;
@@ -119,7 +119,7 @@ class Main
     private
     void createScriptTaskPool()
     {
-        m_scriptTaskPool = new TaskPool(logicalProcessorCount);
+        m_scriptTaskPool = new TaskPool(logicalProcessorCount, "scriptTaskPool");
     }
 
     private

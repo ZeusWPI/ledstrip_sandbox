@@ -12,7 +12,7 @@ final shared synchronized
 class LedstripStates
 {
     private alias enf = enforce!LedstripStatesException;
-    private enum ct_defaultStateName = "default";
+    private enum string ct_defaultStateName = "default";
 
     private uint m_ledCount;
     private LedstripState[string] m_states;

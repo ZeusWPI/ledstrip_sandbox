@@ -1,17 +1,12 @@
 module script.bf.bf_script;
-// dfmt off
 
-import ledstrip.led : Led;
 import script.bf.internal.bf_script_task : BfScriptTask;
 import script.script : Script;
 
 import core.time : Duration;
 
-import std.exception : enforce;
-
-import vibe.core.core : runWorkerTaskH;
-import vibe.core.task : Task;
 import vibe.core.log;
+import vibe.core.task : Task;
 import vibe.core.taskpool : TaskPool;
 
 @safe:

@@ -3,6 +3,9 @@ module script.lua.internal.lua_script_task;
 import script.lua.internal.lua_lib : LuaLib;
 import script.lua.lua_script : LuaScript;
 
+import std.algorithm : canFind;
+import std.format : f = format;
+
 import lumars : LuaState, LuaTable;
 
 import vibe.core.concurrency : thisTid, Tid;
@@ -33,7 +36,7 @@ class LuaScriptTask
 
     private nothrow
     this(LuaScript script)
-    in (script !is null)
+    in (script !is null, "Lua script task: script is null")
     {
         m_script = script;
         m_task = Task.getThis;
@@ -64,20 +67,31 @@ class LuaScriptTask
         scope (exit)
             m_script.reset;
 
+        logInfo(`Task for lua script "%s" started`, m_script.name);
+
         createLuaState;
         buildEnv;
 
         try
         {
             (() @trusted => m_luaState.doString(m_script.sourceCode, m_env))();
+            logInfo(`Task for lua script "%s" exited normally`, m_script.name);
         }
         catch (Exception e)
         {
-            logError("Caught exception in LuaScriptTask.run: %s", e.msg);
-            return;
+            // An InterruptException gets rethrown as a LuaException with the msg embedded
+            if (e.msg.canFind("interrupted"))
+            {
+                logInfo(`Task for bf script "%s" exited by interruption`, m_script.name);
+            }
+            else
+            {
+                logError(
+                    `Task for lua script "%s" failed: %s`,
+                    m_script.name, (() @trusted => e.toString)(),
+                );
+            }
         }
-
-        logInfo("lua script task exited normally");
     }
 
     private nothrow @trusted
@@ -91,7 +105,12 @@ class LuaScriptTask
         }
         catch (Exception e)
         {
-            assert(false, "Fatal error creating LuaState: " ~ e.toString);
+            assert(
+                false,
+                f!`Task for lua script "%s": Fatal error creating LuaState: %s`(
+                    m_script.name, e.toString,
+            ),
+            );
         }
     }
 
@@ -106,7 +125,12 @@ class LuaScriptTask
         }
         catch (Exception e)
         {
-            assert(false, "Fatal error building env: " ~ e.toString);
+            assert(
+                false,
+                f!`Task for lua script "%s": Fatal error building env: %s`(
+                    m_script.name, e.toString,
+            ),
+            );
         }
     }
 

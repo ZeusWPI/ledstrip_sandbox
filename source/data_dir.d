@@ -12,9 +12,9 @@ import std.path : buildPath;
 
 struct DataDir
 {
-    private enum ct_dirName = "data";
-    private enum ct_jsonFileName = "config.json";
-    private enum ct_jsonFilePath = buildPath(ct_dirName, ct_jsonFileName);
+    private enum string ct_dirName = "data";
+    private enum string ct_jsonFileName = "config.json";
+    private enum string ct_jsonFilePath = buildPath(ct_dirName, ct_jsonFileName);
 
     @disable this();
     @disable this(ref typeof(this));

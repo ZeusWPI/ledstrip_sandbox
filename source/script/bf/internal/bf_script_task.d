@@ -1,5 +1,4 @@
 module script.bf.internal.bf_script_task;
-// dfmt off
 
 import ledstrip.led : Led;
 import ledstrip.ledstrip : frameCount;
@@ -22,9 +21,11 @@ import vibe.core.log;
 @safe:
 package:
 
-package(script.bf) final // @suppress(dscanner.suspicious.redundant_attributes)
+package(script.bf) final  // @suppress(dscanner.suspicious.redundant_attributes)
 class BfScriptTask
 {
+    private enum string ct_instructionSet = "><+-.,[]";
+
     private BfScript m_script;
     private Task m_task;
 
@@ -32,7 +33,7 @@ class BfScriptTask
 
     private nothrow
     this(BfScript script)
-    in (script !is null, "script is null")
+    in (script !is null, "Bf script task: script is null")
     {
         m_script = script;
         m_task = Task.getThis;
@@ -41,7 +42,10 @@ class BfScriptTask
     private nothrow
     void run()
     {
-        scope (exit) m_script.reset;
+        scope (exit)
+            m_script.reset;
+
+        logInfo(`Task for bf script "%s" started`, m_script.name);
 
         try
         {
@@ -50,7 +54,7 @@ class BfScriptTask
             ubyte[] tape = new ubyte[m_script.leds.length * 3];
             size_t tapePtr;
 
-            logDiagnostic(`Bf script "%s" after filtering: "%s"`, m_script.name, code);
+            logDiagnostic(`Bf script "%s" source code after filtering: "%s"`, m_script.name, code);
 
             ulong lastFrameCount;
             int ticksSinceLastYield;
@@ -111,28 +115,39 @@ class BfScriptTask
                     ticksSinceLastYield = 0;
                 }
             }
-            logDiagnostic(`Task for bf script "%s" exited normally`, m_script.name);
+            logInfo(`Task for bf script "%s" exited normally`, m_script.name);
         }
         catch (InterruptException e)
         {
-            logDiagnostic(`Task for bf script "%s" exited by interruption`, m_script.name);
-            return;
+            logInfo(`Task for bf script "%s" exited by interruption`, m_script.name);
         }
         catch (Exception e)
         {
-            logError(`Task for bf script "%s" failed: %s`, m_script.name, (() @trusted => e.toString)());
+            logError(
+                `Task for bf script "%s" failed: %s`,
+                m_script.name, (() @trusted => e.toString)(),
+            );
         }
     }
 
-    private pure nothrow
+    private nothrow
     string filterInstructions()
     {
-        scope (failure) assert(false, "bf: filterInstructions failed");
-
-        static immutable string instructionSet = "><+-.,[]";
-        return m_script.sourceCode
-            .filter!(c => instructionSet.canFind(c))
-            .to!string;
+        try
+        {
+            return m_script.sourceCode
+                .filter!(c => ct_instructionSet.canFind(c))
+                .to!string;
+        }
+        catch (Exception e)
+        {
+            assert(
+                false,
+                f!`Task for lua script "%s": Fatal error creating LuaState: %s`(
+                    m_script.name, (() @trusted => e.toString)(),
+            )
+            );
+        }
     }
 
     private pure
@@ -151,7 +166,7 @@ class BfScriptTask
             {
                 enforce!BfException(
                     stack.length,
-                    f!`Bf script "%s": Found unmatched ]`(m_script.name),
+                    f!`Task for bf script "%s": Found unmatched ]`(m_script.name),
                 );
                 bracketMap[stack[$ - 1]] = i;
                 bracketMap[i] = stack[$ - 1];
@@ -160,7 +175,7 @@ class BfScriptTask
         }
         enforce!BfException(
             !stack.length,
-            f!`Bf script "%s": Found unmatched [`(m_script.name),
+            f!`Task for bf script "%s": Found unmatched [`(m_script.name),
         );
 
         return bracketMap;

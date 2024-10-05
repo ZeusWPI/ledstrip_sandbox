@@ -5,6 +5,7 @@ import ledstrip.ledstrip : frameCount;
 import ledstrip.ledstrip_segment : LedstripSegment;
 import main : Main;
 import script.lua.internal.lua_script_task : LuaScriptTask;
+import script.lua.lua_script : LuaScript;
 import script.script : Script;
 import webserver.mailbox : Mailbox;
 
@@ -119,9 +120,17 @@ static:
         }
         catch (Exception e)
         {
-            assert(false, "Fatal error creating env table: " ~ e.toString);
+            assert(false, "LuaLib: Fatal error creating env table: " ~ e.toString);
         }
     }
+
+    private
+    LuaScript script()
+        => LuaScriptTask.instance.script;
+
+    private
+    const(LuaScript) constScript()
+        => LuaScriptTask.constInstance.script;
 
     @trusted
     void log(LuaVariadic args)
@@ -145,7 +154,7 @@ static:
             }
         }
 
-        logInfo(`lua: %-(%s%)`, stringArgs);
+        logInfo(`Lua script "%s" log: %-(%s%)`, constScript.name, stringArgs);
     }
 
     class LedModule
@@ -169,8 +178,8 @@ static:
         {
             enforce!LuaLibException(
                 index < leds.length,
-                f!"led.set: Led index %u out of bounds for segment with length %u"(
-                    index, leds.length,
+                f!`Lua script "%s" led.set: Led index %u out of bounds for segment with length %u`(
+                    constScript.name, index, leds.length,
             ),
             );
             leds[index] = Led(r, g, b);
@@ -180,14 +189,14 @@ static:
         {
             enforce!LuaLibException(
                 begin <= end,
-                f!"led.setSlice: Begin index %u larger than end index %u"(
-                    begin, end
+                f!`Lua script "%s" led.setSlice: Begin index %u larger than end index %u`(
+                    constScript.name, begin, end,
             ),
             );
             enforce!LuaLibException(
                 end <= leds.length,
-                f!"led.setSlice: End index %u out of bounds for segment with length %u"(
-                    end, leds.length
+                f!`Lua script "%s" led.setSlice: End index %u out of bounds for segment with length %u"`(
+                    constScript.name, end, leds.length,
             ),
             );
             leds[begin .. end] = Led(r, g, b);
@@ -242,7 +251,11 @@ static:
 
         void sleepMsecs(long msecs)
         {
-            enforce!LuaLibException(msecs >= 0, f!"Cannot sleep for less than %d msecs"(msecs));
+            string name = LuaScriptTask.constInstance.script.name;
+            enforce!LuaLibException(
+                msecs >= 0,
+                f!`Lua script "%s": Cannot sleep for less than %d msecs`(name, msecs),
+            );
             sleep(msecs.msecs);
         }
 
