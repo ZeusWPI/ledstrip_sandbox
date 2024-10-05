@@ -1,8 +1,6 @@
 module config;
 
-import std.exception : basicExceptionCtors, enforce;
-
-import vibe.data.json;
+import vibe.data.json : deserializeJson, serializeToPrettyJson;
 
 @safe:
 
@@ -15,28 +13,31 @@ struct Config
     uint fps = 15;
     int dmaNumber = 10;
     int gpioPin = 18;
-    ConfigSegment[][string] states;
+    ConfigScript[string] scripts;
+    ConfigState[string] states;
 
     static
     typeof(this) fromJsonString(string s)
-    {
-        return s.deserializeJson!(typeof(this));
-    }
+        => s.deserializeJson!(typeof(this));
 
     string toJsonString()
-    {
-        Json j = this.serializeToJson;
-        return j.toPrettyString;
-    }
+        => this.serializeToPrettyJson;
+}
+
+struct ConfigScript
+{
+    string fileName;
+    uint ledCount;
+    bool autoStart;
+}
+
+struct ConfigState
+{
+    ConfigSegment[] segments;
 }
 
 struct ConfigSegment
 {
     uint begin, end;
-    string scriptFileName;
-}
-
-class ConfigException : Exception
-{
-    mixin basicExceptionCtors;
+    string scriptName;
 }

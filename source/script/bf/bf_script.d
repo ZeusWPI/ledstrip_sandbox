@@ -11,6 +11,7 @@ import std.exception : enforce;
 
 import vibe.core.core : runWorkerTaskH;
 import vibe.core.task : Task;
+import vibe.core.log;
 import vibe.core.taskpool : TaskPool;
 
 @safe:
@@ -29,14 +30,15 @@ import vibe.core.taskpool : TaskPool;
 final shared
 class BfScript : Script
 {
-    this(string state, string scriptFileName, string scriptString, uint ledCount)
+    this(string name, string fileName, string sourceCode, uint ledCount)
     {
-        super(state, scriptFileName, scriptString, ledCount);
+        super(name, fileName, sourceCode, ledCount);
     }
 
     override
     Task start(TaskPool taskPool)
     {
+        logDiagnostic(`Starting task for bf script "%s"`, name);
         super.start(taskPool);
         return taskPool.runTaskH(&BfScriptTask.entrypoint, this);
     }

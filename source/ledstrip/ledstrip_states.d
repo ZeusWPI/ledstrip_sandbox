@@ -12,6 +12,7 @@ final shared synchronized
 class LedstripStates
 {
     private alias enf = enforce!LedstripStatesException;
+    private enum ct_defaultStateName = "default";
 
     private uint m_ledCount;
     private LedstripState[string] m_states;
@@ -36,23 +37,30 @@ class LedstripStates
         => m_states;
 
     pure
-    void addState(string state)
+    LedstripState addState(string stateName)
     {
-        enforceIsValidState(state);
-        enf(state !in m_states, f!`addState: State "%s" already exists`(state));
-        m_states[state] = new LedstripState(state, m_ledCount);
+        enforceIsValidState(stateName);
+        enf(stateName !in m_states, f!`addState: State "%s" already exists`(stateName));
+        return m_states[stateName] = new LedstripState(stateName, m_ledCount);
     }
 
     pure nothrow @nogc
     inout(LedstripState) activeState() inout
         => m_activeState;
 
-    void setActiveState(string state)
+    void setActiveState(string stateName)
     {
-        enf(state in m_states, f!`setActiveState: Unknown state "%s"`(state));
-        m_activeState = m_states[state];
+        enf(stateName in m_states, f!`setActiveState: Unknown state "%s"`(stateName));
+        m_activeState = m_states[stateName];
         if (m_onActiveStateChange)
             m_onActiveStateChange();
+    }
+
+    void setDefaultActive()
+    {
+        if (ct_defaultStateName !in states)
+            addState(ct_defaultStateName);
+        setActiveState(ct_defaultStateName);
     }
 
     pure

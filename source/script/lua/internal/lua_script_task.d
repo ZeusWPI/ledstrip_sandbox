@@ -1,26 +1,18 @@
 module script.lua.internal.lua_script_task;
-// dfmt off
 
 import script.lua.internal.lua_lib : LuaLib;
 import script.lua.lua_script : LuaScript;
 
-import core.time : Duration;
-
-import std.array : array;
-import std.conv : to;
-import std.stdio : writefln, writeln;
-import std.string : toStringz;
-
-import lumars : LuaFunc, LuaNil, LuaState, LuaTable, LuaValue, LuaVariadic;
+import lumars : LuaState, LuaTable;
 
 import vibe.core.concurrency : thisTid, Tid;
 import vibe.core.log;
-import vibe.core.task : InterruptException, Task;
+import vibe.core.task : Task;
 
 @safe:
 package:
 
-package(script.lua) final // @suppress(dscanner.suspicious.redundant_attributes)
+package(script.lua) final  // @suppress(dscanner.suspicious.redundant_attributes)
 class LuaScriptTask
 {
     private static typeof(this)[Tid] tls_tidInstanceMap;
@@ -29,6 +21,13 @@ class LuaScriptTask
     private Task m_task;
     private LuaState m_luaState;
     private LuaTable m_env;
+
+    package(script.lua) static nothrow
+    void entrypoint(LuaScript script)
+    {
+        LuaScriptTask instance = new LuaScriptTask(script);
+        instance.run;
+    }
 
     @disable this(ref typeof(this));
 
@@ -41,8 +40,8 @@ class LuaScriptTask
         registerInstance;
     }
 
-    private nothrow
-    ~this()
+    private nothrow  //
+     ~this()
     {
         unregisterInstance;
     }
@@ -62,14 +61,15 @@ class LuaScriptTask
     private nothrow
     void run()
     {
-        scope (exit) m_script.reset;
+        scope (exit)
+            m_script.reset;
 
         createLuaState;
         buildEnv;
 
         try
         {
-            (() @trusted => m_luaState.doString(m_script.scriptString, m_env))();
+            (() @trusted => m_luaState.doString(m_script.sourceCode, m_env))();
         }
         catch (Exception e)
         {
@@ -110,30 +110,29 @@ class LuaScriptTask
         }
     }
 
-    package(script.lua) static nothrow
-    void entrypoint(LuaScript script)
-    {
-        LuaScriptTask instance = new LuaScriptTask(script);
-        instance.run;
-    }
-
     static nothrow
     LuaScriptTask instance()
     {
         Tid tid;
-        try tid = thisTid;
-        catch (Exception e) assert(false, (() @trusted => e.toString)());
+        try
+            tid = thisTid;
+        catch (Exception e)
+            assert(false, (() @trusted => e.toString)());
         assert(tid in tls_tidInstanceMap);
         return tls_tidInstanceMap[tid];
     }
 
+    static nothrow
+    const(LuaScriptTask) constInstance()
+        => instance;
+
     pure nothrow @nogc
-    ref LuaState luaState()
+    ref inout(LuaState) luaState() inout
     in (m_luaState != LuaState.init)
         => m_luaState;
 
     pure nothrow @nogc
-    LuaScript script()
+    inout(LuaScript) script() inout
     in (m_script !is null)
         => m_script;
 }

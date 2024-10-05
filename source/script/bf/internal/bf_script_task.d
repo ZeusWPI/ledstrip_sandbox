@@ -32,7 +32,7 @@ class BfScriptTask
 
     private nothrow
     this(BfScript script)
-    in (script !is null)
+    in (script !is null, "script is null")
     {
         m_script = script;
         m_task = Task.getThis;
@@ -50,7 +50,7 @@ class BfScriptTask
             ubyte[] tape = new ubyte[m_script.leds.length * 3];
             size_t tapePtr;
 
-            logInfo("bf: %s", code);
+            logDiagnostic(`Bf script "%s" after filtering: "%s"`, m_script.name, code);
 
             ulong lastFrameCount;
             int ticksSinceLastYield;
@@ -90,8 +90,8 @@ class BfScriptTask
                     break;
                 case '.':
                     logInfo(
-                        "bf '.': ip=%u, tapePtr=%u, value=%u, tape=%s",
-                        ip, tapePtr, tape[tapePtr], tape,
+                        `Bf script "%s" dump instruction ('.'): ip=%u, tapePtr=%u, value=%u, tape=%s`,
+                        m_script.name, ip, tapePtr, tape[tapePtr], tape,
                     );
                     break;
                 case '[':
@@ -111,26 +111,26 @@ class BfScriptTask
                     ticksSinceLastYield = 0;
                 }
             }
-            logInfo("bf script task exited normally");
+            logDiagnostic(`Task for bf script "%s" exited normally`, m_script.name);
         }
         catch (InterruptException e)
         {
-            logInfo("bf script task interrupted");
+            logDiagnostic(`Task for bf script "%s" exited by interruption`, m_script.name);
             return;
         }
         catch (Exception e)
         {
-            logError("bf script failed: %s", (() @trusted => e.toString)());
+            logError(`Task for bf script "%s" failed: %s`, m_script.name, (() @trusted => e.toString)());
         }
     }
 
     private pure nothrow
     string filterInstructions()
     {
-        scope (failure) assert(false, "filterInstructions failed");
+        scope (failure) assert(false, "bf: filterInstructions failed");
 
         static immutable string instructionSet = "><+-.,[]";
-        return m_script.scriptString
+        return m_script.sourceCode
             .filter!(c => instructionSet.canFind(c))
             .to!string;
     }
@@ -149,13 +149,19 @@ class BfScriptTask
             }
             else if (c == ']')
             {
-                enforce!BfException(stack.length, "bf: Found unmatched ]");
+                enforce!BfException(
+                    stack.length,
+                    f!`Bf script "%s": Found unmatched ]`(m_script.name),
+                );
                 bracketMap[stack[$ - 1]] = i;
                 bracketMap[i] = stack[$ - 1];
                 stack = stack[0 .. $ - 1];
             }
         }
-        enforce!BfException(!stack.length, "bf: Found unmatched [");
+        enforce!BfException(
+            !stack.length,
+            f!`Bf script "%s": Found unmatched [`(m_script.name),
+        );
 
         return bracketMap;
     }

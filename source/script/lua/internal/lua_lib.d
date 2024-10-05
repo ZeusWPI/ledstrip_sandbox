@@ -1,11 +1,11 @@
 module script.lua.internal.lua_lib;
-// dfmt off
 
 import ledstrip.led : Led;
 import ledstrip.ledstrip : frameCount;
-import ledstrip.ledstrip_states : LedstripStates;
+import ledstrip.ledstrip_segment : LedstripSegment;
 import main : Main;
 import script.lua.internal.lua_script_task : LuaScriptTask;
+import script.script : Script;
 import webserver.mailbox : Mailbox;
 
 import core.time : msecs;
@@ -17,12 +17,12 @@ import std.format : f = format;
 import std.string : toStringz;
 import std.traits : EnumMembers;
 
-import vibe.core.core : sleep, yield;
+import vibe.core.core : sleep;
 import vibe.core.log;
 
-import bindbc.lua.v51 : lua_getglobal, lua_State;
+import bindbc.lua.v51 : lua_getglobal;
 
-import lumars;
+import lumars : LuaFunc, LuaNil, LuaTable, LuaValue, LuaVariadic;
 
 @safe:
 
@@ -43,10 +43,11 @@ static:
         T getGlobal(T)(string key)
         {
             lua_getglobal(scriptTask.luaState.handle, key.toStringz);
-            scope (exit) scriptTask.luaState.pop(1);
+            scope (exit)
+                scriptTask.luaState.pop(1);
             return scriptTask.luaState.get!T(scriptTask.luaState.top);
         }
-        
+
         void addGlobalToTable(T = LuaFunc)(LuaTable t, string k) => t[k] = getGlobal!T(k);
 
         try
@@ -84,30 +85,31 @@ static:
 
             // Custom
             env["log"] = &log;
-            env["led"] = ()
-            {
+            env["led"] = () {
                 LuaTable led = createTable;
                 led["count"] = LedModule.count; // Value
                 led["set"] = &LedModule.set;
                 led["setSlice"] = &LedModule.setSlice;
                 led["setAll"] = &LedModule.setAll;
-                led["isStateActive"] = &LedModule.isStateActive;
-                led["setActiveState"] = &LedModule.setActiveState;
                 return led;
             }();
-            env["time"] = ()
-            {
+            env["state"] = () {
+                LuaTable state = createTable;
+                state["activeName"] = &StateModule.activeName;
+                state["activeContainsThisScript"] = &StateModule.activeContainsThisScript;
+                state["setActiveByName"] = &StateModule.setActiveByName;
+                state["setDefaultActive"] = &StateModule.setDefaultActive;
+                return state;
+            }();
+            env["time"] = () {
                 LuaTable time = createTable;
                 time["stdTimeHnsecs"] = &TimeModule.stdTimeHnsecs;
                 time["unixTimeSeconds"] = &TimeModule.unixTimeSeconds;
                 time["sleepMsecs"] = &TimeModule.sleepMsecs;
                 time["waitFrames"] = &TimeModule.waitFrames;
-                time["waitActiveState"] = &TimeModule.waitActiveState;
-                time["waitInactiveState"] = &TimeModule.waitInactiveState;
                 return time;
             }();
-            env["mailbox"] = ()
-            {
+            env["mailbox"] = () {
                 LuaTable mailbox = createTable;
                 mailbox["consume"] = &MailboxModule.consume;
                 return mailbox;
@@ -127,11 +129,12 @@ static:
         string[] stringArgs;
 
         foreach (LuaValue arg; args)
-            switch (arg.kind)
+        {
+            final switch (arg.kind)
             {
                 foreach (alias kind; EnumMembers!(LuaValue.Kind))
                 {
-                case kind:
+            case kind:
                     auto val = arg.value!kind;
                     static if (is(typeof(val) == LuaNil))
                         stringArgs ~= "nil";
@@ -139,9 +142,8 @@ static:
                         stringArgs ~= text(val);
                     break;
                 }
-            default:
-                break;
             }
+        }
 
         logInfo(`lua: %-(%s%)`, stringArgs);
     }
@@ -156,14 +158,20 @@ static:
         shared(Led[]) leds()
             => LuaScriptTask.instance.script.leds;
 
+        private
+        const(shared(Led[])) constLeds()
+            => leds;
+
         uint count()
-            => cast(uint) leds.length;
+            => cast(uint) constLeds.length;
 
         void set(uint index, ubyte r, ubyte g, ubyte b)
         {
             enforce!LuaLibException(
                 index < leds.length,
-                f!"led.set: Led index %u out of bounds for segment with length %u"(index, leds.length)
+                f!"led.set: Led index %u out of bounds for segment with length %u"(
+                    index, leds.length,
+            ),
             );
             leds[index] = Led(r, g, b);
         }
@@ -172,26 +180,51 @@ static:
         {
             enforce!LuaLibException(
                 begin <= end,
-                f!"led.setSlice: Begin index %u larger than end index %u"(begin, end)
+                f!"led.setSlice: Begin index %u larger than end index %u"(
+                    begin, end
+            ),
             );
             enforce!LuaLibException(
                 end <= leds.length,
-                f!"led.setSlice: End index %u out of bounds for segment with length %u"(end, leds.length)
+                f!"led.setSlice: End index %u out of bounds for segment with length %u"(
+                    end, leds.length
+            ),
             );
             leds[begin .. end] = Led(r, g, b);
         }
-        
+
         void setAll(ubyte r, ubyte g, ubyte b)
         {
             leds[] = Led(r, g, b);
         }
-        
-        bool isStateActive()
-            => Main.instance.states.activeState.name != LuaScriptTask.instance.script.state;
+    }
 
-        void setActiveState(string state)
+    class StateModule
+    {
+        @disable this();
+        @disable this(ref typeof(this));
+
+    static:
+        string activeName()
+            => Main.constInstance.states.activeState.name;
+
+        bool activeContainsThisScript()
+        {
+            const Script thisScript = LuaScriptTask.constInstance.script;
+            foreach (begin, const LedstripSegment seg; Main.instance.states.activeState.segments)
+                if (seg.script is thisScript)
+                    return true;
+            return false;
+        }
+
+        void setActiveByName(string state)
         {
             Main.instance.states.setActiveState(state);
+        }
+
+        void setDefaultActive()
+        {
+            Main.instance.states.setDefaultActive;
         }
     }
 
@@ -217,18 +250,6 @@ static:
         {
             ulong frameCountAtEntry = frameCount;
             while (frameCount < frameCountAtEntry + frames)
-                sleepMsecs(5);
-        }
-
-        void waitActiveState()
-        {
-            while (Main.instance.states.activeState.name != LuaScriptTask.instance.script.state)
-                sleepMsecs(5);
-        }
-
-        void waitInactiveState()
-        {
-            while (Main.instance.states.activeState.name == LuaScriptTask.instance.script.state)
                 sleepMsecs(5);
         }
     }

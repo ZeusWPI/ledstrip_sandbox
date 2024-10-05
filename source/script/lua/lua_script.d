@@ -16,9 +16,9 @@ import vibe.core.taskpool : TaskPool;
 final shared
 class LuaScript : Script
 {
-    this(string state, string scriptFileName, string scriptString, uint ledCount)
+    this(string name, string fileName, string sourceCode, uint ledCount)
     {
-        super(state, scriptFileName, scriptString, ledCount);
+        super(name, fileName, sourceCode, ledCount);
     }
 
     override

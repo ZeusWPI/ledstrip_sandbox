@@ -32,42 +32,42 @@ static:
         c.toJsonString.write(ct_jsonFilePath);
     }
 
-    string loadScript(string scriptFileName)
+    string loadScript(string fileName)
     {
-        string scriptFilePath = getScriptFilePath(scriptFileName);
+        string scriptFilePath = getScriptFilePath(fileName);
         enforce!DataDirException(
             scriptFilePath.exists,
-            f!`loadScript: Script file %s doesn't exist`(scriptFileName),
+            f!`loadScript: Script file %s doesn't exist`(fileName),
         );
         enforce!DataDirException(
             scriptFilePath.isFile,
-            f!`loadScript: Script file %s is not a regular file`(scriptFileName),
+            f!`loadScript: Script file %s is not a regular file`(fileName),
         );
         return scriptFilePath.readText;
     }
 
-    void saveScript(string scriptFileName, string scriptString)
+    void saveScript(string fileName, string sourceCode)
     {
-        string scriptFilePath = getScriptFilePath(scriptFileName);
+        string scriptFilePath = getScriptFilePath(fileName);
         if (scriptFilePath.exists)
         {
             enforce!DataDirException(
                 scriptFilePath.isFile,
-                f!`saveScript: Script file %s is not a regular file`(scriptFileName),
+                f!`saveScript: Script file %s is not a regular file`(fileName),
             );
         }
-        scriptFilePath.write(scriptString);
+        scriptFilePath.write(sourceCode);
     }
 
     private
-    string getScriptFilePath(string scriptFileName)
+    string getScriptFilePath(string fileName)
     {
         createIfNeeded;
         enforce!DataDirException(
-            scriptFileName.isValidScriptFileName,
-            f!`Invalid script file name "%s"`(scriptFileName),
+            fileName.isValidScriptFileName,
+            f!`Invalid script file name "%s"`(fileName),
         );
-        return buildPath(ct_dirName, scriptFileName);
+        return buildPath(ct_dirName, fileName);
     }
 
     private

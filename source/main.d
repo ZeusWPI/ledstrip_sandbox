@@ -1,9 +1,9 @@
 module main;
-// dfmt off
 
-import config : Config, ConfigSegment;
+import config : Config, ConfigScript, ConfigSegment, ConfigState;
 import data_dir : DataDir;
 import ledstrip;
+import ledstrip.ledstrip_state : LedstripState;
 import ledstrip.ledstrip_states : LedstripStates;
 import script.bf.bf_script : BfScript;
 import script.lua.lua_script : LuaScript;
@@ -27,9 +27,10 @@ import vibe.core.taskpool : TaskPool;
 
 @safe:
 
-// TODO: store filename in script
 // TODO: editor
 // TODO: only copy segment leds that changed
+// TODO: better lua logging
+// TODO: catch lua taskinterrupt with canFind("interrupt") and test
 
 final shared
 class Main
@@ -44,7 +45,7 @@ class Main
     private LedstripStates m_states;
     private Ledstrip m_ledstrip;
     private TaskPool m_scriptTaskPool;
-    private Script[] m_scripts;
+    private Script[string] m_scripts;
     private Task[] m_scriptTasks;
     private __gshared Webserver m_webserver;
 
@@ -63,6 +64,11 @@ class Main
     in (s_instance !is null)
         => s_instance;
 
+    static nothrow @nogc
+    const(Main) constInstance()
+    in (s_instance !is null)
+        => s_instance;
+
     private
     this()
     {
@@ -73,8 +79,9 @@ class Main
         createLedstripStates;
         createLedstrip;
         createScriptTaskPool;
-        loadConfigSegments;
-        m_states.setActiveState("default");
+        createConfigScripts;
+        createConfigStates;
+        m_states.setDefaultActive;
         createWebserver;
     }
 
@@ -116,44 +123,52 @@ class Main
     }
 
     private
-    void loadConfigSegments()
+    void createConfigScripts()
     {
-        foreach (string state, shared(ConfigSegment[]) configSegments; m_config.states)
-            foreach (ConfigSegment seg; configSegments)
+        foreach (configScriptName, configScript; m_config.scripts)
+        {
+            string sourceCode = DataDir.loadScript(configScript.fileName);
+
+            Script script;
+            if (configScript.fileName.endsWith(".bf"))
             {
-                try
-                {
-                    loadConfigSegment(state, seg.scriptFileName, seg.begin, seg.end);
-                }
-                catch (Exception e)
-                {
-                    logError(
-                        "Failed to load config segment %s: %s",
-                        seg, (() @trusted => e.toString)(),
-                    );
-                }
+                script = new BfScript(
+                    configScriptName, configScript.fileName, sourceCode, configScript.ledCount,
+                );
             }
+            else if (configScript.fileName.endsWith(".lua"))
+            {
+                script = new LuaScript(
+                    configScriptName, configScript.fileName, sourceCode, configScript.ledCount,
+                );
+            }
+            else
+            {
+                string msg = f!`loadScript: Unknown script type for filename "%s"`(
+                    configScript.fileName,
+                );
+                throw new Exception(msg);
+            }
+            m_scripts[configScriptName] = script;
+        }
     }
 
     private
-    void loadConfigSegment(string state, string scriptFileName, uint begin, uint end)
+    void createConfigStates()
     {
-        string scriptString = DataDir.loadScript(scriptFileName);
-
-        Script script;
-        if (scriptFileName.endsWith(".bf"))
-            script = new BfScript(state, scriptFileName, scriptString, end - begin);
-        else if (scriptFileName.endsWith(".lua"))
-            script = new LuaScript(state, scriptFileName, scriptString, end - begin);
-        else
-            throw new Exception(f!`loadScript: Unknown script type for filename "%s"`(scriptFileName));
-
-        if (state !in m_states.states)
-            m_states.addState(state);
-        
-        m_states.states[state].assignSegment(begin, end, script);
-
-        m_scripts ~= script;
+        foreach (stateName, configState; m_config.states)
+        {
+            LedstripState state = m_states.addState(stateName);
+            foreach (configSegment; configState.segments)
+            {
+                enforce(
+                    configSegment.scriptName in m_scripts,
+                    f!"createConfigStates: no such script %s"(configSegment.scriptName),
+                );
+                Script script = m_scripts[configSegment.scriptName];
+                state.assignSegment(configSegment.begin, configSegment.end, script);
+            }
+        }
     }
 
     private @trusted
@@ -177,8 +192,10 @@ class Main
 
     private
     void startScript(Script script)
+    in (script !is null, "startScript: script is null")
     {
-        enforce(m_scripts.canFind!"a is b"(script), f!`startScript: Unknown script "%s"`(script));
+        enforce(script.name in m_scripts, f!`startScript: Unknown script "%s"`(script.name));
+        enforce(script is m_scripts[script.name], f!`startScript: Unknown script "%s"`(script.name));
         m_scriptTasks ~= script.start(m_scriptTaskPool);
     }
 

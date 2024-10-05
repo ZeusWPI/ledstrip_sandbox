@@ -20,49 +20,49 @@ class Script
 {
     private long m_lastStartTime;
 
-    protected string m_state;
-    protected string m_scriptFileName;
-    protected string m_scriptString;
-    protected Led[] m_leds;
-    protected bool m_running;
+    private string m_name;
+    private string m_fileName;
+    private string m_sourceCode;
+    private Led[] m_leds;
+    private bool m_running;
 
     @disable this(ref typeof(this));
 
     protected
-    this(string state, string scriptFileName, string scriptString, uint ledCount)
+    this(string name, string fileName, string sourceCode, uint ledCount)
     {
-        enforce(state.length);
-        enforce(scriptFileName.isValidScriptFileName);
+        enforce(name.length);
+        enforce(fileName.isValidScriptFileName);
         enforce(ledCount > 0);
 
-        m_state = state;
-        m_scriptFileName = scriptFileName;
-        m_scriptString = scriptString;
+        m_name = name;
+        m_fileName = fileName;
+        m_sourceCode = sourceCode;
         m_leds = new Led[ledCount];
 
         reset;
     }
 
     final pure nothrow @nogc
-    string state() const
-        => m_state;
+    string name() const
+        => m_name;
+
+    final pure nothrow @nogc
+    string fileName() const
+        => m_fileName;
+
+    final pure nothrow @nogc
+    string sourceCode() const
+        => m_sourceCode;
 
     final pure nothrow @nogc
     bool running() const
         => m_running;
 
     final pure nothrow @nogc
-    string scriptString() const
-        => m_scriptString;
-
-    final pure nothrow @nogc
     inout(shared(Led[])) leds() inout
         => m_leds;
     
-    final pure nothrow @nogc
-    string scriptFileName() const
-        => m_scriptFileName;
-
     Task start(TaskPool taskPool)
     {
         m_running = false;
