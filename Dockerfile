@@ -58,7 +58,6 @@ COPY dub.sdl dub.selections.json .
 RUN dub build --config="${DUB_CONFIG}" --arch="${DUB_ARCH}" --build="${DUB_BUILD_TYPE}"
 
 COPY source/ source/
-COPY views/ views/
 RUN dub build --config="${DUB_CONFIG}" --arch="${DUB_ARCH}" --build="${DUB_BUILD_TYPE}"
 RUN bash -c "xargs ar -rcT dlibs.a $(dub describe --data=linker-files)"
 
