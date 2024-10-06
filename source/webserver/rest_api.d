@@ -74,7 +74,7 @@ interface ScriptApi
 
     struct Script {
         string name;
-        string sourceFileName;
+        string fileName;
         uint ledCount;
     }
 

@@ -143,7 +143,7 @@ class Main
             }
             else
             {
-                string msg = f!`loadScript: Unknown script type for filename "%s"`(
+                string msg = f!`loadScript: Unknown script type for file name "%s"`(
                     configScript.fileName,
                 );
                 throw new Exception(msg);
