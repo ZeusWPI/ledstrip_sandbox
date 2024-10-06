@@ -3,6 +3,7 @@ module script.lua.internal.lua_lib;
 import ledstrip.led : Led;
 import ledstrip.ledstrip : frameCount;
 import ledstrip.ledstrip_segment : LedstripSegment;
+import ledstrip.ledstrip_states : LedstripStates;
 import main : Main;
 import script.lua.internal.lua_script_task : LuaScriptTask;
 import script.lua.lua_script : LuaScript;
@@ -171,18 +172,23 @@ static:
         const(shared(Led[])) constLeds()
             => leds;
 
+        private
+        void setLedsChanged()
+            => LuaScriptTask.instance.script.setLedsChanged;
+
         uint count()
             => cast(uint) constLeds.length;
 
         void set(uint index, ubyte r, ubyte g, ubyte b)
         {
             enforce!LuaLibException(
-                index < leds.length,
+                index < constLeds.length,
                 f!`Lua script "%s" led.set: Led index %u out of bounds for segment with length %u`(
-                    constScript.name, index, leds.length,
+                    constScript.name, index, constLeds.length,
             ),
             );
             leds[index] = Led(r, g, b);
+            setLedsChanged;
         }
 
         void setSlice(uint begin, uint end, ubyte r, ubyte g, ubyte b)
@@ -194,17 +200,19 @@ static:
             ),
             );
             enforce!LuaLibException(
-                end <= leds.length,
+                end <= constLeds.length,
                 f!`Lua script "%s" led.setSlice: End index %u out of bounds for segment with length %u"`(
-                    constScript.name, end, leds.length,
+                    constScript.name, end, constLeds.length,
             ),
             );
             leds[begin .. end] = Led(r, g, b);
+            setLedsChanged;
         }
 
         void setAll(ubyte r, ubyte g, ubyte b)
         {
             leds[] = Led(r, g, b);
+            setLedsChanged;
         }
     }
 
@@ -214,6 +222,14 @@ static:
         @disable this(ref typeof(this));
 
     static:
+        private
+        LedstripStates states()
+            => Main.instance.states;
+
+        private
+        const(LedstripStates) constStates()
+            => Main.constInstance.states;
+
         string activeName()
             => Main.constInstance.states.activeState.name;
 

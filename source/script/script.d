@@ -24,6 +24,7 @@ class Script
     private string m_fileName;
     private string m_sourceCode;
     private Led[] m_leds;
+    private bool m_ledsChanged;
     private bool m_running;
 
     @disable this(ref typeof(this));
@@ -62,6 +63,22 @@ class Script
     final pure nothrow @nogc
     inout(shared(Led[])) leds() inout
         => m_leds;
+    
+    final pure nothrow @nogc
+    bool ledsChanged() const
+        => m_ledsChanged;
+
+    final pure nothrow @nogc
+    void setLedsChanged()
+    {
+        m_ledsChanged = true;
+    }
+
+    final pure nothrow @nogc
+    void resetLedsChanged()
+    {
+        m_ledsChanged = false;
+    }
     
     Task start(TaskPool taskPool)
     {

@@ -65,6 +65,7 @@ class BfScriptTask
                 {
                     foreach (i, chunk; tape.chunks(3).enumerate)
                         m_script.leds[i] = Led(chunk[0], chunk[1], chunk[2]);
+                    m_script.setLedsChanged;
                     lastFrameCount = currFrameCount;
                 }
 

@@ -2,7 +2,10 @@ module ledstrip.ledstrip;
 // dfmt off
 
 import ledstrip.led : Led;
+import ledstrip.ledstrip_segment : LedstripSegment;
 import ledstrip.ledstrip_states : LedstripStates;
+import script.script : Script;
+import main : Main;
 
 import core.atomic : atomicOp;
 import core.time : Duration;
@@ -34,6 +37,7 @@ class Ledstrip
     private Duration m_frameTime;
     private bool m_stopRenderLoop;
 
+    synchronized
     this(LedstripStates states, Duration frameTime)
     {
         enf(states !is null);
@@ -42,15 +46,19 @@ class Ledstrip
         m_states = states;
         m_ledCount = states.ledCount;
         m_frameTime = frameTime;
+        m_stopRenderLoop = true;
 
         m_states.setOnActiveStateChange(&onActiveStateChange);
     }
 
     @disable this(ref typeof(this));
 
-    final
+    final synchronized
     void startRenderLoopTask()
+    in (m_stopRenderLoop)
+    out (; !m_stopRenderLoop)
     {
+        m_stopRenderLoop = false;
         runTask(&renderLoop);
     }
 
@@ -59,11 +67,24 @@ class Ledstrip
     {
         try
         {
-            while (!m_stopRenderLoop)
+            while (!m_stopRenderLoop) 
             {
                 SysTime entryTime = Clock.currTime;
-                foreach (seg; m_states.activeState.segments)
-                    leds[seg.begin .. seg.end] = seg.script.leds[];
+                synchronized
+                {
+                    foreach (begin, const LedstripSegment seg; m_states.activeState.segments)
+                    {
+                        const Script constScript = seg.script;
+                        if (constScript.ledsChanged)
+                        {
+                            leds[seg.begin .. seg.end] = constScript.leds[];
+
+                            assert(constScript.name in Main.instance.scripts);
+                            Script script = Main.instance.scripts[constScript.name];
+                            script.resetLedsChanged;
+                        }
+                    }
+                }
                 render();
                 g_frameCount.atomicOp!"+="(1);
 
@@ -98,7 +119,7 @@ class Ledstrip
         m_stopRenderLoop = true;
     }
 
-    private nothrow
+    private synchronized nothrow
     void onActiveStateChange()
     {
         leds[] = Led(0, 0, 0);

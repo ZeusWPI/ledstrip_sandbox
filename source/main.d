@@ -27,7 +27,6 @@ import vibe.core.taskpool : TaskPool;
 
 @safe:
 
-// TODO: only copy segment leds that changed
 // TODO: editor
 // TODO: scripting api for segments
 
@@ -202,6 +201,10 @@ class Main
     pure nothrow @nogc
     inout(LedstripStates) states() inout
         => m_states;
+
+    pure nothrow @nogc
+    inout(shared(Script[string])) scripts() inout
+        => m_scripts;
 }
 
 void main()
