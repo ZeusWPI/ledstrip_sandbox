@@ -3,10 +3,13 @@ module data_dir;
 import config : Config;
 import script.script : isValidScriptFileName;
 
+import std.algorithm : endsWith, filter, map;
+import std.array : array;
 import std.exception : basicExceptionCtors, enforce;
-import std.file : exists, isDir, isFile, mkdir, readText, write;
+import std.file : dirEntries, DirEntry, exists, isDir, isFile, mkdir, readText, SpanMode, write;
 import std.format : f = format;
-import std.path : buildPath;
+import std.path : baseName, buildPath;
+import std.uri;
 
 @safe:
 
@@ -30,6 +33,16 @@ static:
     {
         createIfNeeded;
         c.toJsonString.write(ct_jsonFilePath);
+    }
+
+    @trusted
+    string[] listScripts()
+    {
+        return dirEntries(ct_dirName, SpanMode.shallow)
+            .filter!(entry => entry.isFile)
+            .map!(entry => entry.name.baseName)
+            .filter!(name => name.isValidScriptFileName)
+            .array;
     }
 
     string loadScript(string fileName)

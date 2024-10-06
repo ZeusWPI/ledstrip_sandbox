@@ -69,13 +69,32 @@ interface SegmentApi
 interface ScriptApi
 {
     struct CollectionIndices {
-        string _id;
+        string _name;
     }
+
+    struct Script {
+        string name;
+        string sourceFileName;
+        uint ledCount;
+    }
+
+    string[] get();
+
+    Script get(string _name);
 }
 
 interface SourceFileApi
 {
     struct CollectionIndices {
-        string _id;
+        string _name;
     }
+
+    struct SourceFile {
+        string name;
+        string sourceCode;
+    }
+
+    string[] get();
+
+    SourceFile get(string _name);
 }

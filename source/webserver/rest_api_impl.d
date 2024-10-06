@@ -1,16 +1,20 @@
 module webserver.rest_api_impl;
 
-import ledstrip.ledstrip_states;
-import ledstrip.ledstrip_state;
-import ledstrip.ledstrip_segment;
-import ledstrip.led_positions : getKelderLedPositions, LedPositions;
+import data_dir : DataDir;
+import ledstrip.ledstrip_states : LedstripStates;
+import ledstrip.ledstrip_state : LedstripState;
+import ledstrip.ledstrip_segment : LedstripSegment;
+import script.script : RealScript = Script;
+import ledstrip.led_positions : getKelderLedPositions;
 import main : Main;
 import webserver.mailbox : Mailbox;
 import webserver.rest_api : RestApi, ScriptApi, SegmentApi, SourceFileApi, StateApi;
 
+import std.format : f = format;
+
 import vibe.data.json : Json, serializeToJson;
 import vibe.web.rest : Collection;
-import vibe.http.common : enforceHTTP, HTTPStatus;
+import vibe.http.common : enforceHTTP, HTTPStatus, HTTPStatusException;
 
 @safe:
 
@@ -112,8 +116,46 @@ class SegmentApiImpl : SegmentApi
 
 class ScriptApiImpl : ScriptApi
 {
+    string[] get()
+    {
+        string[] names;
+        foreach (name, realScript; Main.constInstance.scripts)
+            names ~= name;
+        return names;
+    }
+
+    Script get(string _name)
+    {
+        enforceHTTP(_name in Main.constInstance.scripts, HTTPStatus.notFound, "No such script");
+        const RealScript realScript = Main.constInstance.scripts[_name];
+        return Script(
+            realScript.name,
+            realScript.fileName,
+            cast(uint) realScript.leds.length,
+        );
+    }
 }
 
 class SourceFileApiImpl : SourceFileApi
 {
+    string[] get()
+        => DataDir.listScripts;
+
+    SourceFile get(string _name)
+    {
+        string sourceCode;
+        try
+        {
+            sourceCode = DataDir.loadScript(_name);
+        }
+        catch (Exception e)
+        {
+            throw new HTTPStatusException(
+                HTTPStatus.notFound,
+                f!`Can't load source file "%s": %s`(_name, e.msg),
+            );
+        }
+
+        return SourceFile(_name, sourceCode);
+    }
 }
