@@ -4,8 +4,9 @@ import ledstrip.led : Led;
 import ledstrip.ledstrip : frameCount;
 import script.bf.bf_script : BfScript;
 import script.script : Script;
+import util : sleepFrameFraction;
 
-import core.time : Duration;
+import core.time : Duration, msecs;
 
 import std.algorithm : canFind, filter;
 import std.conv : to;
@@ -15,8 +16,8 @@ import std.math : abs;
 import std.range : chunks, enumerate;
 
 import vibe.core.core : yield;
-import vibe.core.task : InterruptException, Task;
 import vibe.core.log;
+import vibe.core.task : InterruptException, Task;
 
 @safe:
 package:
@@ -90,7 +91,7 @@ class BfScriptTask
                     break;
                 case ',':
                     while (frameCount == lastFrameCount)
-                        yield;
+                        sleepFrameFraction(5);
                     ticksSinceLastYield = 0;
                     break;
                 case '.':

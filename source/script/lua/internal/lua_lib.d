@@ -8,6 +8,7 @@ import main : Main;
 import script.lua.internal.lua_script_task : LuaScriptTask;
 import script.lua.lua_script : LuaScript;
 import script.script : Script;
+import util : sleepFrameFraction;
 import webserver.mailbox : Mailbox;
 
 import core.time : msecs;
@@ -275,11 +276,12 @@ static:
             sleep(msecs.msecs);
         }
 
+        /// waitFrames(0) just returns, waitFrames(1) waits until the next render...
         void waitFrames(ulong frames)
         {
             ulong frameCountAtEntry = frameCount;
             while (frameCount < frameCountAtEntry + frames)
-                sleepMsecs(5);
+                sleepFrameFraction(5);
         }
     }
 

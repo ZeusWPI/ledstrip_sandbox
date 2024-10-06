@@ -199,6 +199,10 @@ class Main
     }
 
     pure nothrow @nogc
+    Duration frameTime() const
+        => m_frameTime;
+
+    pure nothrow @nogc
     inout(LedstripStates) states() inout
         => m_states;
 
