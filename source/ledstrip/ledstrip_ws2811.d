@@ -28,6 +28,7 @@ class LedstripWs2811 : Ledstrip
 
     package synchronized
     this()
+    in (ThreadManager.constInstance.inMainThread, "LedstripWs2811: ctor must be called from main thread")
     {
         super();
         setupWs2811(
@@ -40,6 +41,7 @@ class LedstripWs2811 : Ledstrip
 
     nothrow @trusted //
      ~this()
+    in (ThreadManager.constInstance.inMainThread, "LedstripWs2811: dtor must be called from main thread")
     {
         if (m_setupWs2811Done)
             ws2811_fini(&m_ws2811);
@@ -47,7 +49,7 @@ class LedstripWs2811 : Ledstrip
 
     protected override @trusted
     void render()
-    in (ThreadManager.constInstance.inMainThread, "Ledstrip: render must be called from main thread")
+    in (ThreadManager.constInstance.inMainThread, "LedstripWs2811: render must be called from main thread")
     in (m_setupWs2811Done)
     {
         ws2811_render(&m_ws2811);
@@ -55,11 +57,13 @@ class LedstripWs2811 : Ledstrip
 
     override nothrow @nogc @trusted
     shared(Led[]) leds()
+    in (ThreadManager.constInstance.inMainThread, "LedstripWs2811: leds must be called from main thread")
     in (m_setupWs2811Done)
         => cast(shared(Led)[]) m_ws2811.channel[0].leds[0 .. ledCount];
 
     private @trusted
     void setupWs2811(int targetFreq, int dmaNumber, int gpioPin, uint stripType)
+    in (ThreadManager.constInstance.inMainThread, "LedstripWs2811: setupWs2811 must be called from main thread")
     in (!m_setupWs2811Done)
     out (; m_setupWs2811Done)
     {

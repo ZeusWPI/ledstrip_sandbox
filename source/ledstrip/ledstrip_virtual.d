@@ -33,7 +33,7 @@ class LedstripVirtual : Ledstrip
 
     protected override
     void render()
-    in (ThreadManager.constInstance.inMainThread, "Ledstrip: render must be called from main thread")
+    in (ThreadManager.constInstance.inMainThread, "LedstripVirtual: render must be called from main thread")
     {
     }
 
