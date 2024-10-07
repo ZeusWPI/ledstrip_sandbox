@@ -4,7 +4,7 @@
 	],
 	"httpPort": 80,
 	"ledCount": 690,
-	"fps": 15,
+	"fps": 30,
 	"dmaNumber": 10,
 	"gpioPin": 18,
 	"scripts": {
