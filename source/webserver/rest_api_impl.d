@@ -1,20 +1,20 @@
 module webserver.rest_api_impl;
 
 import data_dir : DataDir;
-import ledstrip.ledstrip_states : LedstripStates;
-import ledstrip.ledstrip_state : LedstripState;
-import ledstrip.ledstrip_segment : LedstripSegment;
-import script.script : RealScript = Script;
 import ledstrip.led_positions : getKelderLedPositions;
-import main : Main;
+import ledstrip.ledstrip_segment : LedstripSegment;
+import ledstrip.ledstrip_state : LedstripState;
+import ledstrip.ledstrip_states : LedstripStates;
+import script.script : RealScript = Script;
+import script.scripts : Scripts;
 import webserver.mailbox : Mailbox;
 import webserver.rest_api : RestApi, ScriptApi, SegmentApi, SourceFileApi, StateApi;
 
 import std.format : f = format;
 
 import vibe.data.json : Json, serializeToJson;
-import vibe.web.rest : Collection;
 import vibe.http.common : enforceHTTP, HTTPStatus, HTTPStatusException;
+import vibe.web.rest : Collection;
 
 @safe:
 
@@ -66,7 +66,7 @@ class StateApiImpl : StateApi
 
     State[string] get()
     {
-        const LedstripStates states = Main.instance.states;
+        const LedstripStates states = LedstripStates.constInstance;
         State[string] aa;
         foreach (key, value; states.states)
             aa[key] = State(key, false);
@@ -76,14 +76,14 @@ class StateApiImpl : StateApi
 
     State get(string _state)
     {
-        const LedstripStates states = Main.instance.states;
+        const LedstripStates states = LedstripStates.constInstance;
         enforceHTTP(_state in states.states, HTTPStatus.notFound, "No such state");
         return State(_state, states.activeState.name == _state);
     }
 
     void postActivate(string _state)
     {
-        Main.instance.states.setActiveState(_state);
+        LedstripStates.instance.setActiveState(_state);
     }
 
     Collection!SegmentApi segments(string _state)
@@ -94,23 +94,23 @@ class SegmentApiImpl : SegmentApi
 {
     Segment[] get(string _state)
     {
-        const LedstripStates states = Main.instance.states;
+        const LedstripStates states = LedstripStates.constInstance;
         enforceHTTP(_state in states.states, HTTPStatus.notFound, "No such state");
         const LedstripState state = states.states[_state];
         Segment[] arr;
         foreach (const LedstripSegment seg; state.segments)
-            arr ~= Segment(seg.begin, seg.end, /*seg.script.uuid*/ "someid");
+            arr ~= Segment(seg.begin, seg.end, seg.script.name);
         return arr;
     }
 
     Segment get(string _state, uint _begin)
     {
-        const LedstripStates states = Main.instance.states;
+        const LedstripStates states = LedstripStates.constInstance;
         enforceHTTP(_state in states.states, HTTPStatus.notFound, "No such state");
         const LedstripState state = states.states[_state];
         enforceHTTP(_begin in state.segments, HTTPStatus.notFound, "No segment with provided begin led");
         const LedstripSegment seg = state.segments[_begin];
-        return Segment(seg.begin, seg.end, /*seg.script.uuid*/ "someid");
+        return Segment(seg.begin, seg.end, seg.script.name);
     }
 }
 
@@ -119,15 +119,15 @@ class ScriptApiImpl : ScriptApi
     string[] get()
     {
         string[] names;
-        foreach (name, realScript; Main.constInstance.scripts)
+        foreach (name, realScript; Scripts.constInstance.scripts)
             names ~= name;
         return names;
     }
 
     Script get(string _name)
     {
-        enforceHTTP(_name in Main.constInstance.scripts, HTTPStatus.notFound, "No such script");
-        const RealScript realScript = Main.constInstance.scripts[_name];
+        enforceHTTP(_name in Scripts.constInstance.scripts, HTTPStatus.notFound, "No such script");
+        const RealScript realScript = Scripts.constInstance.scripts[_name];
         return Script(
             realScript.name,
             realScript.fileName,
@@ -139,14 +139,14 @@ class ScriptApiImpl : ScriptApi
 class SourceFileApiImpl : SourceFileApi
 {
     string[] get()
-        => DataDir.listScripts;
+        => DataDir.constInstance.listScripts;
 
     SourceFile get(string _name)
     {
         string sourceCode;
         try
         {
-            sourceCode = DataDir.loadScript(_name);
+            sourceCode = DataDir.constInstance.loadScript(_name);
         }
         catch (Exception e)
         {

@@ -1,10 +1,11 @@
 module ledstrip.ledstrip_virtual;
 
-version (LedstripVirtual):
+version (LedstripVirtual)  :  //
 
 import ledstrip.led : Led;
 import ledstrip.ledstrip_states : LedstripStates;
 import ledstrip.ledstrip : Ledstrip, LedStripException;
+import thread_manager : ThreadManager;
 
 import core.time : Duration;
 
@@ -14,29 +15,26 @@ import std.format : f = format;
 import vibe.core.log;
 
 @safe:
+package:
 
-shared
+final shared
 class LedstripVirtual : Ledstrip
 {
     private Led[] m_leds;
 
     @disable this(ref typeof(this));
 
-    this(LedstripStates states, Duration frameTime)
+    package synchronized
+    this()
     {
-        super(states, frameTime);
+        super();
         m_leds = new Led[](ledCount);
     }
 
     protected override
     void render()
+    in (ThreadManager.constInstance.inMainThread, "Ledstrip: render must be called from main thread")
     {
-        /*
-        string[] ledStrings;
-        foreach(i, Led led; leds)
-            ledStrings ~= f!"%u:0x%02x%02x%02x"(i, led.r, led.g, led.b);
-        logInfo("LedstripVirtual.render: %-(%s %)", ledStrings);
-        */
     }
 
     override pure nothrow @nogc

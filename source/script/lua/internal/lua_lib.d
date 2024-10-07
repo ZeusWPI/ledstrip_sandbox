@@ -1,10 +1,9 @@
 module script.lua.internal.lua_lib;
 
 import ledstrip.led : Led;
-import ledstrip.ledstrip : frameCount;
+import ledstrip.ledstrip : Ledstrip;
 import ledstrip.ledstrip_segment : LedstripSegment;
 import ledstrip.ledstrip_states : LedstripStates;
-import main : Main;
 import script.lua.internal.lua_script_task : LuaScriptTask;
 import script.lua.lua_script : LuaScript;
 import script.script : Script;
@@ -223,21 +222,13 @@ static:
         @disable this(ref typeof(this));
 
     static:
-        private
-        LedstripStates states()
-            => Main.instance.states;
-
-        private
-        const(LedstripStates) constStates()
-            => Main.constInstance.states;
-
         string activeName()
-            => Main.constInstance.states.activeState.name;
+            => LedstripStates.constInstance.activeState.name;
 
         bool activeContainsThisScript()
         {
             const Script thisScript = LuaScriptTask.constInstance.script;
-            foreach (begin, const LedstripSegment seg; Main.instance.states.activeState.segments)
+            foreach (begin, const LedstripSegment seg; LedstripStates.constInstance.activeState.segments)
                 if (seg.script is thisScript)
                     return true;
             return false;
@@ -245,12 +236,12 @@ static:
 
         void setActiveByName(string state)
         {
-            Main.instance.states.setActiveState(state);
+            LedstripStates.instance.setActiveState(state);
         }
 
         void setDefaultActive()
         {
-            Main.instance.states.setDefaultActive;
+            LedstripStates.instance.setDefaultActive;
         }
     }
 
@@ -279,8 +270,8 @@ static:
         /// waitFrames(0) just returns, waitFrames(1) waits until the next render...
         void waitFrames(ulong frames)
         {
-            ulong frameCountAtEntry = frameCount;
-            while (frameCount < frameCountAtEntry + frames)
+            ulong frameCountAtEntry = Ledstrip.constInstance.frameCount;
+            while (Ledstrip.constInstance.frameCount < frameCountAtEntry + frames)
                 sleepFrameFraction(5);
         }
     }

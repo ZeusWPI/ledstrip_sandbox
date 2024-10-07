@@ -1,6 +1,10 @@
 module ledstrip.ledstrip_states;
 
+import data_dir : DataDir;
 import ledstrip.ledstrip_state : LedstripState;
+import script.script : Script;
+import script.scripts : Scripts;
+import singleton : sharedSingleton;
 
 import std.exception : basicExceptionCtors, enforce;
 import std.format : f = format;
@@ -8,9 +12,11 @@ import vibe.core.log;
 
 @safe:
 
-final shared synchronized
+final shared
 class LedstripStates
 {
+    mixin sharedSingleton;
+
     private alias enf = enforce!LedstripStatesException;
     private enum string ct_defaultStateName = "default";
 
@@ -21,11 +27,34 @@ class LedstripStates
 
     @disable this(ref typeof(this));
 
-    pure
-    this(uint ledCount)
+    private synchronized
+    this()
     {
-        enf(ledCount > 0);
-        m_ledCount = ledCount;
+        m_ledCount = DataDir.constInstance.config.ledCount;
+
+        enf(m_ledCount > 0, "LedstripStates: ledCount cannot be 0");
+
+        loadConfigStates;
+        setDefaultActive;
+    }
+
+    private
+    void loadConfigStates()
+    {
+        const configStates = DataDir.constInstance.config.states;
+        foreach (stateName, configState; configStates)
+        {
+            LedstripState state = addState(stateName);
+            foreach (configSegment; configState.segments)
+            {
+                enforce(
+                    configSegment.scriptName in Scripts.constInstance.scripts,
+                    f!"createConfigStates: no such script %s"(configSegment.scriptName),
+                );
+                const Script script = Scripts.constInstance.scripts[configSegment.scriptName];
+                state.assignSegment(configSegment.begin, configSegment.end, script);
+            }
+        }
     }
 
     pure nothrow @nogc
@@ -36,7 +65,7 @@ class LedstripStates
     inout(shared(LedstripState[string])) states() inout
         => m_states;
 
-    pure
+    synchronized pure
     LedstripState addState(string stateName)
     {
         enforceIsValidState(stateName);
@@ -63,7 +92,7 @@ class LedstripStates
         setActiveState(ct_defaultStateName);
     }
 
-    pure
+    pure nothrow @nogc
     void setOnActiveStateChange(shared void delegate() shared nothrow @safe onActiveStateChange)
     {
         m_onActiveStateChange = onActiveStateChange;

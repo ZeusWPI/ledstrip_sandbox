@@ -2,6 +2,7 @@ module script.lua.internal.lua_script_task;
 
 import script.lua.internal.lua_lib : LuaLib;
 import script.lua.lua_script : LuaScript;
+import script.script : Script;
 
 import std.algorithm : canFind;
 import std.format : f = format;
@@ -26,7 +27,7 @@ class LuaScriptTask
     private LuaTable m_env;
 
     package(script.lua) static nothrow
-    void entrypoint(LuaScript script)
+    void entrypoint(Script script)
     {
         LuaScriptTask instance = new LuaScriptTask(script);
         instance.run;
@@ -35,10 +36,11 @@ class LuaScriptTask
     @disable this(ref typeof(this));
 
     private nothrow
-    this(LuaScript script)
+    this(Script script)
     in (script !is null, "Lua script task: script is null")
+    in ((cast(LuaScript) script) !is null, "Lua script task: script is not a LuaScript")
     {
-        m_script = script;
+        m_script = cast(LuaScript) script;
         m_task = Task.getThis;
         registerInstance;
     }
@@ -65,7 +67,9 @@ class LuaScriptTask
     void run()
     {
         scope (exit)
-            m_script.reset;
+        {
+            m_script.setStopped;
+        }
 
         logInfo(`Task for lua script "%s" started`, m_script.name);
 

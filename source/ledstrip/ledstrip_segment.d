@@ -15,9 +15,9 @@ class LedstripSegment
 {
     private uint m_begin;
     private uint m_end;
-    private Script m_script;
+    private const Script m_script;
 
-    this(uint begin, uint end, Script script, uint totalLedCount)
+    this(uint begin, uint end, const Script script, uint totalLedCount)
     {
         m_begin = begin;
         m_end = end;
@@ -34,7 +34,7 @@ class LedstripSegment
         => m_end;
 
     pure nothrow @nogc
-    inout(Script) script() inout
+    const(Script) script() const
         => m_script;
 
     pure
@@ -50,9 +50,6 @@ class LedstripSegment
     pure nothrow @nogc
     bool overlapsWith(in LedstripSegment other) const
         => begin.inRange(other.begin, other.end) || end.inRange(other.begin + 1, other.end);
-
-    string toString() const
-        => f!`LedstripSegment(begin=%u, end=%u, script="%s")`(begin, end, /*script.uuid*/ "someuuid");
 }
 
 class LedstripSegmentException : Exception

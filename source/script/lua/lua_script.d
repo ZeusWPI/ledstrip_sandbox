@@ -14,20 +14,12 @@ import vibe.core.taskpool : TaskPool;
 final shared
 class LuaScript : Script
 {
-    this(string name, string fileName, string sourceCode, uint ledCount)
+    this(string name, string fileName, uint ledCount, bool autoStart)
     {
-        super(name, fileName, sourceCode, ledCount);
+        super(name, fileName, ledCount, autoStart);
     }
 
     override
-    Task start(TaskPool taskPool)
-    {
-        super.start(taskPool);
-        logDiagnostic(`Starting task for lua script "%s"`, name);
-        return taskPool.runTaskH(&LuaScriptTask.entrypoint, this);
-    }
-
-    override
-    Duration runtimeSinceLastPause()
-        => Duration.zero;
+    TaskEntrypoint taskEntrypoint()
+        => &LuaScriptTask.entrypoint;
 }

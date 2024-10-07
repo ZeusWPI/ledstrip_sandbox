@@ -58,7 +58,7 @@ interface SegmentApi
     struct Segment
     {
         uint begin, end;
-        string scriptUuid;
+        string scriptName;
     }
 
     Segment[] get(string _state);

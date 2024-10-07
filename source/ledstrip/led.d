@@ -6,7 +6,7 @@ import bindbc.rpi_ws281x.rpi_ws281x : ws2811_led_t;
 
 struct Led
 {
-nothrow @nogc:
+pure nothrow @nogc:
     version (BigEndian)
         ubyte w, r, g, b;
     else

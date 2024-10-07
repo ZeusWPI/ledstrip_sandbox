@@ -1,10 +1,11 @@
 module script.bf.internal.bf_script_task;
 
 import ledstrip.led : Led;
-import ledstrip.ledstrip : frameCount;
+import ledstrip.ledstrip : Ledstrip;
 import script.bf.bf_script : BfScript;
 import script.script : Script;
 import util : sleepFrameFraction;
+import thread_manager : ThreadManager;
 
 import core.time : Duration, msecs;
 
@@ -30,13 +31,25 @@ class BfScriptTask
     private BfScript m_script;
     private Task m_task;
 
+    package(script.bf) static nothrow
+    void entrypoint(Script script)
+    in (
+        ThreadManager.constInstance.inScriptTaskPool,
+        "Bf script task: entrypoint must be called from script task",
+    )
+    {
+        typeof(this) instance = new typeof(this)(script);
+        instance.run;
+    }
+
     @disable this(ref typeof(this));
 
     private nothrow
-    this(BfScript script)
+    this(Script script)
     in (script !is null, "Bf script task: script is null")
+    in ((cast(BfScript) script) !is null, "Bf script task: script is not a BfScript")
     {
-        m_script = script;
+        m_script = cast(BfScript) script;
         m_task = Task.getThis;
     }
 
@@ -44,7 +57,9 @@ class BfScriptTask
     void run()
     {
         scope (exit)
-            m_script.reset;
+        {
+            m_script.setStopped;
+        }
 
         logInfo(`Task for bf script "%s" started`, m_script.name);
 
@@ -61,7 +76,7 @@ class BfScriptTask
             int ticksSinceLastYield;
             for (size_t ip = 0; ip < code.length; ip++)
             {
-                ulong currFrameCount = frameCount;
+                ulong currFrameCount = Ledstrip.constInstance.frameCount;
                 if (currFrameCount != lastFrameCount)
                 {
                     foreach (i, chunk; tape.chunks(3).enumerate)
@@ -90,7 +105,7 @@ class BfScriptTask
                     tape[tapePtr]--;
                     break;
                 case ',':
-                    while (frameCount == lastFrameCount)
+                    while (Ledstrip.constInstance.frameCount == lastFrameCount)
                         sleepFrameFraction(5);
                     ticksSinceLastYield = 0;
                     break;
@@ -181,13 +196,6 @@ class BfScriptTask
         );
 
         return bracketMap;
-    }
-
-    package(script.bf) static nothrow
-    void entrypoint(BfScript script)
-    {
-        BfScriptTask instance = new BfScriptTask(script);
-        instance.run;
     }
 }
 

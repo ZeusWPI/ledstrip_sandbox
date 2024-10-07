@@ -2,6 +2,7 @@ module data_dir;
 
 import config : Config;
 import script.script : isValidScriptFileName;
+import singleton : sharedSingleton;
 
 import std.algorithm : endsWith, filter, map;
 import std.array : array;
@@ -9,34 +10,48 @@ import std.exception : basicExceptionCtors, enforce;
 import std.file : dirEntries, DirEntry, exists, isDir, isFile, mkdir, readText, SpanMode, write;
 import std.format : f = format;
 import std.path : baseName, buildPath;
-import std.uri;
+
+import vibe.data.json : deserializeJson, serializeToPrettyJson;
 
 @safe:
 
-struct DataDir
+final shared
+class DataDir
 {
+    mixin sharedSingleton;
+
     private enum string ct_dirName = "data";
     private enum string ct_jsonFileName = "config.json";
     private enum string ct_jsonFilePath = buildPath(ct_dirName, ct_jsonFileName);
 
-    @disable this();
-    @disable this(ref typeof(this));
+    private Config m_config;
 
-static:
-    Config loadConfig()
+    private
+    this()
     {
-        createIfNeeded;
-        return Config.fromJsonString(ct_jsonFilePath.readText);
+        loadConfig;
     }
 
-    void saveConfig(Config c)
+    private synchronized
+    void loadConfig()
     {
         createIfNeeded;
-        c.toJsonString.write(ct_jsonFilePath);
+        m_config = deserializeJson!Config(ct_jsonFilePath.readText).sharedDup;
     }
 
-    @trusted
-    string[] listScripts()
+    pure nothrow @nogc
+    ref inout(shared(Config)) config() inout
+        => m_config;
+
+    synchronized
+    void saveConfig() const
+    {
+        createIfNeeded;
+        ct_jsonFilePath.write(m_config.serializeToPrettyJson);
+    }
+
+    synchronized @trusted
+    string[] listScripts() const
     {
         return dirEntries(ct_dirName, SpanMode.shallow)
             .filter!(entry => entry.isFile)
@@ -45,7 +60,8 @@ static:
             .array;
     }
 
-    string loadScript(string fileName)
+    synchronized
+    string loadScript(string fileName) const
     {
         string scriptFilePath = getScriptFilePath(fileName);
         enforce!DataDirException(
@@ -59,7 +75,8 @@ static:
         return scriptFilePath.readText;
     }
 
-    void saveScript(string fileName, string sourceCode)
+    synchronized
+    void saveScript(string fileName, string sourceCode) const
     {
         string scriptFilePath = getScriptFilePath(fileName);
         if (scriptFilePath.exists)
@@ -73,7 +90,7 @@ static:
     }
 
     private
-    string getScriptFilePath(string fileName)
+    string getScriptFilePath(string fileName) const
     {
         createIfNeeded;
         enforce!DataDirException(
@@ -84,7 +101,7 @@ static:
     }
 
     private
-    void createIfNeeded()
+    void createIfNeeded() const
     {
         if (!ct_dirName.exists)
             mkdir(ct_dirName);
@@ -94,7 +111,7 @@ static:
         );
 
         if (!ct_jsonFilePath.exists)
-            ct_jsonFilePath.write(Config.init.toJsonString);
+            ct_jsonFilePath.write(Config.init.serializeToPrettyJson);
         enforce!DataDirException(
             ct_jsonFilePath.isFile,
             f!"%s is not a regular file"(ct_jsonFilePath),

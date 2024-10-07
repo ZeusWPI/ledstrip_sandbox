@@ -1,15 +1,18 @@
 module webserver.webserver;
 
-import main : Main;
+import data_dir : DataDir;
+import singleton : threadLocalSingleton;
+import thread_manager : ThreadManager;
+
 import webserver.mailbox : Mailbox;
 import webserver.rest_api;
 import webserver.rest_api_impl;
 
-import vibe.http.router : URLRouter;
-import vibe.http.fileserver : serveStaticFiles, HTTPFileServerSettings;
-import vibe.http.server : HTTPListener, HTTPServerOption, HTTPServerRequest,
-    HTTPServerResponse, HTTPServerSettings, listenHTTP, HTTPServerRequestDelegateS;
 import vibe.data.json;
+import vibe.http.fileserver : HTTPFileServerSettings, serveStaticFiles;
+import vibe.http.router : URLRouter;
+import vibe.http.server : HTTPListener, HTTPServerOption, HTTPServerRequest, HTTPServerRequestDelegateS,
+    HTTPServerResponse, HTTPServerSettings, listenHTTP;
 import vibe.web.rest : path, registerRestInterface, RestInterfaceSettings;
 
 @safe:
@@ -17,6 +20,8 @@ import vibe.web.rest : path, registerRestInterface, RestInterfaceSettings;
 final
 class Webserver
 {
+    mixin threadLocalSingleton;
+
     private HTTPServerSettings m_httpServerSettings;
     private RestInterfaceSettings m_restApiSettings;
     private RestApi m_restApi;
@@ -25,13 +30,12 @@ class Webserver
     private URLRouter m_router;
     private HTTPListener m_listener;
 
-    @disable this(ref typeof(this));
-
-    this(string[] bindAddresses, ushort port)
+    this()
+    in (ThreadManager.constInstance.inMainThread)
     {
         m_httpServerSettings = new HTTPServerSettings;
-        m_httpServerSettings.port = port;
-        m_httpServerSettings.bindAddresses = bindAddresses;
+        m_httpServerSettings.port = DataDir.constInstance.config.httpPort;
+        m_httpServerSettings.bindAddresses = DataDir.constInstance.config.httpBindAddresses.idup.dup;
         m_httpServerSettings.options |= HTTPServerOption.reuseAddress;
         m_httpServerSettings.options |= HTTPServerOption.reusePort;
 

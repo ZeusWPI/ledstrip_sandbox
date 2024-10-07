@@ -1,10 +1,13 @@
 module ledstrip.ledstrip_ws2811;
-// dfmt off
-version (LedstripWs2811):
 
+version (LedstripWs2811)  :  //
+
+import ct_config : ct_ledStripType, ct_targetFreq;
+import data_dir : DataDir;
 import ledstrip.led : Led;
-import ledstrip.ledstrip_states : LedstripStates;
 import ledstrip.ledstrip : Ledstrip, LedStripException;
+import ledstrip.ledstrip_states : LedstripStates;
+import thread_manager : ThreadManager;
 
 import core.time : Duration;
 
@@ -13,6 +16,7 @@ import std.format : f = format;
 import bindbc.rpi_ws281x;
 
 @safe:
+package:
 
 shared
 class LedstripWs2811 : Ledstrip
@@ -22,15 +26,20 @@ class LedstripWs2811 : Ledstrip
 
     @disable this(ref typeof(this));
 
-    this(LedstripStates states, Duration frameTime,
-        int targetFreq, int dmaNumber, int gpioPin, uint stripType)
+    package synchronized
+    this()
     {
-        super(states, frameTime);
-        setupWs2811(targetFreq, dmaNumber, gpioPin, stripType);
+        super();
+        setupWs2811(
+            ct_targetFreq,
+            DataDir.constInstance.config.dmaNumber,
+            DataDir.constInstance.config.gpioPin,
+            ct_ledStripType,
+        );
     }
 
-    nothrow @trusted
-    ~this()
+    nothrow @trusted //
+     ~this()
     {
         if (m_setupWs2811Done)
             ws2811_fini(&m_ws2811);
@@ -38,6 +47,7 @@ class LedstripWs2811 : Ledstrip
 
     protected override @trusted
     void render()
+    in (ThreadManager.constInstance.inMainThread, "Ledstrip: render must be called from main thread")
     in (m_setupWs2811Done)
     {
         ws2811_render(&m_ws2811);

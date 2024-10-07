@@ -25,20 +25,12 @@ import vibe.core.taskpool : TaskPool;
 final shared
 class BfScript : Script
 {
-    this(string name, string fileName, string sourceCode, uint ledCount)
+    this(string name, string fileName, uint ledCount, bool autoStart)
     {
-        super(name, fileName, sourceCode, ledCount);
+        super(name, fileName, ledCount, autoStart);
     }
 
     override
-    Task start(TaskPool taskPool)
-    {
-        logDiagnostic(`Starting task for bf script "%s"`, name);
-        super.start(taskPool);
-        return taskPool.runTaskH(&BfScriptTask.entrypoint, this);
-    }
-
-    override
-    Duration runtimeSinceLastPause()
-        => Duration.zero;
+    TaskEntrypoint taskEntrypoint()
+        => &BfScriptTask.entrypoint;
 }

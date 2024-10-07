@@ -1,14 +1,16 @@
 module config;
 
-import vibe.data.json : deserializeJson, serializeToPrettyJson;
+import core.time : Duration, seconds;
 
-@safe:
+import std.algorithm : each;
+import std.conv : to;
+
+@safe pure nothrow @nogc:
 
 struct Config
 {
     string[] httpBindAddresses = ["0.0.0.0"];
     ushort httpPort = 80;
-
     uint ledCount = 690;
     uint fps = 15;
     int dmaNumber = 10;
@@ -16,12 +18,26 @@ struct Config
     ConfigScript[string] scripts;
     ConfigState[string] states;
 
-    static
-    typeof(this) fromJsonString(string s)
-        => s.deserializeJson!(typeof(this));
+    pure nothrow @nogc
+    Duration frameTime() const shared
+        => 1.seconds / fps;
 
-    string toJsonString()
-        => this.serializeToPrettyJson;
+    pure
+    shared(Config) sharedDup() const
+    {
+        shared(Config) ret;
+        // dfmt off
+        ret.httpBindAddresses = httpBindAddresses.to!(shared(string)[]);
+        ret.httpPort          = httpPort;
+        ret.ledCount          = ledCount;
+        ret.fps               = fps;
+        ret.dmaNumber         = dmaNumber;
+        ret.gpioPin           = gpioPin;
+        foreach (k, v; scripts) ret.scripts[k] = v;
+        foreach (k, v; states)  ret.states[k]  = v.sharedDup;
+        // dfmt on
+        return ret;
+    }
 }
 
 struct ConfigScript
@@ -34,6 +50,14 @@ struct ConfigScript
 struct ConfigState
 {
     ConfigSegment[] segments;
+
+    pure
+    shared(ConfigState) sharedDup() const
+    {
+        shared ConfigState ret;
+        ret.segments = segments.to!(shared(ConfigSegment[]));
+        return ret;
+    }
 }
 
 struct ConfigSegment
