@@ -18,7 +18,7 @@ import std.format : f = format;
 import std.stdio : stderr, stdout, write, writef, writefln, writeln;
 import std.traits : isInstanceOf;
 
-import vibe.core.core : runTask, sleep;
+import vibe.core.core : runTask, sleep, yield;
 import vibe.core.log;
 
 @safe:
