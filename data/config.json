@@ -47,6 +47,11 @@
 			"fileName": "flashbang.lua",
 			"ledCount": 690,
 			"autoStart": true
+		},
+		"sirens": {
+			"fileName": "sirens.lua",
+			"ledCount": 690,
+			"autoStart": true
 		}
 	},
 	"states": {
@@ -99,6 +104,15 @@
 					"begin": 0,
 					"end": 690,
 					"scriptName": "flashbang"
+				}
+			]
+		},
+		"sirens": {
+			"segments": [
+				{
+					"begin": 0,
+					"end": 690,
+					"scriptName": "sirens"
 				}
 			]
 		}
