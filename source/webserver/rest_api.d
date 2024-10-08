@@ -19,6 +19,8 @@ interface RestApi
 
     Collection!StateApi states();
 
+    string getActiveState();
+
     Collection!ScriptApi scripts();
 
     Collection!SourceFileApi sourceFiles();
@@ -42,17 +44,11 @@ interface StateApi
         string _state;
     }
 
-    struct State
-    {
-        string name;
-        bool active;
-    }
+    string[] get();
 
-    State[string] get();
+    void post(string state);
 
-    State get(string _state);
-
-    void post(string _state);
+    string get(string _state);
 
     void delete_(string _state);
 

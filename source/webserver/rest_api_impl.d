@@ -43,6 +43,10 @@ class RestApiImpl : RestApi
         => Collection!StateApi(m_stateApi);
 
     override
+    string getActiveState()
+        => LedstripStates.constInstance.activeState.name;
+
+    override
     Collection!ScriptApi scripts()
         => Collection!ScriptApi(m_scriptApi);
 
@@ -86,35 +90,34 @@ class StateApiImpl : StateApi
     }
 
     override
-    State[string] get()
+    string[] get()
     {
         const LedstripStates states = LedstripStates.constInstance;
-        State[string] aa;
-        foreach (key, value; states.states)
-            aa[key] = State(key, false);
-        aa[states.activeState.name].active = true;
-        return aa;
+        string[] arr;
+        foreach (name, state; states.states)
+            arr ~= name;
+        return arr;
     }
 
     override
-    State get(string _state)
+    void post(string state)
+    {
+        enforceHTTP(state !in LedstripStates.constInstance.states, HTTPStatus.conflict, "State already exists");
+        LedstripStates.instance.addState(state);
+    }
+
+    override
+    string get(string _state)
     {
         const LedstripStates states = LedstripStates.constInstance;
         enforceHTTP(_state in states.states, HTTPStatus.notFound, "No such state");
-        return State(_state, states.activeState.name == _state);
-    }
-
-    override
-    void post(string _state)
-    {
-        enforceHTTP(_state !in LedstripStates.constInstance.states, HTTPStatus.conflict, "State already exists");
-        LedstripStates.instance.addState(_state);
+        return _state;
     }
 
     override
     void delete_(string _state)
     {
-        enforceHTTP(_state in LedstripStates.constInstance.states, HTTPStatus.conflict, "No such state");
+        enforceHTTP(_state in LedstripStates.constInstance.states, HTTPStatus.notFound, "No such state");
         LedstripStates.instance.removeState(_state);
     }
 
