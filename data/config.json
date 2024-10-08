@@ -2,7 +2,7 @@
 	"httpBindAddresses": [
 		"0.0.0.0"
 	],
-	"httpPort": 8080,
+	"httpPort": 80,
 	"ledCount": 690,
 	"fps": 30,
 	"dmaNumber": 10,
