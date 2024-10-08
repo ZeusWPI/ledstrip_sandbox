@@ -147,6 +147,28 @@ class SegmentApiImpl : SegmentApi
     }
 
     override
+    void post(string _state, Segment segment)
+    {
+        enforceHTTP(
+            _state in LedstripStates.constInstance.states,
+            HTTPStatus.notFound,
+            "No such state",
+        );
+        enforceHTTP(
+            segment.begin !in LedstripStates.constInstance.states[_state].segments,
+            HTTPStatus.conflict,
+            "Segment with the same begin led already exists",
+        );
+        enforceHTTP(
+            segment.scriptName in Scripts.constInstance.scripts,
+            HTTPStatus.notFound,
+            "No such script",
+        );
+        const RealScript script = Scripts.constInstance.scripts[segment.scriptName];
+        LedstripStates.instance.states[_state].assignSegment(segment.begin, segment.end, script);
+    }
+
+    override
     Segment get(string _state, uint _begin)
     {
         const LedstripStates states = LedstripStates.constInstance;
@@ -155,6 +177,22 @@ class SegmentApiImpl : SegmentApi
         enforceHTTP(_begin in state.segments, HTTPStatus.notFound, "No segment with provided begin led");
         const LedstripSegment seg = state.segments[_begin];
         return Segment(seg.begin, seg.end, seg.script.name);
+    }
+
+    override
+    void delete_(string _state, uint _begin)
+    {
+        enforceHTTP(
+            _state in LedstripStates.constInstance.states,
+            HTTPStatus.notFound,
+            "No such state",
+        );
+        enforceHTTP(
+            _begin in LedstripStates.constInstance.states[_state].segments,
+            HTTPStatus.notFound,
+            "No such segment",
+        );
+        LedstripStates.instance.states[_state].unassignSegment(_begin);
     }
 }
 

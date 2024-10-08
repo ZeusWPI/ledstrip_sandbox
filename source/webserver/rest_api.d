@@ -72,7 +72,11 @@ interface SegmentApi
 
     Segment[] get(string _state);
 
+    void post(string _state, Segment segment);
+
     Segment get(string _state, uint _begin);
+
+    void delete_(string _state, uint _begin);
 }
 
 interface ScriptApi
