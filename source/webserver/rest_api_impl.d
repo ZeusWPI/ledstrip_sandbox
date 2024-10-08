@@ -64,6 +64,7 @@ class StateApiImpl : StateApi
         m_segmentApi = new SegmentApiImpl;
     }
 
+    override
     State[string] get()
     {
         const LedstripStates states = LedstripStates.constInstance;
@@ -74,6 +75,7 @@ class StateApiImpl : StateApi
         return aa;
     }
 
+    override
     State get(string _state)
     {
         const LedstripStates states = LedstripStates.constInstance;
@@ -81,17 +83,20 @@ class StateApiImpl : StateApi
         return State(_state, states.activeState.name == _state);
     }
 
+    override
     void postActivate(string _state)
     {
         LedstripStates.instance.setActiveState(_state);
     }
 
+    override
     Collection!SegmentApi segments(string _state)
         => Collection!SegmentApi(m_segmentApi, _state);
 }
 
 class SegmentApiImpl : SegmentApi
 {
+    override
     Segment[] get(string _state)
     {
         const LedstripStates states = LedstripStates.constInstance;
@@ -103,6 +108,7 @@ class SegmentApiImpl : SegmentApi
         return arr;
     }
 
+    override
     Segment get(string _state, uint _begin)
     {
         const LedstripStates states = LedstripStates.constInstance;
@@ -124,6 +130,7 @@ class ScriptApiImpl : ScriptApi
         return names;
     }
 
+    override
     Script get(string _name)
     {
         enforceHTTP(_name in Scripts.constInstance.scripts, HTTPStatus.notFound, "No such script");
@@ -138,9 +145,11 @@ class ScriptApiImpl : ScriptApi
 
 class SourceFileApiImpl : SourceFileApi
 {
+    override
     string[] get()
         => DataDir.constInstance.listScripts;
 
+    override
     SourceFile get(string _name)
     {
         string sourceCode;
