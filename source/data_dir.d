@@ -7,7 +7,7 @@ import singleton : sharedSingleton;
 import std.algorithm : endsWith, filter, map;
 import std.array : array;
 import std.exception : basicExceptionCtors, enforce;
-import std.file : dirEntries, DirEntry, exists, isDir, isFile, mkdir, readText, SpanMode, write;
+import std.file : dirEntries, DirEntry, exists, isDir, isFile, mkdir, readText, remove, SpanMode, write;
 import std.format : f = format;
 import std.path : baseName, buildPath;
 
@@ -74,11 +74,11 @@ class DataDir
         string scriptFilePath = getScriptFilePath(fileName);
         enforce!DataDirException(
             scriptFilePath.exists,
-            f!`loadScript: Script file %s doesn't exist`(fileName),
+            f!`loadScript: Script file "%s" doesn't exist`(fileName),
         );
         enforce!DataDirException(
             scriptFilePath.isFile,
-            f!`loadScript: Script file %s is not a regular file`(fileName),
+            f!`loadScript: Script file "%s" is not a regular file`(fileName),
         );
         return scriptFilePath.readText;
     }
@@ -91,10 +91,25 @@ class DataDir
         {
             enforce!DataDirException(
                 scriptFilePath.isFile,
-                f!`saveScript: Script file %s is not a regular file`(fileName),
+                f!`saveScript: Script file "%s" is not a regular file`(fileName),
             );
         }
         scriptFilePath.write(sourceCode);
+    }
+
+    synchronized
+    void deleteScript(string fileName) const
+    {
+        string scriptFilePath = getScriptFilePath(fileName);
+        enforce!DataDirException(
+            scriptFilePath.exists,
+            f!`removeScript: Script file "%s" doesn't exist`(fileName),
+        );
+        enforce!DataDirException(
+            scriptFilePath.isFile,
+            f!`removeScript: Script file "%s" is not a regular file`(fileName),
+        );
+        scriptFilePath.remove;
     }
 
     private

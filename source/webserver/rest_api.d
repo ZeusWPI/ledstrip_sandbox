@@ -109,5 +109,11 @@ interface SourceFileApi
 
     string[] get();
 
+    void post(SourceFile sourceFile);
+
     SourceFile get(string _name);
+
+    void put(string _name, string sourceCode);
+
+    void delete_(string _name);
 }

@@ -227,6 +227,12 @@ class SourceFileApiImpl : SourceFileApi
         => DataDir.constInstance.listScripts;
 
     override
+    void post(SourceFile sourceFile)
+    {
+        DataDir.constInstance.saveScript(sourceFile.name, sourceFile.sourceCode);
+    }
+
+    override
     SourceFile get(string _name)
     {
         string sourceCode;
@@ -243,5 +249,18 @@ class SourceFileApiImpl : SourceFileApi
         }
 
         return SourceFile(_name, sourceCode);
+    }
+
+
+    override
+    void put(string _name, string sourceCode)
+    {
+        DataDir.constInstance.saveScript(_name, sourceCode);
+    }
+
+    override
+    void delete_(string _name)
+    {
+        DataDir.constInstance.deleteScript(_name);
     }
 }

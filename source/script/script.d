@@ -112,9 +112,9 @@ bool isValidScriptFileName(string name)
 {
     if (name.canFind("/"))
         return false;
-        
+
     foreach (string ext; EnumMembers!ScriptExtension)
-        if (name.canFind(ext))
+        if (name.endsWith(ext))
             return true;
     return false;
 }
