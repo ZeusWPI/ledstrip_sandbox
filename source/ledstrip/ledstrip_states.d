@@ -73,6 +73,18 @@ class LedstripStates
         return m_states[stateName] = new LedstripState(stateName, m_ledCount);
     }
 
+    synchronized
+    void removeState(string stateName)
+    {
+        enforceIsValidState(stateName);
+        enf(stateName in m_states, f!`removeState: No such state "%s"`(stateName));
+        foreach (k, v; m_states[stateName].segments)
+            enf(false, "removeState: State still has segments assigned");
+        if (activeState is m_states[stateName])
+            setDefaultActive;
+        m_states.remove(stateName);
+    }
+
     pure nothrow @nogc
     inout(LedstripState) activeState() inout
         => m_activeState;

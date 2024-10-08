@@ -105,6 +105,20 @@ class StateApiImpl : StateApi
     }
 
     override
+    void post(string _state)
+    {
+        enforceHTTP(_state !in LedstripStates.constInstance.states, HTTPStatus.conflict, "State already exists");
+        LedstripStates.instance.addState(_state);
+    }
+
+    override
+    void delete_(string _state)
+    {
+        enforceHTTP(_state in LedstripStates.constInstance.states, HTTPStatus.conflict, "No such state");
+        LedstripStates.instance.removeState(_state);
+    }
+
+    override
     void postActivate(string _state)
     {
         LedstripStates.instance.setActiveState(_state);

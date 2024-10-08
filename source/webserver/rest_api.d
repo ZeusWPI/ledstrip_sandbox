@@ -52,6 +52,10 @@ interface StateApi
 
     State get(string _state);
 
+    void post(string _state);
+
+    void delete_(string _state);
+
     void postActivate(string _state);
 
     Collection!SegmentApi segments(string _state);

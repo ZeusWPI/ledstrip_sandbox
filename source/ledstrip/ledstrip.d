@@ -101,6 +101,7 @@ class Ledstrip
                         logWarn("Passed frame time before sleeping. Consider lowering fps.");
                         m_framesSinceTimeWarn = 0;
                     }
+                    yield;
                 }
                 else
                 {
