@@ -8,7 +8,7 @@ import ledstrip.ledstrip_states : LedstripStates;
 import script.script : RealScript = Script;
 import script.scripts : Scripts;
 import webserver.mailbox : Mailbox;
-import webserver.rest_api : RestApi, ScriptApi, SegmentApi, SourceFileApi, StateApi;
+import webserver.rest_api : ConfigApi, RestApi, ScriptApi, SegmentApi, SourceFileApi, StateApi;
 
 import std.format : f = format;
 
@@ -21,16 +21,22 @@ import vibe.web.rest : Collection;
 final
 class RestApiImpl : RestApi
 {
+    private ConfigApi m_configApi;
     private StateApi m_stateApi;
     private ScriptApiImpl m_scriptApi;
     private SourceFileApiImpl m_sourceFileApi;
 
     this()
     {
+        m_configApi = new ConfigApiImpl;
         m_stateApi = new StateApiImpl;
         m_scriptApi = new ScriptApiImpl;
         m_sourceFileApi = new SourceFileApiImpl;
     }
+
+    override
+    ConfigApi config()
+        => m_configApi;
 
     override
     Collection!StateApi states()
@@ -53,6 +59,21 @@ class RestApiImpl : RestApi
     override
     Json getLedPositions()
         => getKelderLedPositions.serializeToJson;
+}
+
+class ConfigApiImpl : ConfigApi
+{
+    override
+    uint getFps()
+        => DataDir.constInstance.config.fps;
+
+    override
+    void putFps(uint fps)
+    {
+        enforceHTTP(DataDir.isValidFps(fps), HTTPStatus.conflict, "Invalid fps");
+        DataDir.instance.config.fps = fps;
+        DataDir.instance.saveConfig;
+    }
 }
 
 class StateApiImpl : StateApi
@@ -122,6 +143,7 @@ class SegmentApiImpl : SegmentApi
 
 class ScriptApiImpl : ScriptApi
 {
+    override
     string[] get()
     {
         string[] names;

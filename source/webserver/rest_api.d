@@ -15,6 +15,8 @@ import vibe.web.rest : Collection, path;
 @path("/api")
 interface RestApi
 {
+    ConfigApi config();
+
     Collection!StateApi states();
 
     Collection!ScriptApi scripts();
@@ -25,6 +27,13 @@ interface RestApi
     void putMailbox(string topic, string message);
 
     Json getLedPositions();
+}
+
+interface ConfigApi
+{
+    uint getFps();
+
+    void putFps(uint fps);
 }
 
 interface StateApi

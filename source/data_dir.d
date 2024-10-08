@@ -37,6 +37,14 @@ class DataDir
     {
         createIfNeeded;
         m_config = deserializeJson!Config(ct_jsonFilePath.readText).sharedDup;
+        enforce(
+            isValidFps(m_config.fps),
+            f!`loadConfig: invalid fps "%s"`(m_config.fps)
+        );
+        enforce(
+            isValidLedCount(m_config.ledCount),
+            f!`loadConfig: invalid ledCount "%s"`(m_config.ledCount)
+        );
     }
 
     pure nothrow @nogc
@@ -90,17 +98,6 @@ class DataDir
     }
 
     private
-    string getScriptFilePath(string fileName) const
-    {
-        createIfNeeded;
-        enforce!DataDirException(
-            fileName.isValidScriptFileName,
-            f!`Invalid script file name "%s"`(fileName),
-        );
-        return buildPath(ct_dirName, fileName);
-    }
-
-    private
     void createIfNeeded() const
     {
         if (!ct_dirName.exists)
@@ -117,6 +114,25 @@ class DataDir
             f!"%s is not a regular file"(ct_jsonFilePath),
         );
     }
+
+    private
+    string getScriptFilePath(string fileName) const
+    {
+        createIfNeeded;
+        enforce!DataDirException(
+            fileName.isValidScriptFileName,
+            f!`Invalid script file name "%s"`(fileName),
+        );
+        return buildPath(ct_dirName, fileName);
+    }
+
+    static
+    bool isValidLedCount(uint ledCount)
+        => ledCount > 0;
+
+    static
+    bool isValidFps(uint fps)
+        => fps > 0;
 }
 
 class DataDirException : Exception
