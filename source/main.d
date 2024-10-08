@@ -12,8 +12,6 @@ import vibe.core.log;
 
 @safe:
 
-// TODO: check script ledCount when assigning segments
-// TODO: don't call resetLedsChanged until after walking all segments so every one gets drawn
 // TODO: editor
 // TODO: synchronize rest api procedures with collection singletons
 // TODO: lua auto yield

@@ -119,18 +119,18 @@ class Ledstrip
     void copySegmentLeds()
     {
         const segments = LedstripStates.constInstance.activeState.segments;
+        Script[] scriptsToResetLedsChanged;
         foreach (begin, const LedstripSegment seg; segments)
         {
             const Script constScript = seg.script;
             if (constScript.ledsChanged)
             {
                 leds[seg.begin .. seg.end] = constScript.leds[];
-
-                assert(constScript.name in Scripts.constInstance.scripts);
-                Script script = Scripts.instance.scripts[constScript.name];
-                script.resetLedsChanged;
+                scriptsToResetLedsChanged ~= Scripts.instance.scripts[constScript.name];
             }
         }
+        foreach (script; scriptsToResetLedsChanged)
+            script.resetLedsChanged;
     }
 
     final pure nothrow @nogc
