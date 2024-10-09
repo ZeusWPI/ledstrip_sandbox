@@ -24,7 +24,6 @@ export const Fps = () => {
     const fpsInputField = <input
         type="number"
         min={1}
-        max={99}
         value={fps}
         onChange={(e) => setFps(e.target.valueAsNumber)}
     />;
@@ -41,5 +40,7 @@ export const Fps = () => {
         onClick={fetchFps}
     />;
 
-    return <p>fps: {fpsInputField} {fpsSetButton} {fpsRefreshButton}</p>;
+    return <div>
+        <p>fps: {fpsInputField} {fpsSetButton} {fpsRefreshButton}</p>
+    </div>;
 };

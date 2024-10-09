@@ -7,10 +7,15 @@ export interface StatesProps {
     setStates: React.Dispatch<React.SetStateAction<string[]>>;
     activeState: string;
     setActiveState: React.Dispatch<React.SetStateAction<string>>;
+    selectedState: string;
+    setSelectedState: React.Dispatch<React.SetStateAction<string>>;
 };
 
-export const States = ({ states, setStates, activeState, setActiveState }: StatesProps) => {
-    const [selectedState, setSelectedState] = useState<string>("");
+export const States = ({
+    states, setStates,
+    activeState, setActiveState,
+    selectedState, setSelectedState,
+}: StatesProps) => {
     const [newState, setNewState] = useState<string>("");
 
     const fetchStates = () => {
@@ -28,7 +33,7 @@ export const States = ({ states, setStates, activeState, setActiveState }: State
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ "state": newState }),
+            body: JSON.stringify({ "state": state }),
         });
     };
 
@@ -46,35 +51,36 @@ export const States = ({ states, setStates, activeState, setActiveState }: State
 
     useEffect(() => {
         fetchStates();
-        setInterval(fetchStates, 500);
-    }, [setStates, setActiveState]);
+        const interval = setInterval(fetchStates, 500);
+        return () => clearInterval(interval);
+    });
 
     useEffect(() => {
         if (selectedState === "" && states.length) {
             setSelectedState(states[0]);
         }
-    }, [states, selectedState, setSelectedState]);
+    }, [selectedState, states]);
 
-    const options = states.map((s) => {
+    const options = states.map((state) => {
         let classes = "";
-        if (s === activeState) {
+        if (state === activeState) {
             classes += "activeState";
         }
-        return <option className={classes} key={s} value={s}>{s}</option>
+        return <option className={classes} key={state}>{state}</option>
     });
 
-    return <>
+    return <div>
         <table><tbody><tr>
             <td>
                 <select
-                    size={options.length}
+                    size={options.length + 1}
                     onChange={(e) => setSelectedState(states[e.target.selectedIndex])}
                 >
                     {options}
                 </select>
             </td>
             <td>
-                Selected: {selectedState}
+                Selected: "{selectedState}"
                 <br />
                 <br />
                 {selectedState === activeState && "This is the active state" || "Not the active state"}
@@ -108,5 +114,5 @@ export const States = ({ states, setStates, activeState, setActiveState }: State
             value="Add state"
             onClick={() => addState(newState)}
         />
-    </>;
+    </div>;
 };
