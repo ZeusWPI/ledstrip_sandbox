@@ -11,6 +11,7 @@ export interface StatesProps {
 
 export const States = ({ states, setStates, activeState, setActiveState }: StatesProps) => {
     const [selectedState, setSelectedState] = useState<string>("");
+    const [newState, setNewState] = useState<string>("");
 
     const fetchStates = () => {
         fetch("/api/states/")
@@ -21,7 +22,23 @@ export const States = ({ states, setStates, activeState, setActiveState }: State
             .then(text => setActiveState(JSON.parse(text)));
     };
 
-    const activate = (state: string) => {
+    const addState = (state: string) => {
+        fetch(`/api/states/${state}/`, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ "state": newState }),
+        });
+    };
+
+    const removeState = (state: string) => {
+        fetch(`/api/states/${state}/`, {
+            method: "DELETE",
+        });
+    };
+
+    const activateState = (state: string) => {
         fetch(`/api/states/${state}/activate`, {
             method: "POST",
         }).then(() => setActiveState(state));
@@ -46,27 +63,50 @@ export const States = ({ states, setStates, activeState, setActiveState }: State
         return <option className={classes} key={s} value={s}>{s}</option>
     });
 
-    return <table><tbody><tr>
-        <td>
-            <select
-                size={options.length}
-                onChange={(e) => setSelectedState(states[e.target.selectedIndex])}
-            >
-                {options}
-            </select>
-        </td>
-        <td>
-            <p>Selected: {selectedState}</p>
-            <p>
+    return <>
+        <table><tbody><tr>
+            <td>
+                <select
+                    size={options.length}
+                    onChange={(e) => setSelectedState(states[e.target.selectedIndex])}
+                >
+                    {options}
+                </select>
+            </td>
+            <td>
+                Selected: {selectedState}
+                <br />
+                <br />
                 {selectedState === activeState && "This is the active state" || "Not the active state"}
                 <input
                     className="inline"
                     type="button"
                     value="Activate"
                     disabled={selectedState === activeState}
-                    onClick={() => activate(selectedState)}
+                    onClick={() => activateState(selectedState)}
                 />
-            </p>
-        </td>
-    </tr></tbody></table>;
+                <br />
+                Can only remove states without segments
+                <input
+                    className="inline"
+                    type="button"
+                    value="Remove state"
+                    onClick={() => removeState(selectedState)}
+                />
+            </td>
+        </tr></tbody></table>
+        <input
+            className="inline"
+            type="text"
+            placeholder="State name"
+            value={newState}
+            onChange={(e) => setNewState(e.target.value)}
+        />
+        <input
+            className="inline"
+            type="button"
+            value="Add state"
+            onClick={() => addState(newState)}
+        />
+    </>;
 };
