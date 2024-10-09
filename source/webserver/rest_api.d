@@ -89,11 +89,24 @@ interface ScriptApi
         string name;
         string fileName;
         uint ledCount;
+        bool autoStart;
     }
 
     string[] get();
 
+    void post(Script script);
+
     Script get(string _name);
+
+    void delete_(string _name);
+
+    bool getRunning(string _name);
+
+    void postStart(string _name);
+
+    void postStop(string _name);
+
+    void postReload(string _name);
 }
 
 interface SourceFileApi

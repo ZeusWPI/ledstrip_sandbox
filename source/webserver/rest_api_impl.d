@@ -3,10 +3,10 @@ module webserver.rest_api_impl;
 import data_dir : DataDir;
 import ledstrip.led_positions : getKelderLedPositions;
 import ledstrip.ledstrip_segment : LedstripSegment;
-import ledstrip.ledstrip_state : LedstripState;
-import ledstrip.ledstrip_states : LedstripStates;
-import script.script : RealScript = Script;
-import script.scripts : Scripts;
+import ledstrip.ledstrip_state : LedstripState, LedstripStateException;
+import ledstrip.ledstrip_states : LedstripStates, LedstripStatesException;
+import script.script : RealScript = Script, ScriptException;
+import script.scripts : Scripts, ScriptsException;
 import webserver.mailbox : Mailbox;
 import webserver.rest_api : ConfigApi, RestApi, ScriptApi, SegmentApi, SourceFileApi, StateApi;
 
@@ -142,7 +142,7 @@ class SegmentApiImpl : SegmentApi
         const LedstripState state = states.states[_state];
         Segment[] arr;
         foreach (const LedstripSegment seg; state.segments)
-            arr ~= Segment(seg.begin, seg.end, seg.script.name);
+            arr ~= Segment(seg.begin, seg.end, seg.scriptName);
         return arr;
     }
 
@@ -154,18 +154,18 @@ class SegmentApiImpl : SegmentApi
             HTTPStatus.notFound,
             "No such state",
         );
-        enforceHTTP(
-            segment.begin !in LedstripStates.constInstance.states[_state].segments,
-            HTTPStatus.conflict,
-            "Segment with the same begin led already exists",
-        );
-        enforceHTTP(
-            segment.scriptName in Scripts.constInstance.scripts,
-            HTTPStatus.notFound,
-            "No such script",
-        );
-        const RealScript script = Scripts.constInstance.scripts[segment.scriptName];
-        LedstripStates.instance.states[_state].assignSegment(segment.begin, segment.end, script);
+        try
+        {
+            LedstripStates.instance.states[_state].assignSegment(
+                segment.begin,
+                segment.end,
+                segment.scriptName,
+            );
+        }
+        catch (LedstripStatesException e)
+            throw new HTTPStatusException(HTTPStatus.conflict, e.msg, __FILE__, __LINE__, e);
+        catch (LedstripStateException e)
+            throw new HTTPStatusException(HTTPStatus.conflict, e.msg, __FILE__, __LINE__, e);
     }
 
     override
@@ -176,7 +176,7 @@ class SegmentApiImpl : SegmentApi
         const LedstripState state = states.states[_state];
         enforceHTTP(_begin in state.segments, HTTPStatus.notFound, "No segment with provided begin led");
         const LedstripSegment seg = state.segments[_begin];
-        return Segment(seg.begin, seg.end, seg.script.name);
+        return Segment(seg.begin, seg.end, seg.scriptName);
     }
 
     override
@@ -208,6 +208,24 @@ class ScriptApiImpl : ScriptApi
     }
 
     override
+    void post(Script script)
+    {
+        try
+        {
+            Scripts.instance.createScript(
+                script.name,
+                script.fileName,
+                script.ledCount,
+                script.autoStart,
+            );
+        }
+        catch (ScriptsException e)
+            throw new HTTPStatusException(HTTPStatus.conflict, e.msg, __FILE__, __LINE__, e);
+        catch (ScriptException e)
+            throw new HTTPStatusException(HTTPStatus.conflict, e.msg, __FILE__, __LINE__, e);
+    }
+
+    override
     Script get(string _name)
     {
         enforceHTTP(_name in Scripts.constInstance.scripts, HTTPStatus.notFound, "No such script");
@@ -215,8 +233,52 @@ class ScriptApiImpl : ScriptApi
         return Script(
             realScript.name,
             realScript.fileName,
-            cast(uint) realScript.leds.length,
+            realScript.ledCount,
+            realScript.autoStart,
         );
+    }
+
+    override
+    void delete_(string _name)
+    {
+        try
+            Scripts.instance.removeScript(_name);
+        catch (ScriptsException e)
+            throw new HTTPStatusException(HTTPStatus.notFound, e.msg, __FILE__, __LINE__, e);
+    }
+
+    override
+    bool getRunning(string _name)
+    {
+        enforceHTTP(_name in Scripts.constInstance.scripts, HTTPStatus.notFound, "No such script");
+        return Scripts.constInstance.scripts[_name].running;
+    }
+
+    override
+    void postStart(string _name)
+    {
+        try
+            Scripts.instance.startScript(_name);
+        catch (ScriptsException e)
+            throw new HTTPStatusException(HTTPStatus.conflict, e.msg, __FILE__, __LINE__, e);
+    }
+
+    override
+    void postStop(string _name)
+    {
+        try
+            Scripts.instance.stopScript(_name);
+        catch (ScriptsException e)
+            throw new HTTPStatusException(HTTPStatus.conflict, e.msg, __FILE__, __LINE__, e);
+    }
+
+    override
+    void postReload(string _name)
+    {
+        try
+            Scripts.instance.reloadScript(_name);
+        catch (ScriptsException e)
+            throw new HTTPStatusException(HTTPStatus.conflict, e.msg, __FILE__, __LINE__, e);
     }
 }
 
@@ -250,7 +312,6 @@ class SourceFileApiImpl : SourceFileApi
 
         return SourceFile(_name, sourceCode);
     }
-
 
     override
     void put(string _name, string sourceCode)

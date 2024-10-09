@@ -1,7 +1,7 @@
 module ledstrip.ledstrip_segment;
 
 import ledstrip.led : Led;
-import script.script : Script;
+import script.script : isValidScriptName;
 import util : inRange;
 
 import std.exception : basicExceptionCtors, enforce;
@@ -15,13 +15,13 @@ class LedstripSegment
 {
     private uint m_begin;
     private uint m_end;
-    private const Script m_script;
+    private string m_scriptName;
 
-    this(uint begin, uint end, const Script script, uint totalLedCount)
+    this(uint begin, uint end, string scriptName, uint totalLedCount)
     {
         m_begin = begin;
         m_end = end;
-        m_script = script;
+        m_scriptName = scriptName;
         enforceIsValid(totalLedCount);
     }
 
@@ -34,17 +34,20 @@ class LedstripSegment
         => m_end;
 
     pure nothrow @nogc
-    const(Script) script() const
-        => m_script;
+    uint ledCount() const
+        => m_end - m_begin;
+
+    pure nothrow @nogc
+    string scriptName() const
+        => m_scriptName;
 
     pure
     void enforceIsValid(uint totalLedCount) const
     {
         alias enf = enforce!LedstripSegmentException;
-        enf(end > begin, "Invalid segment: end <= begin");
-        enf(totalLedCount >= end, "Invalid segment: totalLedCount < end");
-        enf(script !is null, "Invalid segment: script is null");
-        enf(script.leds.length == end - begin, "Invalid segment: script.leds.length != end - begin");
+        enf(m_end > m_begin, "Invalid segment: end <= begin");
+        enf(totalLedCount >= m_end, "Invalid segment: totalLedCount < end");
+        enf(m_scriptName.isValidScriptName, "Invalid segment: invalid script name");
     }
 
     pure nothrow @nogc

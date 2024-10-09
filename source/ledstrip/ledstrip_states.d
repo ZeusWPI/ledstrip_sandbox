@@ -46,14 +46,7 @@ class LedstripStates
         {
             LedstripState state = addState(stateName);
             foreach (configSegment; configState.segments)
-            {
-                enforce(
-                    configSegment.scriptName in Scripts.constInstance.scripts,
-                    f!"createConfigStates: no such script %s"(configSegment.scriptName),
-                );
-                const Script script = Scripts.constInstance.scripts[configSegment.scriptName];
-                state.assignSegment(configSegment.begin, configSegment.end, script);
-            }
+                state.assignSegment(configSegment.begin, configSegment.end, configSegment.scriptName);
         }
     }
 

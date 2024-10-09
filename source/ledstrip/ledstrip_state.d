@@ -1,7 +1,6 @@
 module ledstrip.ledstrip_state;
 
 import ledstrip.ledstrip_segment : LedstripSegment;
-import script.script : Script;
 
 import std.exception : basicExceptionCtors, enforce;
 import std.format : f = format;
@@ -35,9 +34,9 @@ class LedstripState
     ref const(shared(LedstripSegment[uint])) segments() const
         => m_segments;
 
-    void assignSegment(uint begin, uint end, const Script script)
+    void assignSegment(uint begin, uint end, string scriptName)
     {
-        LedstripSegment segToAssign = new LedstripSegment(begin, end, script, m_totalLedCount);
+        LedstripSegment segToAssign = new LedstripSegment(begin, end, scriptName, m_totalLedCount);
         foreach (k, seg; segments)
         {
             enf(

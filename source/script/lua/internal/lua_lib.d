@@ -229,7 +229,7 @@ static:
         {
             const Script thisScript = LuaScriptTask.constInstance.script;
             foreach (begin, const LedstripSegment seg; LedstripStates.constInstance.activeState.segments)
-                if (seg.script is thisScript)
+                if (seg.scriptName == thisScript.name)
                     return true;
             return false;
         }

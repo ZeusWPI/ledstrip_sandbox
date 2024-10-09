@@ -28,7 +28,7 @@ void main()
 
     // These depend on DataDir and/or ThreadManager
     Scripts.createInstance;
-    LedstripStates.createInstance; // Depends on Scripts
+    LedstripStates.createInstance;
     Ledstrip.createInstance;
     Webserver.createInstance;
 

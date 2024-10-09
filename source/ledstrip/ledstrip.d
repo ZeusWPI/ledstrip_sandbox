@@ -4,6 +4,7 @@ import data_dir : DataDir;
 import ledstrip.led : Led;
 import ledstrip.ledstrip_segment : LedstripSegment;
 import ledstrip.ledstrip_states : LedstripStates;
+import ledstrip.ledstrip_state : LedstripState;
 import script.script : Script;
 import script.scripts : Scripts;
 import singleton : sharedSingleton;
@@ -118,19 +119,34 @@ class Ledstrip
     private synchronized
     void copySegmentLeds()
     {
-        const segments = LedstripStates.constInstance.activeState.segments;
-        Script[] scriptsToResetLedsChanged;
-        foreach (begin, const LedstripSegment seg; segments)
+        synchronized (Scripts.classinfo)
         {
-            const Script constScript = seg.script;
-            if (constScript.ledsChanged)
+            Script[string] changedScripts;
+            foreach (string name, Script script; Scripts.instance.scripts)
+                if (script.ledsChanged)
+                {
+                    script.resetLedsChanged;
+                    changedScripts[name] = script;
+                }
+            const LedstripState activeState = LedstripStates.constInstance.activeState;
+            foreach (uint begin, const LedstripSegment seg; activeState.segments)
             {
-                leds[seg.begin .. seg.end] = constScript.leds[];
-                scriptsToResetLedsChanged ~= Scripts.instance.scripts[constScript.name];
+                if (seg.scriptName in changedScripts)
+                {
+                    const Script script = changedScripts[seg.scriptName];
+                    if (script.ledCount == seg.end - seg.begin)
+                        leds[seg.begin .. seg.end] = script.leds[];
+                    else
+                    {
+                        logWarn(
+                            `copySegmentLeds: Segment in state "%s" with begin "%u" and led count "%u"`
+                                ~ ` doesn't match the led count "%u" of script "%s"`,
+                            activeState.name, begin, seg.ledCount, script.ledCount, script.name,
+                        );
+                    }
+                }
             }
         }
-        foreach (script; scriptsToResetLedsChanged)
-            script.resetLedsChanged;
     }
 
     final pure nothrow @nogc

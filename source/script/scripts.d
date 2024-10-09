@@ -71,6 +71,8 @@ class Scripts
     {
         try
         {
+            // TODO: reimplement: eventually a new script can have the same address
+            // as an old one that was already auto started
             bool[Script] alreadyStarted;
             while (true)
             {
@@ -108,21 +110,32 @@ class Scripts
     synchronized
     const(Script) createScript(string name, string fileName, uint ledCount, bool autoStart)
     {
+        enf(name !in m_scripts, f!`createScript: Script with name "%s" already exists`(name));
         Script script;
         if (fileName.endsWith(cast(string) ScriptExtension.lua))
             script = new LuaScript(name, fileName, ledCount, autoStart);
         else if (fileName.endsWith(cast(string) ScriptExtension.bf))
             script = new BfScript(name, fileName, ledCount, autoStart);
         else
-            throw new Exception(f!`createScript: Unknown script type for file name "%s"`(fileName));
+            throw new ScriptsException(
+                f!`createScript: Unknown script type for file name "%s"`(fileName));
         m_scripts[name] = script;
         return script;
+    }
+
+    synchronized
+    void removeScript(string name)
+    {
+        enf(name in m_scripts, f!`removeScript: No script with name "%s"`(name));
+        enf(!m_scripts[name].running, f!`removeScript: Script "%s" is still running`(name));
+        m_scripts.remove(name);
     }
 
     synchronized
     void startScript(string name)
     {
         enf(name in m_scripts, f!`startScript: No script with name "%s"`(name));
+        enf(!m_scripts[name].running, f!`startScript: Script "%s" is already running`(name));
         m_scripts[name].setRunning;
         ThreadManager.instance.addAndStartScriptTask(m_scripts[name]);
     }
@@ -131,16 +144,23 @@ class Scripts
     void stopScript(string name)
     {
         enf(name in m_scripts, f!`stopScript: No script with name "%s"`(name));
+        enf(m_scripts[name].running, f!`stopScript: Script "%s" is already stopped`(name));
         m_scripts[name].setStopped;
         ThreadManager.instance.stopAndRemoveScriptTask(m_scripts[name]);
     }
 
     synchronized
-    void removeScript(string name)
+    void reloadScript(string name)
     {
-        enf(name in m_scripts, f!`removeScript: No script with name "%s"`(name));
-        stopScript(name);
-        m_scripts.remove(name);
+        enf(name in m_scripts, f!`reloadScript: No script with name "%s"`(name));
+        enf(!m_scripts[name].running, f!`reloadScript: Script "%s" must be stopped first`(name));
+        Script oldScript = m_scripts[name];
+        scope (failure)
+            m_scripts[name] = oldScript;
+        removeScript(name);
+        createScript(oldScript.name, oldScript.fileName, oldScript.ledCount, oldScript.autoStart);
+        if (oldScript.autoStart)
+            startScript(name);
     }
 }
 

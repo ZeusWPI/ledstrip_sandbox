@@ -9,7 +9,7 @@ import core.time : Duration, seconds;
 import std.algorithm : any, canFind, endsWith;
 import std.conv : to;
 import std.datetime : Clock, SysTime;
-import std.exception : enforce;
+import std.exception : basicExceptionCtors, enforce;
 import std.format : f = format;
 import std.traits : EnumMembers;
 
@@ -22,8 +22,10 @@ import vibe.core.taskpool : TaskPool;
 abstract shared
 class Script
 {
+    private alias enf = enforce!ScriptException;
+
     alias TaskEntrypoint = void function(Script) nothrow @safe;
-    
+
     private string m_name;
     private string m_fileName;
     private uint m_ledCount;
@@ -39,8 +41,8 @@ class Script
     protected synchronized
     this(string name, string fileName, uint ledCount, bool autoStart)
     {
-        enforce(name.length, "Script: Name must not be empty");
-        enforce(fileName.isValidScriptFileName, f!`Script: Invalid file name "%s"`(fileName));
+        enf(name.isValidScriptName, f!`Script: Invalid script name "%s"`(name));
+        enf(fileName.isValidScriptFileName, f!`Script: Invalid file name "%s"`(fileName));
 
         m_name = name;
         m_fileName = fileName;
@@ -102,12 +104,22 @@ class Script
     abstract TaskEntrypoint taskEntrypoint();
 }
 
+class ScriptException : Exception
+{
+    mixin basicExceptionCtors;
+}
+
 enum ScriptExtension : string
 {
     lua = ".lua",
     bf = ".bf",
 }
 
+pure nothrow @nogc
+bool isValidScriptName(string name)
+    => name.length > 0;
+
+pure nothrow @nogc
 bool isValidScriptFileName(string name)
 {
     if (name.canFind("/"))
