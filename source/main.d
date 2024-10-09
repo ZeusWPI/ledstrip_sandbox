@@ -12,6 +12,7 @@ import vibe.core.log;
 
 @safe:
 
+// TODO: copy leds from all scripts in state on first render after state change
 // TODO: editor
 // TODO: synchronize rest api procedures with collection singletons
 // TODO: lua auto yield
