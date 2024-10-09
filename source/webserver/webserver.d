@@ -42,12 +42,12 @@ class Webserver
         m_restApiSettings = new RestInterfaceSettings;
         m_restApi = new RestApiImpl;
 
-        m_fileServerSettings = new HTTPFileServerSettings;
+        m_fileServerSettings = new HTTPFileServerSettings();
         m_fileServer = serveStaticFiles("public", m_fileServerSettings);
 
         m_router = new URLRouter;
         m_router.registerRestInterface(m_restApi, m_restApiSettings);
-        m_router.get("/", m_fileServer);
+        m_router.get("*", m_fileServer);
     }
 
     ~this()

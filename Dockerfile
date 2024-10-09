@@ -5,7 +5,6 @@ ARG DUB_BUILD_TYPE="debug"
 
 FROM debian:bookworm AS base
 
-
 FROM base AS extract-deb-libs
 
 WORKDIR /work/debs
@@ -72,5 +71,19 @@ RUN arm-linux-gnueabihf-gcc-12 libledstrip.a -o ledstrip -Wl,--gc-sections \
     libs/libc.so.6 libs/libm.so.6
 
 
+FROM node:lts AS build-frontend
+
+RUN corepack enable pnpm
+
+WORKDIR /work
+
+COPY frontend/src/ src/
+COPY frontend/public/ public/
+COPY frontend/index.html frontend/package.json frontend/pnpm-lock.yaml frontend/tsconfig.json frontend/vite.config.js .
+RUN pnpm install
+RUN pnpm run build
+
+
 FROM scratch AS artifact
 COPY --from=build /work/ledstrip /ledstrip
+COPY --from=build-frontend /work/dist /public

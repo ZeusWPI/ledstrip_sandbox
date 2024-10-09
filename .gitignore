@@ -14,3 +14,5 @@ ledstrip-test-*
 *.o
 *.obj
 *.lst
+
+/public
