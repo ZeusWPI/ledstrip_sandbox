@@ -1,26 +1,45 @@
-import { useState } from "react";
-import { Fps } from "./Fps";
-import { States } from "./States";
-import { Segments } from "./Segments";
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { ConfigPage } from "./Config/ConfigPage";
+import { StatesSegmentsPage } from "./StatesSegments/StatesSegmentsPage";
+
+import "./App.css";
+
+interface TabProps {
+    name: string;
+    path: string;
+};
+
+const Tab = ({ name, path }: TabProps) => {
+    const navigate = useNavigate();
+    let classes = "tab";
+    if (window.location.pathname === path) {
+        classes += " tab-selected";
+    }
+    return <>
+        <div
+            className={classes}
+            onClick={() => navigate(path)}
+            key={name}
+        >
+            {name}
+        </div>
+    </>;
+};
 
 export const App = () => {
-    const [states, setStates] = useState<string[]>([]);
-    const [activeState, setActiveState] = useState<string>("");
-    const [selectedState, setSelectedState] = useState<string>("");
-
-    return (<>
-        <h1>Ledstrip</h1>
-        <h3>Config</h3>
-        <Fps />
-        <h3>States</h3>
-        <States
-            states={states} setStates={setStates}
-            activeState={activeState} setActiveState={setActiveState}
-            selectedState={selectedState} setSelectedState={setSelectedState}
-        />
-        <h3>Segments in state "{selectedState}"</h3>
-        <Segments
-            selectedState={selectedState}
-        />
-    </>);
+    return <>
+        <BrowserRouter>
+            <h2>Ledstrip</h2>
+            <div className="tabList">
+                <Tab path="/statesSegments" name="States and segments" />
+                <Tab path="/config" name="Config" />
+            </div>
+            <Routes>
+                <Route path="/" element={<Navigate to="statesSegments" />} />
+                <Route path="/statesSegments" element={<StatesSegmentsPage />} />
+                <Route path="/config" element={<ConfigPage />} />
+                <Route path="/*" element={<Navigate to="/" />} />
+            </Routes>
+        </BrowserRouter>
+    </>;
 };
