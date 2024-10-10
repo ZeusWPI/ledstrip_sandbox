@@ -18,9 +18,9 @@ With a recent docker version installed, run:
 docker build -o . .
 ```
 
-This will output a `ledstrip` binary that you can copy over:
+This will output a `ledstrip` binary and `public` folder, that you can copy over, along with the `data` folder template:
 
 ```
-rsync ./ledstrip root@ledstrip:
+rsync -r ledstrip data public root@ledstrip:ledstrip
 ssh root@ledstrip systemctl restart ledstrip
 ```
