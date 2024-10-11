@@ -2,6 +2,7 @@ module webserver.rest_api_impl;
 
 import data_dir : DataDir;
 import ledstrip.led_positions : getKelderLedPositions;
+import ledstrip.ledstrip : Ledstrip;
 import ledstrip.ledstrip_segment : LedstripSegment;
 import ledstrip.ledstrip_state : LedstripState, LedstripStateException;
 import ledstrip.ledstrip_states : LedstripStates, LedstripStatesException;
@@ -78,7 +79,7 @@ class ConfigApiImpl : ConfigApi
         DataDir.instance.config.fps = fps;
         DataDir.instance.saveConfig;
     }
-    
+
     override
     ubyte getMaxBrightness()
         => DataDir.constInstance.config.maxBrightness;
@@ -88,6 +89,7 @@ class ConfigApiImpl : ConfigApi
     {
         DataDir.instance.config.maxBrightness = maxBrightness;
         DataDir.instance.saveConfig;
+        Ledstrip.instance.fullRefresh;
     }
 }
 

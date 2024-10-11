@@ -52,6 +52,7 @@ class Ledstrip
 
     private const uint m_ledCount;
     private bool m_stopRenderLoop;
+    private bool m_fullRefresh;
     private uint m_framesSinceTimeWarn;
     private ulong m_frameCount;
 
@@ -120,11 +121,13 @@ class Ledstrip
     void copySegmentLeds()
     {
         ubyte maxBrightness = DataDir.constInstance.config.maxBrightness;
+        if (m_fullRefresh)
+            leds[] = Led(0, 0, 0);
         synchronized (Scripts.classinfo)
         {
             Script[string] changedScripts;
             foreach (string name, Script script; Scripts.instance.scripts)
-                if (script.ledsChanged)
+                if (script.ledsChanged || m_fullRefresh)
                 {
                     script.resetLedsChanged;
                     changedScripts[name] = script;
@@ -151,6 +154,8 @@ class Ledstrip
                 }
             }
         }
+        if (m_fullRefresh)
+            m_fullRefresh = false;
     }
 
     final pure nothrow @nogc
@@ -167,10 +172,16 @@ class Ledstrip
         m_stopRenderLoop = true;
     }
 
+    final pure nothrow @nogc
+    void fullRefresh()
+    {
+        m_fullRefresh = true;
+    }
+
     private synchronized nothrow @nogc
     void onActiveStateChange()
     {
-        leds[] = Led(0, 0, 0);
+        fullRefresh;
     }
 
     protected abstract
