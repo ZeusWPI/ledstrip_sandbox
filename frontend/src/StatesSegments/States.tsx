@@ -53,7 +53,7 @@ export const States = ({
         fetchStates();
         const interval = setInterval(fetchStates, 500);
         return () => clearInterval(interval);
-    });
+    }, []);
 
     useEffect(() => {
         if (selectedState === "" && states.length) {
@@ -73,7 +73,7 @@ export const States = ({
         <table><tbody><tr>
             <td>
                 <select
-                    size={options.length + 1}
+                    size={Math.max(2, states.length + 1)}
                     onChange={(e) => setSelectedState(states[e.target.selectedIndex])}
                 >
                     {options}

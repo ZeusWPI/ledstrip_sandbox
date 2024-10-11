@@ -10,7 +10,7 @@ interface Segment {
     scriptName: string;
 }
 
-const segmentInit = {
+const segmentInit: Segment = {
     begin: 0,
     end: 0,
     scriptName: "",
@@ -72,7 +72,7 @@ export const Segments = ({ selectedState }: SegmentsProps) => {
         <table><tbody><tr>
             <td>
                 <select
-                    size={segments.length + 1}
+                    size={Math.max(2, segments.length + 1)}
                     onChange={(e) => setSelectedSegment(segments[e.target.selectedIndex])}
                 >
                     {options}
