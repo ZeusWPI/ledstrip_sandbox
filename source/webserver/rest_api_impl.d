@@ -78,6 +78,17 @@ class ConfigApiImpl : ConfigApi
         DataDir.instance.config.fps = fps;
         DataDir.instance.saveConfig;
     }
+    
+    override
+    ubyte getMaxBrightness()
+        => DataDir.constInstance.config.maxBrightness;
+
+    override
+    void putMaxBrightness(ubyte maxBrightness)
+    {
+        DataDir.instance.config.maxBrightness = maxBrightness;
+        DataDir.instance.saveConfig;
+    }
 }
 
 class StateApiImpl : StateApi

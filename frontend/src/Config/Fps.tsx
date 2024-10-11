@@ -19,28 +19,31 @@ export const Fps = () => {
         });
     };
 
-    useEffect(fetchFps, [setFps]);
+    useEffect(fetchFps, []);
 
-    const fpsInputField = <input
-        type="number"
-        min={1}
-        value={fps}
-        onChange={(e) => setFps(e.target.valueAsNumber)}
-    />;
-
-    const fpsSetButton = <input
-        type="button"
-        value="Apply"
-        onClick={applyFps}
-    />;
-
-    const fpsRefreshButton = <input
-        type="button"
-        value="Refresh"
-        onClick={fetchFps}
-    />;
-
-    return <div>
-        <p>fps: {fpsInputField} {fpsSetButton} {fpsRefreshButton}</p>
-    </div>;
+    return <>
+        <p>
+            {"Fps: "}
+            <input
+                className="inline"
+                type="number"
+                min={1}
+                max={99}
+                value={fps}
+                onChange={(e) => setFps(e.target.valueAsNumber)}
+            />
+            <input
+                className="inline"
+                type="button"
+                value="Apply"
+                onClick={applyFps}
+            />
+            <input
+                className="inline"
+                type="button"
+                value="Refresh"
+                onClick={fetchFps}
+            />
+        </p>
+    </>;
 };

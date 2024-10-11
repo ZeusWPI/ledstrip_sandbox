@@ -3,8 +3,8 @@ module ledstrip.ledstrip;
 import data_dir : DataDir;
 import ledstrip.led : Led;
 import ledstrip.ledstrip_segment : LedstripSegment;
-import ledstrip.ledstrip_states : LedstripStates;
 import ledstrip.ledstrip_state : LedstripState;
+import ledstrip.ledstrip_states : LedstripStates;
 import script.script : Script;
 import script.scripts : Scripts;
 import singleton : sharedSingleton;
@@ -119,6 +119,7 @@ class Ledstrip
     private synchronized
     void copySegmentLeds()
     {
+        ubyte maxBrightness = DataDir.constInstance.config.maxBrightness;
         synchronized (Scripts.classinfo)
         {
             Script[string] changedScripts;
@@ -135,7 +136,10 @@ class Ledstrip
                 {
                     const Script script = changedScripts[seg.scriptName];
                     if (script.ledCount == seg.end - seg.begin)
-                        leds[seg.begin .. seg.end] = script.leds[];
+                    {
+                        foreach (i; 0 .. script.ledCount)
+                            leds[seg.begin + i] = script.leds[i].limitBrightness(maxBrightness);
+                    }
                     else
                     {
                         logWarn(

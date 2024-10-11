@@ -36,6 +36,10 @@ interface ConfigApi
     uint getFps();
 
     void putFps(uint fps);
+
+    ubyte getMaxBrightness();
+
+    void putMaxBrightness(ubyte maxBrightness);
 }
 
 interface StateApi
