@@ -10,8 +10,11 @@ import std.format : f = format;
 import lumars : LuaState, LuaTable;
 
 import vibe.core.concurrency : thisTid, Tid;
+import vibe.core.core : yield;
 import vibe.core.log;
 import vibe.core.task : Task;
+
+import bindbc.lua.v51 : lua_Debug, lua_Hook, LUA_MASKLINE, lua_sethook, lua_State;
 
 @safe:
 package:
@@ -74,6 +77,7 @@ class LuaScriptTask
         logInfo(`Task for lua script "%s" started`, m_script.name);
 
         createLuaState;
+        setupHook;
         buildEnv;
 
         try
@@ -116,6 +120,23 @@ class LuaScriptTask
             ),
             );
         }
+    }
+
+    private nothrow @trusted
+    void setupHook()
+    {
+        lua_sethook(
+            m_luaState.handle,
+            cast(lua_Hook)&hook, // Cast away nothrow so yield can raise an InterruptException
+            LUA_MASKLINE,
+            0,
+        );
+    }
+
+    private static
+    void hook(lua_State* handle, lua_Debug* dbg)
+    {
+        yield;
     }
 
     private nothrow @trusted

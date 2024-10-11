@@ -14,7 +14,6 @@ import vibe.core.log;
 
 // TODO: editor
 // TODO: synchronize rest api procedures with collection singletons
-// TODO: lua auto yield
 // TODO: scripting api for segments
 
 void main()
