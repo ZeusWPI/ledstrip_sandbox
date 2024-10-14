@@ -76,7 +76,7 @@ export const SourceFileEditor = () => {
         }
     };
 
-    if (monaco && selectedSourceFile.length && sourceCode && modelsCreated) {
+    if (monaco && selectedSourceFile.length && sourceCode !== null && modelsCreated) {
         return (
             <Editor
                 width="85vw"

@@ -4,6 +4,7 @@ import { App } from "./App";
 import { ActiveStateContextProvider } from "./contexts/ActiveStateContext";
 import { NewScriptContextProvider } from "./contexts/NewScriptContext";
 import { NewSegmentContextProvider } from "./contexts/NewSegmentContext";
+import { NewSourceFileContextProvider } from "./contexts/NewSourceFileContext";
 import { NewStateContextProvider } from "./contexts/NewStateContext";
 import { ScriptNamesContextProvider } from "./contexts/ScriptNamesContext";
 import { SegmentsContextProvider } from "./contexts/SegmentsContext";
@@ -39,6 +40,7 @@ const AppProviders = ({ children }: PropsWithChildren) => {
         SourceFilesContextProvider,
         SelectedSourceFileContextProvider,
         SourceCodeContextProvider,
+        NewSourceFileContextProvider,
     ];
     return providers.reduceRight((acc, Provider) => <Provider>{acc}</Provider>, children);
 };
