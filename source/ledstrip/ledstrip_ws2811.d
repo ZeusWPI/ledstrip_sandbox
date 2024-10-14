@@ -33,8 +33,8 @@ class LedstripWs2811 : Ledstrip
         super();
         setupWs2811(
             ct_targetFreq,
-            DataDir.constInstance.config.dmaNumber,
-            DataDir.constInstance.config.gpioPin,
+            DataDir.sharedConfig.dmaNumber,
+            DataDir.sharedConfig.gpioPin,
             ct_ledStripType,
         );
     }

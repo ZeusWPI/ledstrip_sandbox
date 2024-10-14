@@ -32,6 +32,7 @@ struct Config
         ret.httpPort          = httpPort;
         ret.ledCount          = ledCount;
         ret.fps               = fps;
+        ret.maxBrightness     = maxBrightness;
         ret.dmaNumber         = dmaNumber;
         ret.gpioPin           = gpioPin;
         foreach (k, v; scripts) ret.scripts[k] = v;

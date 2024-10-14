@@ -14,5 +14,5 @@ bool inRange(T1, T2, T3)(T1 val, T2 lower, T3 upper)
 
 void sleepFrameFraction(uint fraction)
 {
-    sleep(DataDir.constInstance.config.frameTime / fraction);
+    sleep(DataDir.sharedConfig.frameTime / fraction);
 }

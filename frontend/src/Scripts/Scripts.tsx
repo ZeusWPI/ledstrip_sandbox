@@ -143,13 +143,11 @@ export const Scripts = () => {
         <input
             className="inline"
             type="checkbox"
-            defaultValue={newScript.autoStart && "true" || "false"}
+            defaultChecked={newScript.autoStart}
             onChange={(e) => {
-                if (e.target.value.length) {
-                    let script = newScript;
-                    console.log(e.target.value);
-                    setNewScript(script);
-                }
+                let script = newScript;
+                script.autoStart = e.target.checked;
+                setNewScript(script);
             }}
         />
         <input

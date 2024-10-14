@@ -2,7 +2,8 @@ module data_dir;
 
 import config : Config;
 import script.script : isValidScriptFileName;
-import singleton : sharedSingleton;
+import singleton : threadLocalSingleton;
+import thread_manager : ThreadManager;
 
 import std.algorithm : endsWith, filter, map;
 import std.array : array;
@@ -15,28 +16,31 @@ import vibe.data.json : deserializeJson, serializeToPrettyJson;
 
 @safe:
 
-final shared
+final
 class DataDir
 {
-    mixin sharedSingleton;
+    mixin threadLocalSingleton;
 
     private enum string ct_dirName = "data";
     private enum string ct_jsonFileName = "config.json";
     private enum string ct_jsonFilePath = buildPath(ct_dirName, ct_jsonFileName);
 
+    private static shared Config s_config;
     private Config m_config;
 
     private
     this()
+    in (ThreadManager.constInstance.inMainThread, "DataDir: ctor must be called from main thread")
     {
         loadConfig;
     }
 
-    private synchronized
+    private
     void loadConfig()
     {
         createIfNeeded;
-        m_config = deserializeJson!Config(ct_jsonFilePath.readText).sharedDup;
+        m_config = deserializeJson!Config(ct_jsonFilePath.readText);
+        syncConfigToSharedStatic;
         enforce(
             isValidFps(m_config.fps),
             f!`loadConfig: invalid fps "%s"`(m_config.fps)
@@ -48,17 +52,26 @@ class DataDir
     }
 
     pure nothrow @nogc
-    ref inout(shared(Config)) config() inout
+    ref inout(Config) config() inout
         => m_config;
+    
+    static nothrow @nogc
+    ref const(shared(Config)) sharedConfig()
+        => s_config;
 
-    synchronized
-    void saveConfig() const
+    void syncConfigToSharedStatic()
     {
+        s_config = m_config.sharedDup;
+    }
+
+    void saveConfig()
+    {
+        syncConfigToSharedStatic;
         createIfNeeded;
         ct_jsonFilePath.write(m_config.serializeToPrettyJson);
     }
 
-    synchronized @trusted
+    @trusted
     string[] listScripts() const
     {
         return dirEntries(ct_dirName, SpanMode.shallow)
@@ -68,7 +81,6 @@ class DataDir
             .array;
     }
 
-    synchronized
     string loadScript(string fileName) const
     {
         string scriptFilePath = getScriptFilePath(fileName);
@@ -83,7 +95,6 @@ class DataDir
         return scriptFilePath.readText;
     }
 
-    synchronized
     void saveScript(string fileName, string sourceCode) const
     {
         string scriptFilePath = getScriptFilePath(fileName);
@@ -97,7 +108,6 @@ class DataDir
         scriptFilePath.write(sourceCode);
     }
 
-    synchronized
     void deleteScript(string fileName) const
     {
         string scriptFilePath = getScriptFilePath(fileName);

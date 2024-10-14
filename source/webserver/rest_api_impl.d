@@ -1,5 +1,6 @@
 module webserver.rest_api_impl;
 
+import config : ConfigScript, ConfigSegment, ConfigState;
 import data_dir : DataDir;
 import ledstrip.led_positions : getKelderLedPositions;
 import ledstrip.ledstrip : Ledstrip;
@@ -12,6 +13,7 @@ import script.scripts : Scripts, ScriptsException;
 import webserver.mailbox : Mailbox;
 import webserver.rest_api : ConfigApi, RestApi, ScriptApi, SegmentApi, SourceFileApi, StateApi;
 
+import std.algorithm : remove;
 import std.format : f = format;
 
 import vibe.data.json : Json, serializeToJson;
@@ -75,7 +77,7 @@ class ConfigApiImpl : ConfigApi
 {
     override
     uint getFps()
-        => DataDir.constInstance.config.fps;
+        => DataDir.sharedConfig.fps;
 
     override
     void putFps(uint fps)
@@ -87,7 +89,7 @@ class ConfigApiImpl : ConfigApi
 
     override
     ubyte getMaxBrightness()
-        => DataDir.constInstance.config.maxBrightness;
+        => DataDir.sharedConfig.maxBrightness;
 
     override
     void putMaxBrightness(ubyte maxBrightness)
@@ -122,6 +124,8 @@ class StateApiImpl : StateApi
     {
         enforceHTTP(state !in LedstripStates.constInstance.states, HTTPStatus.conflict, "State already exists");
         LedstripStates.instance.addState(state);
+        DataDir.instance.config.states[state] = ConfigState();
+        DataDir.instance.saveConfig;
     }
 
     override
@@ -137,6 +141,8 @@ class StateApiImpl : StateApi
     {
         enforceHTTP(_state in LedstripStates.constInstance.states, HTTPStatus.notFound, "No such state");
         LedstripStates.instance.removeState(_state);
+        DataDir.instance.config.states.remove(_state);
+        DataDir.instance.saveConfig;
     }
 
     override
@@ -184,6 +190,12 @@ class SegmentApiImpl : SegmentApi
             throw new HTTPStatusException(HTTPStatus.conflict, e.msg, __FILE__, __LINE__, e);
         catch (LedstripStateException e)
             throw new HTTPStatusException(HTTPStatus.conflict, e.msg, __FILE__, __LINE__, e);
+        DataDir.instance.config.states[_state].segments ~= ConfigSegment(
+            segment.begin,
+            segment.end,
+            segment.scriptName,
+        );
+        DataDir.instance.saveConfig;
     }
 
     override
@@ -211,6 +223,13 @@ class SegmentApiImpl : SegmentApi
             "No such segment",
         );
         LedstripStates.instance.states[_state].unassignSegment(_begin);
+        foreach (i, configSegment; DataDir.sharedConfig.states[_state].segments)
+            if (configSegment.begin == _begin)
+            {
+                DataDir.instance.config.states[_state].segments.remove(i);
+                break;
+            }
+        DataDir.instance.saveConfig;
     }
 }
 
@@ -241,6 +260,12 @@ class ScriptApiImpl : ScriptApi
             throw new HTTPStatusException(HTTPStatus.conflict, e.msg, __FILE__, __LINE__, e);
         catch (ScriptException e)
             throw new HTTPStatusException(HTTPStatus.conflict, e.msg, __FILE__, __LINE__, e);
+        DataDir.instance.config.scripts[script.name] = ConfigScript(
+            script.fileName,
+            script.ledCount,
+            script.autoStart,
+        );
+        DataDir.instance.saveConfig;
     }
 
     override
@@ -263,6 +288,8 @@ class ScriptApiImpl : ScriptApi
             Scripts.instance.removeScript(_name);
         catch (ScriptsException e)
             throw new HTTPStatusException(HTTPStatus.notFound, e.msg, __FILE__, __LINE__, e);
+        DataDir.instance.config.scripts.remove(_name);
+        DataDir.instance.saveConfig;
     }
 
     override

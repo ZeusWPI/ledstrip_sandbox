@@ -35,8 +35,8 @@ class Webserver
     in (ThreadManager.constInstance.inMainThread)
     {
         m_httpServerSettings = new HTTPServerSettings;
-        m_httpServerSettings.port = DataDir.constInstance.config.httpPort;
-        m_httpServerSettings.bindAddresses = DataDir.constInstance.config.httpBindAddresses.idup.dup;
+        m_httpServerSettings.port = DataDir.sharedConfig.httpPort;
+        m_httpServerSettings.bindAddresses = DataDir.sharedConfig.httpBindAddresses.idup.dup;
         m_httpServerSettings.options |= HTTPServerOption.reuseAddress;
         m_httpServerSettings.options |= HTTPServerOption.reusePort;
 

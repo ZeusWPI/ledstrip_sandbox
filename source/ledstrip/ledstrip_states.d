@@ -30,7 +30,7 @@ class LedstripStates
     private synchronized
     this()
     {
-        m_ledCount = DataDir.constInstance.config.ledCount;
+        m_ledCount = DataDir.sharedConfig.ledCount;
 
         enf(m_ledCount > 0, "LedstripStates: ledCount cannot be 0");
 
@@ -41,7 +41,7 @@ class LedstripStates
     private
     void loadConfigStates()
     {
-        const configStates = DataDir.constInstance.config.states;
+        const configStates = DataDir.sharedConfig.states;
         foreach (stateName, configState; configStates)
         {
             LedstripState state = addState(stateName);

@@ -59,7 +59,7 @@ class Ledstrip
     protected synchronized
     this()
     {
-        m_ledCount = DataDir.constInstance.config.ledCount;
+        m_ledCount = DataDir.sharedConfig.ledCount;
         m_stopRenderLoop = true;
         m_framesSinceTimeWarn = uint.max;
 
@@ -95,7 +95,7 @@ class Ledstrip
                     m_framesSinceTimeWarn.atomicOp!"+="(1);
 
                 Duration timeToSleep = entryTime - Clock.currTime
-                    + DataDir.constInstance.config.frameTime;
+                    + DataDir.sharedConfig.frameTime;
                 if (timeToSleep.isNegative)
                 {
                     if (m_framesSinceTimeWarn >= ct_framesBetweenWarns)
@@ -120,7 +120,7 @@ class Ledstrip
     private synchronized
     void copySegmentLeds()
     {
-        ubyte maxBrightness = DataDir.constInstance.config.maxBrightness;
+        ubyte maxBrightness = DataDir.sharedConfig.maxBrightness;
         if (m_fullRefresh)
             leds[] = Led(0, 0, 0);
         synchronized (Scripts.classinfo)

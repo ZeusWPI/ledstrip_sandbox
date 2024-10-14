@@ -36,7 +36,7 @@ class Scripts
     private
     void loadConfigScripts()
     {
-        const configScripts = DataDir.constInstance.config.scripts;
+        const configScripts = DataDir.sharedConfig.scripts;
         foreach (configScriptName, configScript; configScripts)
         {
             try
@@ -84,7 +84,8 @@ class Scripts
                         {
                             if (script.autoStart && script !in alreadyStarted)
                             {
-                                startScript(name);
+                                if (!script.running)
+                                    startScript(name);
                                 alreadyStarted[script] = true;
                             }
                         }
