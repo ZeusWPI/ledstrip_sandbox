@@ -3,9 +3,10 @@ import * as monaco_editor from 'monaco-editor';
 import { useContext, useEffect, useState } from "react";
 import { SelectedSourceFileContext } from "../contexts/SelectedSourceFileContext";
 import { SourceCodeContext } from "../contexts/SourceCodeContext";
+import { getExtension } from "../types/Script";
 
-const sourceFileModelUri = monaco_editor.Uri.parse("inmemory://sourceFile.lua");
-const luaApiFileModelUri = monaco_editor.Uri.parse("inmemory://luaApiFile.lua");
+const sourceFileModelUri = monaco_editor.Uri.parse("inmemory://sourceFile");
+const luaApiFileModelUri = monaco_editor.Uri.parse("inmemory://luaApiFile");
 
 export const SourceFileEditor = () => {
     const { selectedSourceFile } = useContext(SelectedSourceFileContext)!;
@@ -13,19 +14,51 @@ export const SourceFileEditor = () => {
 
     const monaco = useMonaco();
     const [luaApiFileModel, setLuaApiFileModel] = useState<monaco_editor.editor.ITextModel | null>(null);
-    const [modelsCreated, setModelsCreated] = useState<boolean>(false);
+    const [editorInitialized, setEditorInitialized] = useState<boolean>(false);
 
-    // Create models
+    const ext = selectedSourceFile ? getExtension(selectedSourceFile) : "";
+
+    // Setup editor
     useEffect(() => {
-        if (monaco && selectedSourceFile.length && sourceCode && !modelsCreated) {
+        if (monaco && selectedSourceFile.length && sourceCode && !editorInitialized) {
+            // Setup language support
+            monaco.languages.register({ id: "bf" });
+            monaco.languages.setLanguageConfiguration("bf", {
+                brackets: [
+                    ["[", "]"],
+                ],
+            });
+            monaco.languages.setMonarchTokensProvider("bf", {
+                tokenizer: {
+                    root: [
+                        [/[><+-.,]/, "operators"],
+                        [/[\[\]]/, "@brackets"],
+                        [/./, "comment"],
+                    ],
+                },
+            });
+
+            // Create models
             if (!monaco.editor.getModel(sourceFileModelUri)) {
-                monaco.editor.createModel(sourceCode ? sourceCode : "", "lua", sourceFileModelUri);
+                monaco.editor.createModel(
+                    sourceCode ? sourceCode : "",
+                    ext,
+                    sourceFileModelUri,
+                );
             }
-            if (!monaco.editor.getModel(luaApiFileModelUri)) {
-                monaco.editor.createModel("lua_api_file", "lua", luaApiFileModelUri);
+            if (ext === "lua") {
+                if (!monaco.editor.getModel(luaApiFileModelUri)) {
+                    monaco.editor.createModel(
+                        "lua_api_file",
+                        "lua",
+                        luaApiFileModelUri,
+                    );
+                }
+                setLuaApiFileModel(monaco.editor.getModel(luaApiFileModelUri));
             }
-            setLuaApiFileModel(monaco.editor.getModel(luaApiFileModelUri));
-            setModelsCreated(true);
+
+            // Run only once
+            setEditorInitialized(true);
         }
     }, [monaco, selectedSourceFile, sourceCode]);
 
@@ -76,14 +109,14 @@ export const SourceFileEditor = () => {
         }
     };
 
-    if (monaco && selectedSourceFile.length && sourceCode !== null && modelsCreated) {
+    if (monaco && selectedSourceFile.length && sourceCode !== null && editorInitialized) {
         return (
             <Editor
                 width="85vw"
                 height="80vh"
                 theme="vs-dark"
-                value={sourceCode || ""}
-                language="lua"
+                value={sourceCode}
+                language={ext}
                 path={sourceFileModelUri.toString()}
                 onChange={onChange}
             />

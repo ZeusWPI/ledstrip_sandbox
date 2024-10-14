@@ -12,7 +12,8 @@ import vibe.core.log;
 
 @safe:
 
-// TODO: source file add/remove in frontend
+// TODO: bf language type
+// TODO: lua language server
 // TODO: show errors in frontend
 // TODO: synchronize rest api procedures with collection singletons
 // TODO: scripting api for segments
