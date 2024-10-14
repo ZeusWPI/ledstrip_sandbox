@@ -1,46 +1,19 @@
-import { useEffect, useState } from "react";
+import { useContext } from "react";
+import { NewScriptContext } from "../contexts/NewScriptContext";
+import { ScriptNamesContext } from "../contexts/ScriptNamesContext";
+import { SelectedScriptContext } from "../contexts/SelectedScriptContext";
+import { SelectedScriptNameContext } from "../contexts/SelectedScriptNameContext";
+import { SelectedScriptRunningContext } from "../contexts/SelectedScriptRunningContext";
+import { Script } from "../types/Script";
 
-import "./Scripts.css"
-
-export interface ScriptsProps {
-    selectedState: string;
-};
-
-interface Script {
-    name: string;
-    fileName: string;
-    ledCount: number;
-    autoStart: boolean;
-}
-
-const scriptInit: Script = {
-    name: "",
-    fileName: "",
-    ledCount: 0,
-    autoStart: false,
-};
+import "./Scripts.css";
 
 export const Scripts = () => {
-    const [scriptNames, setScriptNames] = useState<string[]>([]);
-    const [selectedScriptName, setSelectedScriptName] = useState<string>("");
-    const [selectedScript, setSelectedScript] = useState<Script>(scriptInit);
-    const [selectedScriptRunning, setSelectedScriptRunning] = useState<boolean>(false);
-    const [newScript, setNewScript] = useState<Script>(scriptInit);
-
-    const fetchScripts = () => {
-        fetch("/api/scripts/")
-            .then(res => res.json())
-            .then(json => setScriptNames(json));
-    };
-
-    const fetchScript = (name: string) => {
-        fetch(`/api/scripts/${name}/`)
-            .then(res => res.json())
-            .then(json => setSelectedScript(json));
-        fetch(`/api/scripts/${name}/running`)
-            .then(res => res.text())
-            .then(text => setSelectedScriptRunning(JSON.parse(text)));
-    };
+    const scriptNames = useContext(ScriptNamesContext)!;
+    const { selectedScriptName, setSelectedScriptName } = useContext(SelectedScriptNameContext)!;
+    const selectedScript = useContext(SelectedScriptContext)!;
+    const selectedScriptRunning = useContext(SelectedScriptRunningContext)!;
+    const { newScript, setNewScript } = useContext(NewScriptContext)!;
 
     const addScript = (script: Script) => {
         fetch(`/api/scripts/`, {
@@ -76,40 +49,20 @@ export const Scripts = () => {
         });
     };
 
-    useEffect(() => {
-        fetchScripts();
-        const interval = setInterval(fetchScripts, 500);
-        return () => clearInterval(interval);
-    }, []);
-
-    useEffect(() => {
-        if (selectedScriptName !== "") {
-            fetchScript(selectedScriptName);
-            const interval = setInterval(() => fetchScript(selectedScriptName), 500);
-            return () => clearInterval(interval);
-        }
-    }, [selectedScriptName]);
-
-    useEffect(() => {
-        if (selectedScriptName === "" && scriptNames.length) {
-            setSelectedScriptName(scriptNames[0]);
-        }
-    }, [selectedScriptName, scriptNames]);
-
     return <div>
         <table><tbody><tr>
             <td>
                 <select
                     size={Math.max(2, scriptNames.length + 1)}
                     onChange={(e) => setSelectedScriptName(scriptNames[e.target.selectedIndex])}
+                    defaultValue={selectedScriptName}
                 >
-                    {scriptNames.map(name => <option key={name}>{name}</option>)}
+                    {scriptNames.map(name => <option key={name} value={name}>{name}</option>)}
                 </select>
             </td>
             <td>
                 Selected: "{selectedScriptName}"
                 <table style={{ marginLeft: "8px" }}><tbody>
-                    <tr><td>Name:</td><td>{selectedScript.name}</td></tr>
                     <tr><td>File name:</td><td>{selectedScript.fileName}</td></tr>
                     <tr><td>Led count:</td><td>{selectedScript.ledCount}</td></tr>
                     <tr><td>Auto start:</td><td>{selectedScript.autoStart && "true" || "false"}</td></tr>
@@ -149,6 +102,7 @@ export const Scripts = () => {
         <input
             className="inline"
             type="text"
+            defaultValue={newScript.name}
             onChange={(e) => {
                 if (e.target.value.length) {
                     let script = newScript;
@@ -161,6 +115,7 @@ export const Scripts = () => {
         <input
             className="inline"
             type="text"
+            defaultValue={newScript.fileName}
             onChange={(e) => {
                 if (e.target.value.length) {
                     let script = newScript;
@@ -175,7 +130,7 @@ export const Scripts = () => {
             type="number"
             min={0}
             max={999}
-            defaultValue={0}
+            defaultValue={newScript.ledCount}
             onChange={(e) => {
                 if (e.target.value.length) {
                     let script = newScript;
@@ -188,6 +143,7 @@ export const Scripts = () => {
         <input
             className="inline"
             type="checkbox"
+            defaultValue={newScript.autoStart && "true" || "false"}
             onChange={(e) => {
                 if (e.target.value.length) {
                     let script = newScript;

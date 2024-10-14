@@ -1,35 +1,15 @@
-import { useEffect, useState } from "react";
+import { useContext } from "react";
+import { NewSegmentContext } from "../contexts/NewSegmentContext";
+import { SegmentsContext } from "../contexts/SegmentsContext";
+import { SelectedSegmentContext } from "../contexts/SelectedSegmentContext";
+import { SelectedStateContext } from "../contexts/SelectedStateContext";
+import { Segment } from "../types/Segment";
 
-export interface SegmentsProps {
-    selectedState: string;
-};
-
-interface Segment {
-    begin: number;
-    end: number;
-    scriptName: string;
-}
-
-const segmentInit: Segment = {
-    begin: 0,
-    end: 0,
-    scriptName: "",
-};
-
-const compareSegments = (a: Segment, b: Segment) => a.begin - b.begin;
-
-export const Segments = ({ selectedState }: SegmentsProps) => {
-    const [segments, setSegments] = useState<Segment[]>([]);
-    const [selectedSegment, setSelectedSegment] = useState<Segment>(segmentInit);
-    const [newSegment, setNewSegment] = useState<Segment>(segmentInit);
-
-    const fetchSegments = () => {
-        if (selectedState.length) {
-            fetch(`/api/states/${selectedState}/segments/`)
-                .then((res) => res.json())
-                .then((segs: Segment[]) => setSegments(segs.sort(compareSegments)));
-        }
-    };
+export const Segments = () => {
+    const { selectedState } = useContext(SelectedStateContext)!;
+    const segments = useContext(SegmentsContext)!;
+    const { selectedSegment, setSelectedSegment } = useContext(SelectedSegmentContext)!;
+    const { newSegment, setNewSegment } = useContext(NewSegmentContext)!;
 
     const addSegment = (segment: Segment) => {
         fetch(`/api/states/${selectedState}/segments/`, {
@@ -47,25 +27,9 @@ export const Segments = ({ selectedState }: SegmentsProps) => {
         });
     };
 
-    useEffect(() => {
-        fetchSegments();
-        const interval = setInterval(fetchSegments, 500);
-        return () => clearInterval(interval);
-    }, [selectedState]);
-
-    useEffect(() => {
-        setSelectedSegment({ begin: 0, end: 0, scriptName: "" })
-    }, [selectedState]);
-
-    useEffect(() => {
-        if (selectedSegment.scriptName === "" && segments.length) {
-            setSelectedSegment(segments[0]);
-        }
-    }, [selectedSegment, segments]);
-
     const options = segments.map((seg) => {
         const text = `${seg.begin} - ${seg.end}`;
-        return <option key={seg.begin}>{text}</option>
+        return <option key={seg.begin} value={seg.begin}>{text}</option>
     });
 
     return <div>
@@ -74,6 +38,7 @@ export const Segments = ({ selectedState }: SegmentsProps) => {
                 <select
                     size={Math.max(2, segments.length + 1)}
                     onChange={(e) => setSelectedSegment(segments[e.target.selectedIndex])}
+                    defaultValue={selectedSegment.begin}
                 >
                     {options}
                 </select>
@@ -100,7 +65,7 @@ export const Segments = ({ selectedState }: SegmentsProps) => {
             type="number"
             min={0}
             max={999}
-            defaultValue={0}
+            defaultValue={newSegment.begin}
             onChange={(e) => {
                 if (e.target.value.length) {
                     let seg = newSegment;
@@ -115,7 +80,7 @@ export const Segments = ({ selectedState }: SegmentsProps) => {
             type="number"
             min={0}
             max={999}
-            defaultValue={0}
+            defaultValue={newSegment.end}
             onChange={(e) => {
                 if (e.target.value.length) {
                     let seg = newSegment;
@@ -128,6 +93,7 @@ export const Segments = ({ selectedState }: SegmentsProps) => {
         <input
             className="inline"
             type="text"
+            defaultValue={newSegment.scriptName}
             onChange={(e) => {
                 let seg = newSegment;
                 seg.scriptName = e.target.value;

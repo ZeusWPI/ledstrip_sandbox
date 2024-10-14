@@ -29,6 +29,8 @@ interface RestApi
     void putMailbox(string topic, string message);
 
     Json getLedPositions();
+
+    string getLuaApiFile();
 }
 
 interface ConfigApi

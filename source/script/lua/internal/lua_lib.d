@@ -25,14 +25,16 @@ import vibe.core.log;
 
 import bindbc.lua.v51 : lua_getglobal;
 
-import lumars : LuaFunc, LuaNil, LuaTable, LuaValue, LuaVariadic, EmmyLuaBuilder, addFunction;
-import lumars;
+import lumars : LuaFunc, LuaNil, LuaTable, LuaValue, LuaVariadic, addFunction, LuaNumber;
+import emmylua_modified : EmmyLuaBuilder, addFunction;
 
 @safe:
 
 class LuaLib
 {
     private alias enf = enforce!LuaLibException;
+
+    private static shared string s_luaApiFile;
 
     @disable this();
     @disable this(ref typeof(this));
@@ -211,11 +213,7 @@ static:
             // Mailbox module
             register(&MailboxModule.consume, "mailbox", "consume", "");
             
-            {
-                import std.file : write;
-
-                write("api.lua", elb.toString());
-            }
+            s_luaApiFile = elb.toString();
 
             return env;
         }
@@ -224,6 +222,10 @@ static:
             assert(false, "LuaLib: Fatal error creating env table: " ~ e.toString);
         }
     }
+
+    nothrow @nogc
+    string luaApiFile()
+        => s_luaApiFile;
 
     private
     LuaScript script()

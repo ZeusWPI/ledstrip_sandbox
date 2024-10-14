@@ -1,31 +1,16 @@
-import { useEffect, useState } from "react";
+import { useContext } from "react";
+import { ActiveStateContext } from "../contexts/ActiveStateContext";
+import { NewStateContext } from "../contexts/NewStateContext";
+import { SelectedStateContext } from "../contexts/SelectedStateContext";
+import { StatesContext } from "../contexts/StatesContext";
 
 import "./States.css";
 
-export interface StatesProps {
-    states: string[];
-    setStates: React.Dispatch<React.SetStateAction<string[]>>;
-    activeState: string;
-    setActiveState: React.Dispatch<React.SetStateAction<string>>;
-    selectedState: string;
-    setSelectedState: React.Dispatch<React.SetStateAction<string>>;
-};
-
-export const States = ({
-    states, setStates,
-    activeState, setActiveState,
-    selectedState, setSelectedState,
-}: StatesProps) => {
-    const [newState, setNewState] = useState<string>("");
-
-    const fetchStates = () => {
-        fetch("/api/states/")
-            .then(res => res.json())
-            .then(json => setStates(json));
-        fetch("/api/active_state")
-            .then(res => res.text())
-            .then(text => setActiveState(JSON.parse(text)));
-    };
+export const States = () => {
+    const states = useContext(StatesContext)!;
+    const activeState = useContext(ActiveStateContext)!;
+    const { selectedState, setSelectedState } = useContext(SelectedStateContext)!;
+    const { newState, setNewState } = useContext(NewStateContext)!;
 
     const addState = (state: string) => {
         fetch(`/api/states/${state}/`, {
@@ -46,27 +31,15 @@ export const States = ({
     const activateState = (state: string) => {
         fetch(`/api/states/${state}/activate`, {
             method: "POST",
-        }).then(() => setActiveState(state));
+        });
     };
-
-    useEffect(() => {
-        fetchStates();
-        const interval = setInterval(fetchStates, 500);
-        return () => clearInterval(interval);
-    }, []);
-
-    useEffect(() => {
-        if (selectedState === "" && states.length) {
-            setSelectedState(states[0]);
-        }
-    }, [selectedState, states]);
 
     const options = states.map((state) => {
         let classes = "";
         if (state === activeState) {
             classes += "activeState";
         }
-        return <option className={classes} key={state}>{state}</option>
+        return <option className={classes} key={state} value={state}>{state}</option>
     });
 
     return <div>
@@ -75,6 +48,7 @@ export const States = ({
                 <select
                     size={Math.max(2, states.length + 1)}
                     onChange={(e) => setSelectedState(states[e.target.selectedIndex])}
+                    defaultValue={selectedState}
                 >
                     {options}
                 </select>
@@ -105,7 +79,7 @@ export const States = ({
             className="inline"
             type="text"
             placeholder="State name"
-            value={newState}
+            defaultValue={newState}
             onChange={(e) => setNewState(e.target.value)}
         />
         <input

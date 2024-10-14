@@ -6,6 +6,7 @@ import ledstrip.ledstrip : Ledstrip;
 import ledstrip.ledstrip_segment : LedstripSegment;
 import ledstrip.ledstrip_state : LedstripState, LedstripStateException;
 import ledstrip.ledstrip_states : LedstripStates, LedstripStatesException;
+import script.lua.internal.lua_lib : LuaLib;
 import script.script : RealScript = Script, ScriptException;
 import script.scripts : Scripts, ScriptsException;
 import webserver.mailbox : Mailbox;
@@ -64,6 +65,10 @@ class RestApiImpl : RestApi
     override
     Json getLedPositions()
         => getKelderLedPositions.serializeToJson;
+
+    override
+    string getLuaApiFile()
+        => LuaLib.luaApiFile;
 }
 
 class ConfigApiImpl : ConfigApi
