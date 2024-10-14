@@ -1,0 +1,11 @@
+td {
+    vertical-align: top;
+}
+
+td>*:first-child {
+    margin-top: 0;
+}
+
+input.inline {
+    margin-left: 4px;
+}

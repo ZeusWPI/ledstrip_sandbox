@@ -12,7 +12,7 @@ export const ActiveStateContextProvider = ({ children }: PropsWithChildren) => {
                 .then(text => setActiveState(JSON.parse(text)));
         };
         fn();
-        const interval = setInterval(fn, 500);
+        const interval = setInterval(fn, 2000);
         return () => clearInterval(interval);
     }, []);
 

@@ -57,7 +57,7 @@ export const Scripts = () => {
                     onChange={(e) => setSelectedScriptName(scriptNames[e.target.selectedIndex])}
                     defaultValue={selectedScriptName}
                 >
-                    {scriptNames.map(name => <option key={name} value={name}>{name}</option>)}
+                    {scriptNames.sort().map(name => <option key={name} value={name}>{name}</option>)}
                 </select>
             </td>
             <td>

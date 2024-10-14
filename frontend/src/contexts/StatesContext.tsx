@@ -12,7 +12,7 @@ export const StatesContextProvider = ({ children }: PropsWithChildren) => {
                 .then(json => setStates(json));
         };
         fn();
-        const interval = setInterval(fn, 500);
+        const interval = setInterval(fn, 2000);
         return () => clearInterval(interval);
     }, []);
 

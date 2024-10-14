@@ -16,7 +16,7 @@ export const SegmentsContextProvider = ({ children }: PropsWithChildren) => {
                     .then((segs: Segment[]) => setSegments(segs.sort(compareSegments)));
             };
             fn();
-            const interval = setInterval(fn, 500);
+            const interval = setInterval(fn, 2000);
             return () => clearInterval(interval);
         }
     }, [selectedState]);
