@@ -1,0 +1,23 @@
+{
+  "name": "monaco-lua-example-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --platform=node --outdir=dist",
+    "start": "node dist/main.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "vscode-languageserver": "^9.0.1",
+    "vscode-ws-jsonrpc": "^3.3.2",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.5",
+    "@types/ws": "^8.5.12",
+    "esbuild": "^0.24.0"
+  }
+}
