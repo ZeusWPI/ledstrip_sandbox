@@ -1,49 +1,88 @@
-import { Editor, useMonaco } from "@monaco-editor/react";
-import * as monaco_editor from 'monaco-editor';
 import { useContext, useEffect, useState } from "react";
 import { SelectedSourceFileContext } from "../contexts/SelectedSourceFileContext";
 import { SourceCodeContext } from "../contexts/SourceCodeContext";
 import { getExtension } from "../types/Script";
 
+import * as monaco from 'monaco-editor';
 import { initServices } from 'monaco-languageclient/vscode/services';
-import { MonacoLanguageClient } from "monaco-languageclient";
-import { toSocket, WebSocketMessageReader, WebSocketMessageWriter } from "vscode-ws-jsonrpc";
-import { CloseAction, ErrorAction } from "vscode-languageclient";
+import { LogLevel } from 'vscode/services';
+import { MonacoLanguageClient } from 'monaco-languageclient';
+import { WebSocketMessageReader, WebSocketMessageWriter, toSocket } from 'vscode-ws-jsonrpc';
+import { CloseAction, ErrorAction, MessageTransports } from 'vscode-languageclient/browser.js';
+import { ConsoleLogger } from 'monaco-languageclient/tools';
 
-const sourceFileModelUri = monaco_editor.Uri.parse("inmemory://sourceFile.lua");
-const luaApiFileModelUri = monaco_editor.Uri.parse("inmemory://luaApiFile");
+// @ts-ignore
+import * as lua_language from "monaco-languages/release/esm/lua/lua.js";
 
-initServices({});
+const sourceFileModelUri = monaco.Uri.parse("inmemory://sourceFile.lua");
+const luaApiFileModelUri = monaco.Uri.parse("inmemory://luaApiFile");
+
+const logger = new ConsoleLogger(LogLevel.Debug);
+const htmlContainer = document.getElementById('monaco-editor-root')!;
+await initServices({
+    htmlContainer,
+    logger,
+});
+
+// monaco.languages.register({ id: "bf" });
+// monaco.languages.setLanguageConfiguration("bf", {
+//     brackets: [
+//         ["[", "]"],
+//     ],
+// });
+// monaco.languages.setMonarchTokensProvider("bf", {
+//     tokenizer: {
+//         root: [
+//             [/[><+-.,]/, "operators"],
+//             [/[\[\]]/, "@brackets"],
+//             [/./, "comment"],
+//         ],
+//     },
+// });
+
+monaco.languages.register({ id: "lua" });
+monaco.languages.setLanguageConfiguration("lua", lua_language.conf);
+monaco.languages.setMonarchTokensProvider("lua", lua_language.language);
+
+const model = monaco.editor.createModel(
+    "for i=0, 10 do print(i) end",
+    "lua",
+    sourceFileModelUri,
+);
+monaco.editor.create(htmlContainer, {
+    model: model,
+    automaticLayout: true,
+    wordBasedSuggestions: "off",
+    theme: "vs-dark",
+});
+
+const ws = new WebSocket("ws://localhost:9999");
+ws.onopen = () => {
+    const socket = toSocket(ws);
+    const reader = new WebSocketMessageReader(socket);
+    const writer = new WebSocketMessageWriter(socket);
+    const languageClient = new MonacoLanguageClient({
+        name: "Lua Language Client",
+        clientOptions: {
+            documentSelector: ["lua"],
+            errorHandler: {
+                error: () => ({ action: ErrorAction.Continue }),
+                closed: () => ({ action: CloseAction.DoNotRestart }),
+            },
+        },
+        messageTransports: { reader, writer },
+    });
+    languageClient.start();
+    console.log("Language server started");
+    reader.onClose(() => languageClient.stop());
+};
 
 export const SourceFileEditor = () => {
-    const { selectedSourceFile } = useContext(SelectedSourceFileContext)!;
-    const { sourceCode, setSourceCode } = useContext(SourceCodeContext)!;
-
-    const monaco = useMonaco();
-    const [luaApiFileModel, setLuaApiFileModel] = useState<monaco_editor.editor.ITextModel | null>(null);
-    const [editorInitialized, setEditorInitialized] = useState<boolean>(false);
-
-    const ext = selectedSourceFile ? getExtension(selectedSourceFile) : "";
-
     // Setup editor
+    /*
     useEffect(() => {
         if (monaco && selectedSourceFile.length && sourceCode && !editorInitialized) {
             // Setup language support
-            monaco.languages.register({ id: "bf" });
-            monaco.languages.setLanguageConfiguration("bf", {
-                brackets: [
-                    ["[", "]"],
-                ],
-            });
-            monaco.languages.setMonarchTokensProvider("bf", {
-                tokenizer: {
-                    root: [
-                        [/[><+-.,]/, "operators"],
-                        [/[\[\]]/, "@brackets"],
-                        [/./, "comment"],
-                    ],
-                },
-            });
 
             const ws = new WebSocket("ws://localhost:9999");
             let languageClient: MonacoLanguageClient | null = null;
@@ -93,8 +132,10 @@ export const SourceFileEditor = () => {
             };
         }
     }, [monaco, selectedSourceFile, sourceCode]);
+    */
 
     // Set LuaApiFileModel contents
+    /*
     useEffect(() => {
         if (luaApiFileModel) {
             fetch("/api/lua_api_file")
@@ -102,32 +143,7 @@ export const SourceFileEditor = () => {
                 .then((text) => luaApiFileModel.setValue(JSON.parse(text)));
         }
     }, [luaApiFileModel]);
+    */
 
-    // Connect to language server
-    useEffect(() => {
-        if (monaco) {
-        };
-    }, [monaco]);
-
-    const onChange = (value: string | undefined) => {
-        if (value) {
-            setSourceCode(value);
-        }
-    };
-
-    if (monaco && selectedSourceFile.length && sourceCode !== null && editorInitialized) {
-        return (
-            <Editor
-                width="85vw"
-                height="80vh"
-                theme="vs-dark"
-                value={sourceCode}
-                language={ext}
-                path={sourceFileModelUri.toString()}
-                onChange={onChange}
-            />
-        )
-    } else {
-        return "Select a source file to edit";
-    }
+    return "Select a source file to edit";
 }
