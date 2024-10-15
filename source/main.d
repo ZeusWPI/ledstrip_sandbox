@@ -24,8 +24,10 @@ void main()
     setLogFormat(FileLogger.Format.thread, FileLogger.Format.thread);
 
     // These have no dependencies
-    DataDir.createInstance;
     ThreadManager.createInstance;
+
+    // These depend on ThreadManager
+    DataDir.createInstance;
 
     // These depend on DataDir and/or ThreadManager
     Scripts.createInstance;
