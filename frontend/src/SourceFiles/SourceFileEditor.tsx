@@ -5,8 +5,15 @@ import { SelectedSourceFileContext } from "../contexts/SelectedSourceFileContext
 import { SourceCodeContext } from "../contexts/SourceCodeContext";
 import { getExtension } from "../types/Script";
 
-const sourceFileModelUri = monaco_editor.Uri.parse("inmemory://sourceFile");
+import { initServices } from 'monaco-languageclient/vscode/services';
+import { MonacoLanguageClient } from "monaco-languageclient";
+import { toSocket, WebSocketMessageReader, WebSocketMessageWriter } from "vscode-ws-jsonrpc";
+import { CloseAction, ErrorAction } from "vscode-languageclient";
+
+const sourceFileModelUri = monaco_editor.Uri.parse("inmemory://sourceFile.lua");
 const luaApiFileModelUri = monaco_editor.Uri.parse("inmemory://luaApiFile");
+
+initServices({});
 
 export const SourceFileEditor = () => {
     const { selectedSourceFile } = useContext(SelectedSourceFileContext)!;
@@ -38,44 +45,6 @@ export const SourceFileEditor = () => {
                 },
             });
 
-            // Create models
-            if (!monaco.editor.getModel(sourceFileModelUri)) {
-                monaco.editor.createModel(
-                    sourceCode ? sourceCode : "",
-                    ext,
-                    sourceFileModelUri,
-                );
-            }
-            if (ext === "lua") {
-                if (!monaco.editor.getModel(luaApiFileModelUri)) {
-                    monaco.editor.createModel(
-                        "lua_api_file",
-                        "lua",
-                        luaApiFileModelUri,
-                    );
-                }
-                setLuaApiFileModel(monaco.editor.getModel(luaApiFileModelUri));
-            }
-
-            // Run only once
-            setEditorInitialized(true);
-        }
-    }, [monaco, selectedSourceFile, sourceCode]);
-
-    // Set LuaApiFileModel contents
-    useEffect(() => {
-        if (luaApiFileModel) {
-            fetch("/api/lua_api_file")
-                .then((res) => res.text())
-                .then((text) => luaApiFileModel.setValue(JSON.parse(text)));
-        }
-    }, [luaApiFileModel]);
-
-    // Connect to language server
-    /*
-    useEffect(() => {
-        if (monaco) {
-            console.info("Connecting to language server");
             const ws = new WebSocket("ws://localhost:9999");
             let languageClient: MonacoLanguageClient | null = null;
             ws.onopen = () => {
@@ -97,11 +66,48 @@ export const SourceFileEditor = () => {
                 });
                 languageClient.start();
             };
-            ws.onclose = () => languageClient?.dispose();
-            return () => ws.close();
+
+            // Create models
+            if (!monaco.editor.getModel(sourceFileModelUri)) {
+                monaco.editor.createModel(
+                    sourceCode ? sourceCode : "",
+                    ext,
+                    sourceFileModelUri,
+                );
+            }
+            if (ext === "lua") {
+                if (!monaco.editor.getModel(luaApiFileModelUri)) {
+                    monaco.editor.createModel(
+                        "lua_api_file",
+                        "lua",
+                        luaApiFileModelUri,
+                    );
+                }
+                setLuaApiFileModel(monaco.editor.getModel(luaApiFileModelUri));
+            }
+
+            // Run only once
+            setEditorInitialized(true);
+            return () => {
+                ws.close();
+            };
+        }
+    }, [monaco, selectedSourceFile, sourceCode]);
+
+    // Set LuaApiFileModel contents
+    useEffect(() => {
+        if (luaApiFileModel) {
+            fetch("/api/lua_api_file")
+                .then((res) => res.text())
+                .then((text) => luaApiFileModel.setValue(JSON.parse(text)));
+        }
+    }, [luaApiFileModel]);
+
+    // Connect to language server
+    useEffect(() => {
+        if (monaco) {
         };
     }, [monaco]);
-    */
 
     const onChange = (value: string | undefined) => {
         if (value) {
