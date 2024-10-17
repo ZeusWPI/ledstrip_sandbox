@@ -1,7 +1,10 @@
 /**
- * @type {import('vite').UserConfig}
+ * @type {import("vite").UserConfig}
  */
 const config = {
+    build: {
+        target: "es2022"
+    },
     server: {
         proxy: {
             '/api': {
@@ -9,7 +12,7 @@ const config = {
                 changeOrigin: true,
                 secure: false,
             },
-            cors: false
+            cors: false,
         },
     },
 };

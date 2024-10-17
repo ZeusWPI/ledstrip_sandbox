@@ -1,14 +1,16 @@
 module main;
 
 import data_dir : DataDir;
-import ledstrip.ledstrip_states : LedstripStates;
 import ledstrip.ledstrip : Ledstrip;
+import ledstrip.ledstrip_states : LedstripStates;
 import script.scripts : Scripts;
 import thread_manager : ThreadManager;
 import webserver.webserver : Webserver;
 
 import vibe.core.core : runEventLoopOnce;
+import vibe.core.path;
 import vibe.core.log;
+import vibe.core.process : spawnProcess, Config, execute;
 
 @safe:
 
@@ -39,6 +41,8 @@ void main()
     Scripts.instance.startAutoStartTask;
     Webserver.instance.start;
 
+    spawnProcess(["node", "dist/main.js"], null, Config.none, NativePath("./lua-language-server-ws/"));
+    
     while (true)
     {
         runEventLoopOnce;

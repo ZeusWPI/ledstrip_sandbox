@@ -20,9 +20,10 @@ export const launch = (socket: IWebSocket) => {
 };
 
 const wsServer = new WebSocketServer({
+    host: "0.0.0.0",
     port: 9999,
 });
-console.info(`WebSocketServer listening on port ${wsServer.options.port}`);
+console.info(`Lua language server listening on ws://${wsServer.options.host}:${wsServer.options.port}`);
 wsServer.on("connection", (ws) => {
     const socket: IWebSocket = {
         send: (content) => {

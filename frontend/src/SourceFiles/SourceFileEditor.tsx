@@ -42,7 +42,7 @@ const initMonaco = async () => {
     monaco.languages.setLanguageConfiguration("lua", lua_language.conf);
     monaco.languages.setMonarchTokensProvider("lua", lua_language.language);
 
-    const luaLanguageClientWs = new WebSocket("ws://localhost:9999");
+    const luaLanguageClientWs = new WebSocket(`ws://${window.location.hostname}:9999`);
     let luaLanguageClient = null;
     luaLanguageClientWs.onopen = () => {
         const socket = toSocket(luaLanguageClientWs);
