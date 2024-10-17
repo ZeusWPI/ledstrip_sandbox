@@ -1,12 +1,14 @@
 import { useContext, useEffect, useRef } from "react";
 import { SelectedSourceFileContext } from "../contexts/SelectedSourceFileContext";
-import { SourceFilesContext } from "../contexts/SourceFilesContext";
 import { SourceCodeContext } from "../contexts/SourceCodeContext";
+import { SourceCodeModifiedContext } from "../contexts/SourceCodeModifiedContext";
+import { SourceFilesContext } from "../contexts/SourceFilesContext";
 
 export const SourceFileSelection = () => {
     const sourceFiles = useContext(SourceFilesContext)!;
     const { setSelectedSourceFile } = useContext(SelectedSourceFileContext)!;
     const { sourceCode } = useContext(SourceCodeContext)!;
+    const { sourceCodeModified } = useContext(SourceCodeModifiedContext)!;
     const selectElementRef = useRef<HTMLSelectElement | null>(null);
 
     // Deselect on save
@@ -22,7 +24,7 @@ export const SourceFileSelection = () => {
         <select
             size={Math.max(2, sourceFiles.length + 1)}
             onChange={(e) => setSelectedSourceFile(sourceFiles[e.target.selectedIndex])}
-            disabled={sourceCode !== null}
+            disabled={sourceCodeModified}
             ref={selectElementRef}
         >
             {sourceFiles.sort().map(name => {

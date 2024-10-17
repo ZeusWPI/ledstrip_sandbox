@@ -1,10 +1,12 @@
 import { useContext } from "react";
 import { SelectedSourceFileContext } from "../contexts/SelectedSourceFileContext";
 import { SourceCodeContext } from "../contexts/SourceCodeContext";
+import { SourceCodeModifiedContext } from "../contexts/SourceCodeModifiedContext";
 
 export const SourceFileSaveButton = () => {
-    const { selectedSourceFile, setSelectedSourceFile } = useContext(SelectedSourceFileContext)!;
-    const { sourceCode, setSourceCode } = useContext(SourceCodeContext)!;
+    const { selectedSourceFile } = useContext(SelectedSourceFileContext)!;
+    const { sourceCode } = useContext(SourceCodeContext)!;
+    const { sourceCodeModified, setSourceCodeModified } = useContext(SourceCodeModifiedContext)!;
 
     const saveSourceFile = () => {
         fetch(`/api/source_files/${selectedSourceFile}/`, {
@@ -14,8 +16,7 @@ export const SourceFileSaveButton = () => {
             },
             body: JSON.stringify({ "sourceCode": sourceCode }),
         }).then(() => {
-            setSelectedSourceFile("");
-            setSourceCode(null);
+            setSourceCodeModified(false);
         });
     };
 
@@ -25,7 +26,7 @@ export const SourceFileSaveButton = () => {
             type="button"
             value="Save"
             onClick={() => saveSourceFile()}
-            disabled={sourceCode === null}
+            disabled={!sourceCodeModified}
         />
     );
 };

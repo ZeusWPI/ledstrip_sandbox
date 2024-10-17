@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import { SelectedSourceFileContext } from "../contexts/SelectedSourceFileContext";
+import { SourceFileDiscardButton } from "./SourceFileDiscardButton";
 import { SourceFileEditor } from "./SourceFileEditor";
 import { SourceFileNew } from "./SourceFileNew";
 import { SourceFileSaveButton } from "./SourceFileSaveButton";
@@ -17,6 +18,7 @@ export const SourceFiles = () => {
                     </td></tr>
                     <tr><td>
                         <SourceFileSaveButton />
+                        <SourceFileDiscardButton />
                     </td></tr>
                 </tbody></table>
             </td>
@@ -25,6 +27,6 @@ export const SourceFiles = () => {
             </td>
         </tr></tbody></table>
         <br />
-        {!selectedSourceFile.length && <SourceFileNew />}
+        {!selectedSourceFile && <SourceFileNew />}
     </div>;
 };

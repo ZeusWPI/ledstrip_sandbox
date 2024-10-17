@@ -13,6 +13,7 @@ import { getExtension } from "../types/Script";
 
 // @ts-ignore
 import * as lua_language from "monaco-languages/release/esm/lua/lua.js";
+import { SourceCodeModifiedContext } from '../contexts/SourceCodeModifiedContext';
 
 let initMonacoCalled = false;
 const initMonaco = async () => {
@@ -73,9 +74,12 @@ export const SourceFileEditor = () => {
     const editorElementRef = useRef<HTMLDivElement | null>(null);
     const { selectedSourceFile } = useContext(SelectedSourceFileContext)!;
     const { sourceCode, setSourceCode } = useContext(SourceCodeContext)!;
+    const { setSourceCodeModified } = useContext(SourceCodeModifiedContext)!;
     const [initialized, setInitialized] = useState<boolean>(false);
 
     const ext = useMemo<string>(() => getExtension(selectedSourceFile), [selectedSourceFile]);
+
+    console.log("sourcefileeditor render")
 
     // Create models and editor
     useEffect(() => {
@@ -87,6 +91,7 @@ export const SourceFileEditor = () => {
 
             monaco.editor.getModel(sourceFileModelUri)!.onDidChangeContent(() => {
                 setSourceCode(monaco.editor.getModel(sourceFileModelUri)!.getValue());
+                setSourceCodeModified(true);
             });
 
             monaco.editor.create(editorElementRef.current, {
@@ -113,8 +118,9 @@ export const SourceFileEditor = () => {
         return () => {
             monaco.editor.getEditors().forEach(editor => editor.dispose());
             monaco.editor.getModels().forEach(model => model.dispose());
+            setInitialized(false);
         };
-    }, []);
+    }, [selectedSourceFile]);
 
     return <>
         <div ref={editorElementRef} style={{ width: "80vw", height: "70vh" }}>
