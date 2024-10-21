@@ -26,15 +26,12 @@ import vibe.core.log;
 import bindbc.lua.v51 : lua_getglobal;
 
 import lumars : LuaFunc, LuaNil, LuaTable, LuaValue, LuaVariadic, addFunction, LuaNumber;
-import emmylua_modified : EmmyLuaBuilder, addFunction;
 
 @safe:
 
 class LuaLib
 {
     private alias enf = enforce!LuaLibException;
-
-    private static shared string s_luaApiFile;
 
     @disable this();
     @disable this(ref typeof(this));
@@ -59,7 +56,6 @@ static:
         try
         {
             LuaTable env = createTable;
-            EmmyLuaBuilder elb;
 
             void ensureModuleExists(string module_)
             {
@@ -69,7 +65,7 @@ static:
                     env.set(module_, createTable);
             }
 
-            void register(T, DocT = T)(T val, string module_, string name, string description)
+            void register(T)(T val, string module_, string name)
             {
                 if (module_.length)
                 {
@@ -80,141 +76,130 @@ static:
                 {
                     env.set(name, val);
                 }
-
-                static if (isFunctionPointer!DocT)
-                {
-                    elb.addFunction!DocT(module_, name, description);
-                }
-                else
-                {
-                    elb.addValue!DocT(module_, name, description);
-                }
             }
 
-            void registerGlobal(T, DocT = T)(string module_, string name, string description)
+            void registerGlobal(T)(string module_, string name)
             {
                 T val;
                 if (module_.length)
                     val = getGlobal!LuaTable(module_).get!T(name);
                 else
                     val = getGlobal!T(name);
-                register!(T, DocT)(val, module_, name, description);
+                register!T(val, module_, name);
             }
 
             // Values
-            registerGlobal!(string)("", "_VERSION", "");
+            registerGlobal!(string)("", "_VERSION");
 
             // Core
-            registerGlobal!(LuaFunc)("", "type", "");
+            registerGlobal!(LuaFunc)("", "type");
 
             // Error handling
-            registerGlobal!(LuaFunc)("", "assert", "");
-            registerGlobal!(LuaFunc)("", "error",  "");
-            registerGlobal!(LuaFunc)("", "pcall",  "");
-            registerGlobal!(LuaFunc)("", "xpcall", "");
+            registerGlobal!(LuaFunc)("", "assert");
+            registerGlobal!(LuaFunc)("", "error" );
+            registerGlobal!(LuaFunc)("", "pcall" );
+            registerGlobal!(LuaFunc)("", "xpcall");
 
             // String ops
-            registerGlobal!(LuaFunc)("",       "tonumber", "");
-            registerGlobal!(LuaFunc)("",       "tostring", "");
-            registerGlobal!(LuaFunc)("",       "unpack",   "");
-            registerGlobal!(LuaFunc)("string", "byte",     "");
-            registerGlobal!(LuaFunc)("string", "char",     "");
-            registerGlobal!(LuaFunc)("string", "dump",     "");
-            registerGlobal!(LuaFunc)("string", "find",     "");
-            registerGlobal!(LuaFunc)("string", "format",   "");
-            registerGlobal!(LuaFunc)("string", "gmatch",   "");
-            registerGlobal!(LuaFunc)("string", "gsub",     "");
-            registerGlobal!(LuaFunc)("string", "len",      "");
-            registerGlobal!(LuaFunc)("string", "lower",    "");
-            registerGlobal!(LuaFunc)("string", "match",    "");
-            registerGlobal!(LuaFunc)("string", "rep",      "");
-            registerGlobal!(LuaFunc)("string", "reverse",  "");
-            registerGlobal!(LuaFunc)("string", "sub",      "");
-            registerGlobal!(LuaFunc)("string", "upper",    "");
+            registerGlobal!(LuaFunc)("",       "tonumber");
+            registerGlobal!(LuaFunc)("",       "tostring");
+            registerGlobal!(LuaFunc)("",       "unpack"  );
+            registerGlobal!(LuaFunc)("string", "byte"    );
+            registerGlobal!(LuaFunc)("string", "char"    );
+            registerGlobal!(LuaFunc)("string", "dump"    );
+            registerGlobal!(LuaFunc)("string", "find"    );
+            registerGlobal!(LuaFunc)("string", "format"  );
+            registerGlobal!(LuaFunc)("string", "gmatch"  );
+            registerGlobal!(LuaFunc)("string", "gsub"    );
+            registerGlobal!(LuaFunc)("string", "len"     );
+            registerGlobal!(LuaFunc)("string", "lower"   );
+            registerGlobal!(LuaFunc)("string", "match"   );
+            registerGlobal!(LuaFunc)("string", "rep"     );
+            registerGlobal!(LuaFunc)("string", "reverse" );
+            registerGlobal!(LuaFunc)("string", "sub"     );
+            registerGlobal!(LuaFunc)("string", "upper"   );
 
             // Table ops
-            registerGlobal!(LuaFunc)("",      "ipairs", "");
-            registerGlobal!(LuaFunc)("",      "next",   "");
-            registerGlobal!(LuaFunc)("",      "pairs",  "");
-            registerGlobal!(LuaFunc)("",      "select", "");
-            registerGlobal!(LuaFunc)("table", "concat", "");
-            registerGlobal!(LuaFunc)("table", "insert", "");
-            registerGlobal!(LuaFunc)("table", "maxn",   "");
-            registerGlobal!(LuaFunc)("table", "remove", "");
-            registerGlobal!(LuaFunc)("table", "sort",   "");
+            registerGlobal!(LuaFunc)("",      "ipairs");
+            registerGlobal!(LuaFunc)("",      "next"  );
+            registerGlobal!(LuaFunc)("",      "pairs" );
+            registerGlobal!(LuaFunc)("",      "select");
+            registerGlobal!(LuaFunc)("table", "concat");
+            registerGlobal!(LuaFunc)("table", "insert");
+            registerGlobal!(LuaFunc)("table", "maxn"  );
+            registerGlobal!(LuaFunc)("table", "remove");
+            registerGlobal!(LuaFunc)("table", "sort"  );
 
             // Math
-            registerGlobal!(LuaFunc  )("math", "abs",        "");
-            registerGlobal!(LuaFunc  )("math", "acos",       "");
-            registerGlobal!(LuaFunc  )("math", "asin",       "");
-            registerGlobal!(LuaFunc  )("math", "atan",       "");
-            registerGlobal!(LuaFunc  )("math", "atan2",      "");
-            registerGlobal!(LuaFunc  )("math", "ceil",       "");
-            registerGlobal!(LuaFunc  )("math", "cos",        "");
-            registerGlobal!(LuaFunc  )("math", "cosh",       "");
-            registerGlobal!(LuaFunc  )("math", "deg",        "");
-            registerGlobal!(LuaFunc  )("math", "exp",        "");
-            registerGlobal!(LuaFunc  )("math", "floor",      "");
-            registerGlobal!(LuaFunc  )("math", "fmod",       "");
-            registerGlobal!(LuaFunc  )("math", "frexp",      "");
-            registerGlobal!(LuaNumber)("math", "huge",       ""); // Value
-            registerGlobal!(LuaFunc  )("math", "ldexp",      "");
-            registerGlobal!(LuaFunc  )("math", "log",        "");
-            registerGlobal!(LuaFunc  )("math", "log10",      "");
-            registerGlobal!(LuaFunc  )("math", "max",        "");
-            registerGlobal!(LuaFunc  )("math", "min",        "");
-            registerGlobal!(LuaFunc  )("math", "modf",       "");
-            registerGlobal!(LuaNumber)("math", "pi",         "");
-            registerGlobal!(LuaFunc  )("math", "pow",        "");
-            registerGlobal!(LuaFunc  )("math", "rad",        "");
-            registerGlobal!(LuaFunc  )("math", "random",     "");
-            registerGlobal!(LuaFunc  )("math", "randomseed", "");
-            registerGlobal!(LuaFunc  )("math", "sin",        "");
-            registerGlobal!(LuaFunc  )("math", "sinh",       "");
-            registerGlobal!(LuaFunc  )("math", "sqrt",       "");
-            registerGlobal!(LuaFunc  )("math", "tan",        "");
-            registerGlobal!(LuaFunc  )("math", "tanh",       "");
+            registerGlobal!(LuaFunc  )("math", "abs"       );
+            registerGlobal!(LuaFunc  )("math", "acos"      );
+            registerGlobal!(LuaFunc  )("math", "asin"      );
+            registerGlobal!(LuaFunc  )("math", "atan"      );
+            registerGlobal!(LuaFunc  )("math", "atan2"     );
+            registerGlobal!(LuaFunc  )("math", "ceil"      );
+            registerGlobal!(LuaFunc  )("math", "cos"       );
+            registerGlobal!(LuaFunc  )("math", "cosh"      );
+            registerGlobal!(LuaFunc  )("math", "deg"       );
+            registerGlobal!(LuaFunc  )("math", "exp"       );
+            registerGlobal!(LuaFunc  )("math", "floor"     );
+            registerGlobal!(LuaFunc  )("math", "fmod"      );
+            registerGlobal!(LuaFunc  )("math", "frexp"     );
+            registerGlobal!(LuaNumber)("math", "huge"      );
+            registerGlobal!(LuaFunc  )("math", "ldexp"     );
+            registerGlobal!(LuaFunc  )("math", "log"       );
+            registerGlobal!(LuaFunc  )("math", "log10"     );
+            registerGlobal!(LuaFunc  )("math", "max"       );
+            registerGlobal!(LuaFunc  )("math", "min"       );
+            registerGlobal!(LuaFunc  )("math", "modf"      );
+            registerGlobal!(LuaNumber)("math", "pi"        );
+            registerGlobal!(LuaFunc  )("math", "pow"       );
+            registerGlobal!(LuaFunc  )("math", "rad"       );
+            registerGlobal!(LuaFunc  )("math", "random"    );
+            registerGlobal!(LuaFunc  )("math", "randomseed");
+            registerGlobal!(LuaFunc  )("math", "sin"       );
+            registerGlobal!(LuaFunc  )("math", "sinh"      );
+            registerGlobal!(LuaFunc  )("math", "sqrt"      );
+            registerGlobal!(LuaFunc  )("math", "tan"       );
+            registerGlobal!(LuaFunc  )("math", "tanh"      );
 
             // Bit manipulation
-            registerGlobal!(LuaFunc)("bit", "arshift", "");
-            registerGlobal!(LuaFunc)("bit", "band",    "");
-            registerGlobal!(LuaFunc)("bit", "bnot",    "");
-            registerGlobal!(LuaFunc)("bit", "bor",     "");
-            registerGlobal!(LuaFunc)("bit", "bswap",   "");
-            registerGlobal!(LuaFunc)("bit", "bxor",    "");
-            registerGlobal!(LuaFunc)("bit", "lshift",  "");
-            registerGlobal!(LuaFunc)("bit", "rol",     "");
-            registerGlobal!(LuaFunc)("bit", "ror",     "");
-            registerGlobal!(LuaFunc)("bit", "rshift",  "");
-            registerGlobal!(LuaFunc)("bit", "tobit",   "");
-            registerGlobal!(LuaFunc)("bit", "tohex",   "");
+            registerGlobal!(LuaFunc)("bit", "arshift");
+            registerGlobal!(LuaFunc)("bit", "band"   );
+            registerGlobal!(LuaFunc)("bit", "bnot"   );
+            registerGlobal!(LuaFunc)("bit", "bor"    );
+            registerGlobal!(LuaFunc)("bit", "bswap"  );
+            registerGlobal!(LuaFunc)("bit", "bxor"   );
+            registerGlobal!(LuaFunc)("bit", "lshift" );
+            registerGlobal!(LuaFunc)("bit", "rol"    );
+            registerGlobal!(LuaFunc)("bit", "ror"    );
+            registerGlobal!(LuaFunc)("bit", "rshift" );
+            registerGlobal!(LuaFunc)("bit", "tobit"  );
+            registerGlobal!(LuaFunc)("bit", "tohex"  );
 
             // Custom globals
-            register(&log, "", "log", "");
+            register(&log, "", "log");
 
             // Led module
-            register(LedModule.count,     "led", "count",    ""); // Value
-            register(&LedModule.set,      "led", "set",      "");
-            register(&LedModule.setSlice, "led", "setSlice", "");
-            register(&LedModule.setAll,   "led", "setAll",   "");
+            register(LedModule.count,     "led", "count"   );
+            register(&LedModule.set,      "led", "set"     );
+            register(&LedModule.setSlice, "led", "setSlice");
+            register(&LedModule.setAll,   "led", "setAll"  );
 
             // State module
-            register(&StateModule.activeName,               "state", "activeName", "");
-            register(&StateModule.activeContainsThisScript, "state", "activeContainsThisScript", "");
-            register(&StateModule.setActiveByName,          "state", "setActiveByName", "");
-            register(&StateModule.setDefaultActive,         "state", "setDefaultActive", "");
+            register(&StateModule.activeName,               "state", "activeName"              );
+            register(&StateModule.activeContainsThisScript, "state", "activeContainsThisScript");
+            register(&StateModule.setActiveByName,          "state", "setActiveByName"         );
+            register(&StateModule.setDefaultActive,         "state", "setDefaultActive"        );
             
             // Time module
-            register(&TimeModule.stdTimeHnsecs,   "time", "stdTimeHnsecs",   "");
-            register(&TimeModule.unixTimeSeconds, "time", "unixTimeSeconds", "");
-            register(&TimeModule.sleepMsecs,      "time", "sleepMsecs",      "");
-            register(&TimeModule.waitFrames,      "time", "waitFrames",      "");
+            register(&TimeModule.stdTimeHnsecs,   "time", "stdTimeHnsecs"  );
+            register(&TimeModule.unixTimeSeconds, "time", "unixTimeSeconds");
+            register(&TimeModule.sleepMsecs,      "time", "sleepMsecs"     );
+            register(&TimeModule.waitFrames,      "time", "waitFrames"     );
 
             // Mailbox module
-            register(&MailboxModule.consume, "mailbox", "consume", "");
+            register(&MailboxModule.consume, "mailbox", "consume");
             
-            s_luaApiFile = elb.toString();
-
             return env;
         }
         catch (Exception e)
@@ -222,10 +207,6 @@ static:
             assert(false, "LuaLib: Fatal error creating env table: " ~ e.toString);
         }
     }
-
-    nothrow @nogc
-    string luaApiFile()
-        => s_luaApiFile;
 
     private
     LuaScript script()
