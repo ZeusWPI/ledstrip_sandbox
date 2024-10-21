@@ -206,3 +206,100 @@ function pairs(t) end
 ---@return any
 ---@nodiscard
 function select(index, ...) end
+
+
+---Receives any number of arguments and prints their values to the syslog.
+---@param ... any
+function log(...) end
+
+
+---Led module.
+---@class ledlib
+---
+---The total number of leds. Does not change during script execution.
+---@field count number
+led = {}
+
+---Sets the led at `index` to the color `r`, `g`, `b`.
+---@param index number
+---@param r number
+---@param g number
+---@param b number
+function led.set(index, r, g, b) end
+
+---
+---Sets the leds starting from index `begin` up to `end` (exclusive) to the color `r`, `g`, `b`.
+---
+---@param begin number
+---@param end number
+---@param r number
+---@param g number
+---@param b number
+function led.setSlice(begin, end, r, g, b) end
+
+---
+---Sets all leds to the color `r`, `g`, `b`.
+---
+---@param r number
+---@param g number
+---@param b number
+function led.setAll(r, g, b) end
+
+
+---State module.
+---@class statelib
+state = {}
+
+---
+---@return string
+---@nodiscard
+function state.activeName() end
+
+---Returns true if the currently active state is one that shows this script.
+---A single script can be shown in multiple states.
+---@return boolean
+---@nodiscard
+function state.activeContainsThisScript() end
+
+---Change the active state to the state with name `stateName`.
+---@param stateName string
+function state.setActiveByName(stateName) end
+
+---Change the active state to the default one.
+function state.setDefaultActive() end
+
+
+---Time module.
+---@class timelib
+time = {}
+
+---Returns the number of hnsecs since midnight, January 1st, 1 A.D. UTC.
+---@return number
+---@nodiscard
+function time.stdTimeHnsecs() end
+
+---Returns the number of seconds since midnight, January 1st, 1970 UTC.
+---@return number
+---@nodiscard
+function time.unixTimeSeconds() end
+
+---Suspends execution for `msecs` milliseconds.
+---@param msecs number
+function time.sleepMsecs(msecs) end
+
+---Suspends execution until `frames` number of frames have been rendered.
+---`waitFrames(0)` just returns. `waitFrames(1)` waits until the next render...
+---@param frames number
+function time.waitFrames(frames) end
+
+
+---Mailbox module.
+---@class mailbox
+mailbox = {}
+
+---Returns and deletes any message in the mailbox for topic `topic`.
+---Returns an empty string if no message was available.
+---@param topic string
+---@return string
+---@nodiscard
+function mailbox.consume(topic) end

@@ -337,9 +337,9 @@ static:
             return false;
         }
 
-        void setActiveByName(string state)
+        void setActiveByName(string stateName)
         {
-            LedstripStates.instance.setActiveState(state);
+            LedstripStates.instance.setActiveState(stateName);
         }
 
         void setDefaultActive()
