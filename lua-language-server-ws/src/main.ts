@@ -1,7 +1,7 @@
-import { resolve } from 'path';
-import { IWebSocket, WebSocketMessageReader, WebSocketMessageWriter } from 'vscode-ws-jsonrpc';
-import { createConnection, createServerProcess, forward } from 'vscode-ws-jsonrpc/server';
-import { WebSocketServer } from 'ws';
+import { resolve } from "path";
+import { IWebSocket, WebSocketMessageReader, WebSocketMessageWriter } from "vscode-ws-jsonrpc";
+import { createConnection, createServerProcess, forward } from "vscode-ws-jsonrpc/server";
+import { WebSocketServer } from "ws";
 
 export const launch = (socket: IWebSocket) => {
     const reader = new WebSocketMessageReader(socket);
@@ -13,8 +13,9 @@ export const launch = (socket: IWebSocket) => {
         () => socket.dispose(),
     );
     const serverConnection = createServerProcess(
-        'Lua Language Server',
-        resolve(process.cwd(), './lua-language-server/bin/lua-language-server'),
+        "Lua Language Server",
+        resolve(process.cwd(), "./lua-language-server/bin/lua-language-server"),
+        [`--configpath=${resolve(process.cwd(), "./config.lua")}`],
     )!;
     forward(socketConnection, serverConnection);
 };

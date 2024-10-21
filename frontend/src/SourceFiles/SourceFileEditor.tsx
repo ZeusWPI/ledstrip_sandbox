@@ -103,15 +103,15 @@ export const SourceFileEditor = () => {
     }, [editorElementRef, selectedSourceFile, sourceCode]);
 
     // Set apiFileModel contents
-    useEffect(() => {
-        if (initialized) {
-            if (ext == "lua") {
-                fetch("/api/lua_api_file")
-                    .then((res) => res.text())
-                    .then((text) => monaco.editor.getModel(apiFileModelUri)!.setValue(JSON.parse(text)));
-            }
-        }
-    }, [initialized]);
+    // useEffect(() => {
+    //     if (initialized) {
+    //         if (ext == "lua") {
+    //             fetch("/api/lua_api_file")
+    //                 .then((res) => res.text())
+    //                 .then((text) => monaco.editor.getModel(apiFileModelUri)!.setValue(JSON.parse(text)));
+    //         }
+    //     }
+    // }, [initialized]);
 
     // Cleanup
     useEffect(() => {
