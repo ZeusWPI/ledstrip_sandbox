@@ -14,9 +14,10 @@ import vibe.core.process : spawnProcess, Config, execute;
 
 @safe:
 
-// TODO: bf language type
-// TODO: lua language server
 // TODO: show errors in frontend
+// TODO: improve script logging
+// TODO: track script cpu usage
+// TODO: improve mailbox
 // TODO: synchronize rest api procedures with collection singletons
 // TODO: scripting api for segments
 
