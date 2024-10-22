@@ -2,9 +2,12 @@ ARG DUB_CONFIG="rpi2-bookworm"
 ARG DUB_ARCH="arm-linux-cortex-7a-gnueabihf"
 ARG DUB_BUILD_TYPE="release-debug"
 
-
 FROM debian:bookworm AS base
+FROM --platform=linux/arm/v7 debian:bookworm AS base-target
+FROM node:lts AS base-node
 
+
+# Fetch static and dynamic libs from cross target
 FROM base AS extract-deb-libs
 
 WORKDIR /work/debs
@@ -20,6 +23,7 @@ RUN find . -name "*\.o*" -exec cp "{}" /work/libs/ ";"
 RUN rm -rf /work/debs
 
 
+# Cross compile libws2811
 FROM base AS build-ws2811
 
 RUN apt-get update && apt-get install -y \
@@ -38,8 +42,8 @@ RUN cp build/libws2811.a /work/
 RUN rm -rf /work/rpi_ws281x
 
 
-FROM base AS build
-
+# Cross compile the ledstrip D backend
+FROM base AS build-backend
 
 RUN apt-get update && apt-get install -y gcc-12-arm-linux-gnueabihf
 
@@ -71,7 +75,8 @@ RUN arm-linux-gnueabihf-gcc-12 libledstrip.a -o ledstrip -Wl,--gc-sections \
     libs/libc.so.6 libs/libm.so.6
 
 
-FROM node:lts AS build-frontend
+# Build the ledstrip frontend
+FROM base-node AS build-frontend
 
 RUN corepack enable pnpm
 
@@ -85,6 +90,47 @@ COPY frontend/index.html frontend/tsconfig.json frontend/vite.config.js .
 RUN pnpm run build
 
 
+# Build the lua language server
+FROM base-target AS build-luals
+
+RUN apt-get update && apt-get install -y \
+    build-essential git wget cmake ninja-build
+
+WORKDIR /work
+
+RUN git clone https://github.com/LuaLS/lua-language-server.git . \
+    --branch "3.11.1" \
+    --recurse-submodules
+RUN cd 3rd/luamake && compile/build.sh
+RUN 3rd/luamake/luamake -notest
+
+RUN mkdir out out/locale out/meta
+RUN cp -r bin script main.lua debugger.lua out/
+RUN cp -r locale/en-us out/locale/
+RUN cp -r meta/spell out/meta
+COPY luals/meta out/meta/template
+COPY luals/config.lua out/
+
+
+# Build the websocket wrapper for the lua language server
+FROM base-node AS build-luals-ws-wrapper
+
+RUN corepack enable pnpm
+
+WORKDIR /work
+
+COPY luals/ws-wrapper/package.json luals/ws-wrapper/pnpm-lock.yaml .
+RUN pnpm install
+
+COPY luals/ws-wrapper/src src
+RUN pnpm run build
+
+
+# Copy build results into a single output artifact
 FROM scratch AS artifact
-COPY --from=build /work/ledstrip /ledstrip
-COPY --from=build-frontend /work/dist /public
+
+COPY --from=build-backend          /work/ledstrip         /ledstrip
+COPY --from=build-frontend         /work/dist             /public
+COPY --from=build-luals            /work/out              /luals
+COPY --from=build-luals-ws-wrapper /work/dist/main.js     /luals/ws-wrapper.js
+

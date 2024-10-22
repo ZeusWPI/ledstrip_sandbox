@@ -14,8 +14,8 @@ export const launch = (socket: IWebSocket) => {
     );
     const serverConnection = createServerProcess(
         "Lua Language Server",
-        resolve(process.cwd(), "./lua-language-server/bin/lua-language-server"),
-        [`--configpath=${resolve(process.cwd(), "./config.lua")}`],
+        resolve(process.cwd(), "luals/bin/lua-language-server"),
+        [`--configpath=${resolve(process.cwd(), "luals/config.lua")}`],
     )!;
     forward(socketConnection, serverConnection);
 };

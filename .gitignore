@@ -15,4 +15,4 @@ ledstrip-test-*
 *.obj
 *.lst
 
-/public
+/build-cross

@@ -42,7 +42,7 @@ void main()
     Scripts.instance.startAutoStartTask;
     Webserver.instance.start;
 
-    spawnProcess(["node", "dist/main.js"], null, Config.none, NativePath("./lua-language-server-ws/"));
+    spawnProcess(["node", "luals/ws-wrapper.js"]);
     
     while (true)
     {

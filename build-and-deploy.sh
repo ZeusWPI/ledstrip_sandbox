@@ -3,14 +3,12 @@ set -e
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-rm -r public || true
-docker build -o . .
+[ -e build-cross ] && rm -r build-cross
+mkdir build-cross
+docker build -o build-cross .
 
-pushd lua-language-server-ws
-rm -r lua-language-server || true
-docker build -f Dockerfile.lua-language-server --platform=linux/arm/v7 -o . .
-pnpm i && pnpm build
-popd
-
-rsync -r ledstrip data public lua-language-server-ws --exclude=node_modules root@ledstrip:ledstrip
+ssh root@ledstrip rm -r ledstrip || true
+echo Running rsync...
+rsync -r data build-cross/ root@ledstrip:ledstrip/
+echo Restarting ledstrip
 ssh root@ledstrip systemctl restart ledstrip
