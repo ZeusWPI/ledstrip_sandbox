@@ -20,6 +20,8 @@ import vibe.core.process : spawnProcess, Config, execute;
 // TODO: improve mailbox
 // TODO: synchronize rest api procedures with collection singletons
 // TODO: scripting api for segments
+// TODO: switch to something more efficient than REST
+// TODO: visualize leds in frontend
 
 void main()
 {
