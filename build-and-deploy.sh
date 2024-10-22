@@ -3,11 +3,11 @@ set -e
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-rm -r public
+rm -r public || true
 docker build -o . .
 
 pushd lua-language-server-ws
-rm -r lua-language-server
+rm -r lua-language-server || true
 docker build -f Dockerfile.lua-language-server --platform=linux/arm/v7 -o . .
 pnpm i && pnpm build
 popd

@@ -81,7 +81,6 @@ COPY frontend/package.json frontend/pnpm-lock.yaml .
 RUN pnpm install
 
 COPY frontend/src/ src/
-COPY frontend/public/ public/
 COPY frontend/index.html frontend/tsconfig.json frontend/vite.config.js .
 RUN pnpm run build
 
