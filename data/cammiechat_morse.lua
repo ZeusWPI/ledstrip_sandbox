@@ -66,6 +66,8 @@ function tableconcat(t1, t2)
     return t1
 end
 
+mailbox.subscribe("morsemessage")
+
 led.setAll(10, 0, 0)
 
 time.sleepMsecs(1000)

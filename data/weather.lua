@@ -1,5 +1,7 @@
 assert(led.count >= 68, "This script must have at least 68 leds assigned")
 
+mailbox.subscribe("weather")
+
 led.setAll(4, 0, 0)
 while true do
     local msg = mailbox.consume("weather")
