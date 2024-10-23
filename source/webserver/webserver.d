@@ -4,7 +4,6 @@ import data_dir : DataDir;
 import singleton : threadLocalSingleton;
 import thread_manager : ThreadManager;
 
-import webserver.mailbox : Mailbox;
 import webserver.rest_api;
 import webserver.rest_api_impl;
 

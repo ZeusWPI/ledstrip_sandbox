@@ -3,21 +3,21 @@ module main;
 import data_dir : DataDir;
 import ledstrip.ledstrip : Ledstrip;
 import ledstrip.ledstrip_states : LedstripStates;
+import mailbox : Mailbox;
 import script.scripts : Scripts;
 import thread_manager : ThreadManager;
 import webserver.webserver : Webserver;
 
 import vibe.core.core : runEventLoopOnce;
-import vibe.core.path;
 import vibe.core.log;
-import vibe.core.process : spawnProcess, Config, execute;
+import vibe.core.path;
+import vibe.core.process : Config, execute, spawnProcess;
 
 @safe:
 
 // TODO: show errors in frontend
 // TODO: improve script logging
 // TODO: track script cpu usage
-// TODO: improve mailbox
 // TODO: synchronize rest api procedures with collection singletons
 // TODO: scripting api for segments
 // TODO: switch to something more efficient than REST
@@ -30,6 +30,7 @@ void main()
 
     // These have no dependencies
     ThreadManager.createInstance;
+    Mailbox.createInstance;
 
     // These depend on ThreadManager
     DataDir.createInstance;

@@ -9,7 +9,7 @@ import script.lua.internal.lua_script_task : LuaScriptTask;
 import script.lua.lua_script : LuaScript;
 import script.script : Script;
 import util : sleepFrameFraction;
-import webserver.mailbox : Mailbox;
+import mailbox : Mailbox;
 
 import core.time : msecs;
 
@@ -190,7 +190,7 @@ static:
             register(&StateModule.activeContainsThisScript, "state", "activeContainsThisScript");
             register(&StateModule.setActiveByName,          "state", "setActiveByName"         );
             register(&StateModule.setDefaultActive,         "state", "setDefaultActive"        );
-            
+
             // Time module
             register(&TimeModule.stdTimeHnsecs,   "time", "stdTimeHnsecs"  );
             register(&TimeModule.unixTimeSeconds, "time", "unixTimeSeconds");
@@ -198,8 +198,11 @@ static:
             register(&TimeModule.waitFrames,      "time", "waitFrames"     );
 
             // Mailbox module
-            register(&MailboxModule.consume, "mailbox", "consume");
-            
+            register(&MailboxModule.subscribe,      "mailbox", "subscribe"     );
+            register(&MailboxModule.unsubscribe,    "mailbox", "unsubscribe"   );
+            register(&MailboxModule.unsubscribeAll, "mailbox", "unsubscribeAll");
+            register(&MailboxModule.consume,        "mailbox", "consume"       );
+
             return env;
         }
         catch (Exception e)
@@ -366,8 +369,23 @@ static:
         @disable this(ref typeof(this));
 
     static:
+        void subscribe(string topic)
+        {
+            LuaScriptTask.instance.mailboxSubscribe(topic);
+        }
+
+        void unsubscribe(string topic)
+        {
+            LuaScriptTask.instance.mailboxUnsubscribe(topic);
+        }
+
+        void unsubscribeAll()
+        {
+            LuaScriptTask.instance.mailboxUnsubscribeAll();
+        }
+
         string consume(string topic)
-            => Mailbox.consumeMailbox(topic);
+            => LuaScriptTask.instance.mailboxConsume(topic);
     }
 }
 

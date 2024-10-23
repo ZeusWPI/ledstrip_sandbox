@@ -1,10 +1,12 @@
 module script.lua.internal.lua_script_task;
 
+import mailbox : Mailbox;
 import script.lua.internal.lua_lib : LuaLib;
 import script.lua.lua_script : LuaScript;
 import script.script : Script;
 
 import std.algorithm : canFind;
+import std.exception : basicExceptionCtors, enforce;
 import std.format : f = format;
 
 import lumars : LuaState, LuaTable;
@@ -22,10 +24,16 @@ package:
 package(script.lua) final  // @suppress(dscanner.suspicious.redundant_attributes)
 class LuaScriptTask
 {
+    private alias enf = enforce!LuaScriptTaskException;
+
     private static typeof(this)[Tid] tls_tidInstanceMap;
 
     private LuaScript m_script;
     private Task m_task;
+
+    private string[string] m_localMailbox;
+    private Mailbox.Subscriber m_mailboxSubscriber;
+
     private LuaState m_luaState;
     private LuaTable m_env;
 
@@ -46,12 +54,21 @@ class LuaScriptTask
         m_script = cast(LuaScript) script;
         m_task = Task.getThis;
         registerInstance;
+        m_mailboxSubscriber = &mailboxSubscriber;
     }
 
     private nothrow  //
      ~this()
     {
         unregisterInstance;
+        try
+        {
+            mailboxUnsubscribeAll;
+        }
+        catch (Exception e)
+        {
+            logError("Exception in LuaScriptTask dtor: %s", (() @trusted => e.toString)());
+        }
     }
 
     private nothrow
@@ -175,6 +192,38 @@ class LuaScriptTask
     const(LuaScriptTask) constInstance()
         => instance;
 
+    private
+    void mailboxSubscriber(string topic, string message)
+    {
+        m_localMailbox[topic] = message;
+    }
+
+    void mailboxSubscribe(string topic)
+    {
+        Mailbox.instance.subscribe(topic, m_mailboxSubscriber);
+    }
+
+    void mailboxUnsubscribe(string topic)
+    {
+        Mailbox.instance.unsubscribe(topic, m_mailboxSubscriber);
+    }
+
+    void mailboxUnsubscribeAll()
+    {
+        Mailbox.instance.unsubscribeAll(m_mailboxSubscriber);
+    }
+
+    string mailboxConsume(string topic)
+    {
+        if (topic in m_localMailbox)
+        {
+            scope (exit)
+                m_localMailbox.remove(topic);
+            return m_localMailbox[topic];
+        }
+        return "";
+    }
+
     pure nothrow @nogc
     ref inout(LuaState) luaState() inout
     in (m_luaState != LuaState.init)
@@ -184,4 +233,9 @@ class LuaScriptTask
     inout(LuaScript) script() inout
     in (m_script !is null)
         => m_script;
+}
+
+class LuaScriptTaskException : Exception
+{
+    mixin basicExceptionCtors;
 }

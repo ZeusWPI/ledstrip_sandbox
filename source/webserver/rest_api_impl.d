@@ -9,7 +9,7 @@ import ledstrip.ledstrip_state : LedstripState, LedstripStateException;
 import ledstrip.ledstrip_states : LedstripStates, LedstripStatesException;
 import script.script : RealScript = Script, ScriptException;
 import script.scripts : Scripts, ScriptsException;
-import webserver.mailbox : Mailbox;
+import mailbox : Mailbox;
 import webserver.rest_api : ConfigApi, RestApi, ScriptApi, SegmentApi, SourceFileApi, StateApi;
 
 import std.algorithm : remove;
@@ -60,7 +60,7 @@ class RestApiImpl : RestApi
     override
     void putMailbox(string topic, string message)
     {
-        Mailbox.putMailbox(topic, message);
+        Mailbox.instance.put(topic, message);
     }
 
     override
@@ -221,7 +221,8 @@ class SegmentApiImpl : SegmentApi
         foreach (i, configSegment; DataDir.sharedConfig.states[_state].segments)
             if (configSegment.begin == _begin)
             {
-                DataDir.instance.config.states[_state].segments.remove(i);
+                DataDir.instance.config.states[_state].segments
+                    = DataDir.instance.config.states[_state].segments.remove(i);
                 break;
             }
         DataDir.instance.saveConfig;

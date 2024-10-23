@@ -297,8 +297,20 @@ function time.waitFrames(frames) end
 ---@class mailbox
 mailbox = {}
 
----Returns and deletes any message in the mailbox for topic `topic`.
+---Subscribes to `topic`. Generates an error if already subscribed to that topic.
+---@param topic string
+function mailbox.subscribe(topic) end
+
+---Subscribes to `topic`. Generates an error if not subscribed to that topic.
+---@param topic string
+function mailbox.unsubscribe(topic) end
+
+---Unsubscribes from all topics.
+function mailbox.unsubscribeAll() end
+
+---Returns and deletes any message in this script's local mailbox for topic `topic`.
 ---Returns an empty string if no message was available.
+---In order for messages for a topic to end up in the local mailbox, `subscribe(topic)` must be called first.
 ---@param topic string
 ---@return string
 ---@nodiscard
