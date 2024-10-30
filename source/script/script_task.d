@@ -65,8 +65,8 @@ class ScriptTask
     protected abstract nothrow
     void run();
 
-    protected static nothrow
-    ScriptTask uncastedInstance()
+    static nothrow
+    ScriptTask instance()
     {
         Tid tid;
         try
@@ -76,6 +76,18 @@ class ScriptTask
         assert(tid in tls_tidInstanceMap);
         return tls_tidInstanceMap[tid];
     }
+
+    static nothrow
+    const(ScriptTask) constInstance()
+        => cast(const) instance;
+
+    final pure nothrow @nogc
+    Script script()
+        => m_script;
+
+    final pure nothrow @nogc
+    const(Script) constScript() const
+        => m_script;
 
     private
     void mailboxSubscriberMethod(string topic, string message)
@@ -113,10 +125,6 @@ class ScriptTask
         }
         return "";
     }
-
-    protected final pure nothrow @nogc
-    inout(Script) uncastedScript() inout
-        => m_script;
 }
 
 class ScriptTaskException : Exception

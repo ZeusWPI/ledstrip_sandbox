@@ -3,19 +3,10 @@ module script.script;
 import data_dir : DataDir;
 import ledstrip.led : Led;
 
-import core.atomic;
-import core.time : Duration, seconds;
-
-import std.algorithm : any, canFind, endsWith;
-import std.conv : to;
-import std.datetime : Clock, SysTime;
+import std.algorithm : canFind, endsWith;
 import std.exception : basicExceptionCtors, enforce;
 import std.format : f = format;
 import std.traits : EnumMembers;
-
-import vibe.core.log;
-import vibe.core.task : Task;
-import vibe.core.taskpool : TaskPool;
 
 @safe:
 
@@ -41,8 +32,8 @@ class Script
     protected synchronized
     this(string name, string fileName, uint ledCount, bool autoStart)
     {
-        enf(name.isValidScriptName, f!`Script: Invalid script name "%s"`(name));
-        enf(fileName.isValidScriptFileName, f!`Script: Invalid file name "%s"`(fileName));
+        enf(name.isValidScriptName, f!`Invalid script name "%s"`(name));
+        enf(fileName.isValidScriptFileName, f!`Invalid file name "%s"`(fileName));
 
         m_name = name;
         m_fileName = fileName;

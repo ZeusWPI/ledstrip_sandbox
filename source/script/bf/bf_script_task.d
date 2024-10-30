@@ -1,12 +1,12 @@
 module script.bf.bf_script_task;
 
-import script.script_task : ScriptTask;
 import ledstrip.led : Led;
 import ledstrip.ledstrip : Ledstrip;
 import script.bf.bf_script : BfScript;
 import script.script : Script;
-import util : sleepFrameFraction;
+import script.script_task : ScriptTask;
 import thread_manager : ThreadManager;
+import util : sleepFrameFraction;
 
 import std.algorithm : canFind, filter;
 import std.conv : to;
@@ -193,6 +193,22 @@ class BfScriptTask : ScriptTask
 
         return bracketMap;
     }
+
+    static nothrow
+    BfScriptTask instance()
+        => cast(BfScriptTask) super.instance;
+
+    static nothrow
+    const(BfScriptTask) constInstance()
+        => cast(const(BfScriptTask)) super.constInstance;
+
+    pure nothrow @nogc
+    BfScript bfScript()
+        => cast(BfScript) script;
+
+    pure nothrow @nogc
+    const(BfScript) constBfScript() const
+        => cast(const(BfScript)) constScript;
 }
 
 class BfScriptTaskException : Exception

@@ -144,15 +144,19 @@ class LuaScriptTask : ScriptTask
 
     static nothrow
     LuaScriptTask instance()
-        => cast(LuaScriptTask) uncastedInstance;
+        => cast(LuaScriptTask) super.instance;
 
     static nothrow
     const(LuaScriptTask) constInstance()
-        => cast(const(LuaScriptTask)) uncastedInstance;
+        => cast(const(LuaScriptTask)) super.constInstance;
 
     pure nothrow @nogc
-    inout(LuaScript) script() inout
-        => cast(inout(LuaScript)) uncastedScript;
+    LuaScript luaScript()
+        => cast(LuaScript) script;
+
+    pure nothrow @nogc
+    const(LuaScript) constLuaScript() const
+        => cast(const(LuaScript)) constScript;
 
     pure nothrow @nogc
     ref inout(LuaState) luaState() inout

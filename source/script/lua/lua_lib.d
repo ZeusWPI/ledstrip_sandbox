@@ -1,25 +1,15 @@
 module script.lua.lua_lib;
 // dfmt off
 
-import ledstrip.led : Led;
-import ledstrip.ledstrip : Ledstrip;
-import ledstrip.ledstrip_segment : LedstripSegment;
-import ledstrip.ledstrip_states : LedstripStates;
-import script.lua.lua_script_task : LuaScriptTask;
+import script.common_lib : CommonLib;
 import script.lua.lua_script : LuaScript;
-import script.script : Script;
-import util : sleepFrameFraction;
-
-import core.time : msecs;
+import script.lua.lua_script_task : LuaScriptTask;
 
 import std.conv : text;
-import std.datetime : Clock;
 import std.exception : basicExceptionCtors, enforce;
-import std.format : f = format;
 import std.string : toStringz;
-import std.traits : EnumMembers, isFunctionPointer;
+import std.traits : EnumMembers;
 
-import vibe.core.core : sleep;
 import vibe.core.log;
 
 import bindbc.lua.v51 : lua_getglobal;
@@ -176,31 +166,31 @@ static:
             registerGlobal!(LuaFunc)("bit", "tohex"  );
 
             // Custom globals
-            register(&log, "", "log");
+            register(&LuaLib.log, "", "log");
 
             // Led module
-            register(LedModule.count,     "led", "count"   );
-            register(&LedModule.set,      "led", "set"     );
-            register(&LedModule.setSlice, "led", "setSlice");
-            register(&LedModule.setAll,   "led", "setAll"  );
+            register(CommonLib.LedModule.count,     "led", "count"   );
+            register(&CommonLib.LedModule.set,      "led", "set"     );
+            register(&CommonLib.LedModule.setSlice, "led", "setSlice");
+            register(&CommonLib.LedModule.setAll,   "led", "setAll"  );
 
             // State module
-            register(&StateModule.activeName,               "state", "activeName"              );
-            register(&StateModule.activeContainsThisScript, "state", "activeContainsThisScript");
-            register(&StateModule.setActiveByName,          "state", "setActiveByName"         );
-            register(&StateModule.setDefaultActive,         "state", "setDefaultActive"        );
+            register(&CommonLib.StateModule.activeName,               "state", "activeName"              );
+            register(&CommonLib.StateModule.activeContainsThisScript, "state", "activeContainsThisScript");
+            register(&CommonLib.StateModule.setActiveByName,          "state", "setActiveByName"         );
+            register(&CommonLib.StateModule.setDefaultActive,         "state", "setDefaultActive"        );
 
             // Time module
-            register(&TimeModule.stdTimeHnsecs,   "time", "stdTimeHnsecs"  );
-            register(&TimeModule.unixTimeSeconds, "time", "unixTimeSeconds");
-            register(&TimeModule.sleepMsecs,      "time", "sleepMsecs"     );
-            register(&TimeModule.waitFrames,      "time", "waitFrames"     );
+            register(&CommonLib.TimeModule.stdTimeHnsecs,   "time", "stdTimeHnsecs"  );
+            register(&CommonLib.TimeModule.unixTimeSeconds, "time", "unixTimeSeconds");
+            register(&CommonLib.TimeModule.sleepMsecs,      "time", "sleepMsecs"     );
+            register(&CommonLib.TimeModule.waitFrames,      "time", "waitFrames"     );
 
             // Mailbox module
-            register(&MailboxModule.subscribe,      "mailbox", "subscribe"     );
-            register(&MailboxModule.unsubscribe,    "mailbox", "unsubscribe"   );
-            register(&MailboxModule.unsubscribeAll, "mailbox", "unsubscribeAll");
-            register(&MailboxModule.consume,        "mailbox", "consume"       );
+            register(&CommonLib.MailboxModule.subscribe,      "mailbox", "subscribe"     );
+            register(&CommonLib.MailboxModule.unsubscribe,    "mailbox", "unsubscribe"   );
+            register(&CommonLib.MailboxModule.unsubscribeAll, "mailbox", "unsubscribeAll");
+            register(&CommonLib.MailboxModule.consume,        "mailbox", "consume"       );
 
             return env;
         }
@@ -211,12 +201,20 @@ static:
     }
 
     private
+    LuaScriptTask task()
+        => LuaScriptTask.instance;
+
+    private
+    const(LuaScriptTask) constTask()
+        => LuaScriptTask.constInstance;
+
+    private
     LuaScript script()
-        => LuaScriptTask.instance.script;
+        => task.luaScript;
 
     private
     const(LuaScript) constScript()
-        => LuaScriptTask.constInstance.script;
+        => constTask.constLuaScript;
 
     @trusted
     void log(LuaVariadic args)
@@ -240,151 +238,7 @@ static:
             }
         }
 
-        logInfo(`Lua script "%s" log: %-(%s%)`, constScript.name, stringArgs);
-    }
-
-    class LedModule
-    {
-        @disable this();
-        @disable this(ref typeof(this));
-
-    static:
-        private
-        shared(Led[]) leds()
-            => LuaScriptTask.instance.script.leds;
-
-        private
-        const(shared(Led[])) constLeds()
-            => leds;
-
-        private
-        void setLedsChanged()
-            => LuaScriptTask.instance.script.setLedsChanged;
-
-        uint count()
-            => cast(uint) constLeds.length;
-
-        void set(uint index, ubyte r, ubyte g, ubyte b)
-        {
-            enf(
-                index < constLeds.length,
-                f!`Lua script "%s" led.set: Led index %u out of bounds for segment with length %u`(
-                    constScript.name, index, constLeds.length,
-            ),
-            );
-            leds[index] = Led(r, g, b);
-            setLedsChanged;
-        }
-
-        void setSlice(uint begin, uint end, ubyte r, ubyte g, ubyte b)
-        {
-            enf(
-                begin <= end,
-                f!`Lua script "%s" led.setSlice: Begin index %u larger than end index %u`(
-                    constScript.name, begin, end,
-            ),
-            );
-            enf(
-                end <= constLeds.length,
-                f!`Lua script "%s" led.setSlice: End index %u out of bounds for segment with length %u"`(
-                    constScript.name, end, constLeds.length,
-            ),
-            );
-            leds[begin .. end] = Led(r, g, b);
-            setLedsChanged;
-        }
-
-        void setAll(ubyte r, ubyte g, ubyte b)
-        {
-            leds[] = Led(r, g, b);
-            setLedsChanged;
-        }
-    }
-
-    class StateModule
-    {
-        @disable this();
-        @disable this(ref typeof(this));
-
-    static:
-        string activeName()
-            => LedstripStates.constInstance.activeState.name;
-
-        bool activeContainsThisScript()
-        {
-            const Script thisScript = LuaScriptTask.constInstance.script;
-            foreach (begin, const LedstripSegment seg; LedstripStates
-                .constInstance.activeState.segments)
-                if (seg.scriptName == thisScript.name)
-                    return true;
-            return false;
-        }
-
-        void setActiveByName(string stateName)
-        {
-            LedstripStates.instance.setActiveState(stateName);
-        }
-
-        void setDefaultActive()
-        {
-            LedstripStates.instance.setDefaultActive;
-        }
-    }
-
-    class TimeModule
-    {
-        @disable this();
-        @disable this(ref typeof(this));
-
-    static:
-        long stdTimeHnsecs()
-            => Clock.currStdTime;
-
-        long unixTimeSeconds()
-            => Clock.currTime.toUnixTime;
-
-        void sleepMsecs(long msecs)
-        {
-            string name = LuaScriptTask.constInstance.script.name;
-            enf(
-                msecs >= 0,
-                f!`Lua script "%s": Cannot sleep for less than %d msecs`(name, msecs),
-            );
-            sleep(msecs.msecs);
-        }
-
-        /// waitFrames(0) just returns, waitFrames(1) waits until the next render...
-        void waitFrames(ulong frames)
-        {
-            ulong frameCountAtEntry = Ledstrip.constInstance.frameCount;
-            while (Ledstrip.constInstance.frameCount < frameCountAtEntry + frames)
-                sleepFrameFraction(5);
-        }
-    }
-
-    class MailboxModule
-    {
-        @disable this();
-        @disable this(ref typeof(this));
-
-    static:
-        void subscribe(string topic)
-        {
-            LuaScriptTask.instance.mailboxSubscribe(topic);
-        }
-
-        void unsubscribe(string topic)
-        {
-            LuaScriptTask.instance.mailboxUnsubscribe(topic);
-        }
-
-        void unsubscribeAll()
-        {
-            LuaScriptTask.instance.mailboxUnsubscribeAll();
-        }
-
-        string consume(string topic)
-            => LuaScriptTask.instance.mailboxConsume(topic);
+        logInfo(`Script "%s": log: %-(%s%)`, constScript.name, stringArgs);
     }
 }
 
