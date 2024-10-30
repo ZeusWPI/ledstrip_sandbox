@@ -1,15 +1,14 @@
-module script.lua.internal.lua_lib;
+module script.lua.lua_lib;
 // dfmt off
 
 import ledstrip.led : Led;
 import ledstrip.ledstrip : Ledstrip;
 import ledstrip.ledstrip_segment : LedstripSegment;
 import ledstrip.ledstrip_states : LedstripStates;
-import script.lua.internal.lua_script_task : LuaScriptTask;
+import script.lua.lua_script_task : LuaScriptTask;
 import script.lua.lua_script : LuaScript;
 import script.script : Script;
 import util : sleepFrameFraction;
-import mailbox : Mailbox;
 
 import core.time : msecs;
 
@@ -25,7 +24,7 @@ import vibe.core.log;
 
 import bindbc.lua.v51 : lua_getglobal;
 
-import lumars : LuaFunc, LuaNil, LuaTable, LuaValue, LuaVariadic, addFunction, LuaNumber;
+import lumars : LuaFunc, LuaNil, LuaNumber, LuaTable, LuaValue, LuaVariadic;
 
 @safe:
 

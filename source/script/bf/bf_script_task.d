@@ -1,5 +1,6 @@
-module script.bf.internal.bf_script_task;
+module script.bf.bf_script_task;
 
+import script.script_task : ScriptTask;
 import ledstrip.led : Led;
 import ledstrip.ledstrip : Ledstrip;
 import script.bf.bf_script : BfScript;
@@ -7,53 +8,48 @@ import script.script : Script;
 import util : sleepFrameFraction;
 import thread_manager : ThreadManager;
 
-import core.time : Duration, msecs;
-
 import std.algorithm : canFind, filter;
 import std.conv : to;
 import std.exception : basicExceptionCtors, enforce;
 import std.format : f = format;
-import std.math : abs;
 import std.range : chunks, enumerate;
 
 import vibe.core.core : yield;
 import vibe.core.log;
-import vibe.core.task : InterruptException, Task;
+import vibe.core.task : InterruptException;
 
 @safe:
-package:
 
-package(script.bf) final  // @suppress(dscanner.suspicious.redundant_attributes)
-class BfScriptTask
+final
+class BfScriptTask : ScriptTask
 {
+    private alias enf = enforce!BfScriptTaskException;
+
     private enum string ct_instructionSet = "><+-.,[]";
 
-    private BfScript m_script;
-    private Task m_task;
-
-    package(script.bf) static nothrow
+    static nothrow
     void entrypoint(Script script)
     in (
         ThreadManager.constInstance.inScriptTaskPool,
-        "Bf script task: entrypoint must be called from script task",
+        "BfScriptTask: entrypoint must be called from a script task",
     )
     {
-        typeof(this) instance = new typeof(this)(script);
+        BfScriptTask instance;
+        try
+            instance = new typeof(this)(script);
+        catch (Exception e)
+            logError("BfScriptTask entrypoint failed: %s", (() @trusted => e.toString)());
         instance.run;
     }
 
-    @disable this(ref typeof(this));
-
-    private nothrow
+    protected
     this(Script script)
-    in (script !is null, "Bf script task: script is null")
-    in ((cast(BfScript) script) !is null, "Bf script task: script is not a BfScript")
     {
-        m_script = cast(BfScript) script;
-        m_task = Task.getThis;
+        super(script);
+        enf(cast(BfScript) script, "Script is not a BfScript");
     }
 
-    private nothrow
+    protected override nothrow
     void run()
     {
         scope (exit)
@@ -181,7 +177,7 @@ class BfScriptTask
             }
             else if (c == ']')
             {
-                enforce!BfException(
+                enf(
                     stack.length,
                     f!`Task for bf script "%s": Found unmatched ]`(m_script.name),
                 );
@@ -190,7 +186,7 @@ class BfScriptTask
                 stack = stack[0 .. $ - 1];
             }
         }
-        enforce!BfException(
+        enf(
             !stack.length,
             f!`Task for bf script "%s": Found unmatched [`(m_script.name),
         );
@@ -199,7 +195,7 @@ class BfScriptTask
     }
 }
 
-class BfException : Exception
+class BfScriptTaskException : Exception
 {
     mixin basicExceptionCtors;
 }

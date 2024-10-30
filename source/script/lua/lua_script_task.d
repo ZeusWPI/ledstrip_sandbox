@@ -1,9 +1,10 @@
-module script.lua.internal.lua_script_task;
+module script.lua.lua_script_task;
 
-import mailbox : Mailbox;
-import script.lua.internal.lua_lib : LuaLib;
+import script.lua.lua_lib : LuaLib;
 import script.lua.lua_script : LuaScript;
 import script.script : Script;
+import script.script_task : ScriptTask;
+import thread_manager : ThreadManager;
 
 import std.algorithm : canFind;
 import std.exception : basicExceptionCtors, enforce;
@@ -11,79 +12,44 @@ import std.format : f = format;
 
 import lumars : LuaState, LuaTable;
 
-import vibe.core.concurrency : thisTid, Tid;
 import vibe.core.core : yield;
 import vibe.core.log;
-import vibe.core.task : Task;
 
 import bindbc.lua.v51 : lua_Debug, lua_Hook, LUA_MASKLINE, lua_sethook, lua_State;
 
 @safe:
-package:
 
-package(script.lua) final  // @suppress(dscanner.suspicious.redundant_attributes)
-class LuaScriptTask
+final
+class LuaScriptTask : ScriptTask
 {
     private alias enf = enforce!LuaScriptTaskException;
 
-    private static typeof(this)[Tid] tls_tidInstanceMap;
-
-    private LuaScript m_script;
-    private Task m_task;
-
-    private string[string] m_localMailbox;
-    private Mailbox.Subscriber m_mailboxSubscriber;
-
     private LuaState m_luaState;
-    private LuaTable m_env;
+    private LuaTable m_env; // Has @system dtor
 
-    package(script.lua) static nothrow
+    static nothrow
     void entrypoint(Script script)
+    in (
+        ThreadManager.constInstance.inScriptTaskPool,
+        "LuaScriptTask: entrypoint must be called from a script task",
+    )
     {
-        LuaScriptTask instance = new LuaScriptTask(script);
+        LuaScriptTask instance;
+        try
+            instance = new typeof(this)(script);
+        catch (Exception e)
+            logError("LuaScriptTask entrypoint failed: %s", (() @trusted => e.toString)());
         instance.run;
     }
 
-    @disable this(ref typeof(this));
-
-    private nothrow
+    protected @trusted // Calls @system dtor on throw
     this(Script script)
-    in (script !is null, "Lua script task: script is null")
-    in ((cast(LuaScript) script) !is null, "Lua script task: script is not a LuaScript")
     {
-        m_script = cast(LuaScript) script;
-        m_task = Task.getThis;
-        registerInstance;
-        m_mailboxSubscriber = &mailboxSubscriber;
+        super(script);
+        enf(cast(LuaScript) script, "Script is not a LuaScript");
     }
 
-    private nothrow  //
-     ~this()
-    {
-        unregisterInstance;
-        try
-        {
-            mailboxUnsubscribeAll;
-        }
-        catch (Exception e)
-        {
-            logError("Exception in LuaScriptTask dtor: %s", (() @trusted => e.toString)());
-        }
-    }
-
-    private nothrow
-    void registerInstance()
-    {
-        tls_tidInstanceMap[m_task.tid] = this;
-    }
-
-    private nothrow
-    void unregisterInstance()
-    {
-        tls_tidInstanceMap.remove(m_task.tid);
-    }
-
-    private nothrow
+    protected override nothrow
     void run()
     {
         scope (exit)
@@ -107,7 +73,7 @@ class LuaScriptTask
             // An InterruptException gets rethrown as a LuaException with the msg embedded
             if (e.msg.canFind("interrupted"))
             {
-                logInfo(`Task for bf script "%s" exited by interruption`, m_script.name);
+                logInfo(`Task for lua script "%s" exited by interruption`, m_script.name);
             }
             else
             {
@@ -178,61 +144,20 @@ class LuaScriptTask
 
     static nothrow
     LuaScriptTask instance()
-    {
-        Tid tid;
-        try
-            tid = thisTid;
-        catch (Exception e)
-            assert(false, (() @trusted => e.toString)());
-        assert(tid in tls_tidInstanceMap);
-        return tls_tidInstanceMap[tid];
-    }
+        => cast(LuaScriptTask) uncastedInstance;
 
     static nothrow
     const(LuaScriptTask) constInstance()
-        => instance;
+        => cast(const(LuaScriptTask)) uncastedInstance;
 
-    private
-    void mailboxSubscriber(string topic, string message)
-    {
-        m_localMailbox[topic] = message;
-    }
-
-    void mailboxSubscribe(string topic)
-    {
-        Mailbox.instance.subscribe(topic, m_mailboxSubscriber);
-    }
-
-    void mailboxUnsubscribe(string topic)
-    {
-        Mailbox.instance.unsubscribe(topic, m_mailboxSubscriber);
-    }
-
-    void mailboxUnsubscribeAll()
-    {
-        Mailbox.instance.unsubscribeAll(m_mailboxSubscriber);
-    }
-
-    string mailboxConsume(string topic)
-    {
-        if (topic in m_localMailbox)
-        {
-            scope (exit)
-                m_localMailbox.remove(topic);
-            return m_localMailbox[topic];
-        }
-        return "";
-    }
+    pure nothrow @nogc
+    inout(LuaScript) script() inout
+        => cast(inout(LuaScript)) uncastedScript;
 
     pure nothrow @nogc
     ref inout(LuaState) luaState() inout
     in (m_luaState != LuaState.init)
         => m_luaState;
-
-    pure nothrow @nogc
-    inout(LuaScript) script() inout
-    in (m_script !is null)
-        => m_script;
 }
 
 class LuaScriptTaskException : Exception

@@ -1,13 +1,7 @@
 module script.lua.lua_script;
 
-import script.lua.internal.lua_script_task : LuaScriptTask;
+import script.lua.lua_script_task : LuaScriptTask;
 import script.script : Script;
-
-import core.time : Duration;
-
-import vibe.core.log;
-import vibe.core.task : Task;
-import vibe.core.taskpool : TaskPool;
 
 @safe:
 

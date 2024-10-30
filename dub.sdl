@@ -20,3 +20,8 @@ configuration "rpi2-bookworm" {
 	dflags "--preview=shortenedMethods"
 	versions "LedstripVirtual" "LedstripWs2811"
 }
+
+buildType "release-debug" {
+	buildOptions "releaseMode" "optimize" "inline" "debugInfo"
+	buildRequirements "requireContracts" "requireBoundsCheck"
+}
