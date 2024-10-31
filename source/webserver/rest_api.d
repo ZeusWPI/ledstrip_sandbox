@@ -5,13 +5,6 @@ import vibe.web.rest : Collection, path;
 
 @safe:
 
-// TODO:
-// Fancier mailbox
-// Collections:
-//   Segment readAll, create, read, delete
-//   Script readAll, create, read, start, stop, debug...
-//   Sourcefile readAll, create, read, update, delete
-
 @path("/api")
 interface RestApi
 {

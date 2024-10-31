@@ -22,6 +22,9 @@ import vibe.core.process : Config, execute, spawnProcess;
 // TODO: scripting api for segments
 // TODO: switch to something more efficient than REST
 // TODO: visualize leds in frontend
+// TODO: python auto yield
+// TODO: improve autoStartTask
+// TODO: improve in...TaskPool
 
 void main()
 {
