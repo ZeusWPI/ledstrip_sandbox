@@ -103,6 +103,7 @@ class ScriptException : Exception
 enum ScriptExtension : string
 {
     lua = ".lua",
+    python = ".py",
     bf = ".bf",
 }
 

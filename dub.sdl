@@ -3,9 +3,12 @@ authors "Zeus WPI"
 copyright "Copyright © 2024, Zeus WPI"
 license "MIT"
 
-dependency "vibe-d" version="~>0.10.1"
 dependency "lumars" version="~>1.12.1"
+dependency "pyd" version="~>0.14.4"
+dependency "vibe-d" version="~>0.10.1"
 dependency "vibe-stream:tls" version="~>1"
+
+subConfiguration "pyd" "python311"
 
 dflags "--preview=inclusiveincontracts"
 

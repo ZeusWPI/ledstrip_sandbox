@@ -40,7 +40,7 @@
 			"autoStart": true
 		},
 		"flashlight": {
-			"fileName": "flashlight.lua",
+			"fileName": "flashlight.py",
 			"ledCount": 690,
 			"autoStart": true
 		},

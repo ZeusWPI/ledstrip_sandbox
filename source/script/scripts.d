@@ -3,6 +3,7 @@ module script.scripts;
 import data_dir : DataDir;
 import script.bf.bf_script : BfScript;
 import script.lua.lua_script : LuaScript;
+import script.python.python_script : PythonScript;
 import script.script : Script, ScriptExtension;
 import singleton : sharedSingleton;
 import thread_manager : ThreadManager;
@@ -115,6 +116,8 @@ class Scripts
         Script script;
         if (fileName.endsWith(cast(string) ScriptExtension.lua))
             script = new LuaScript(name, fileName, ledCount, autoStart);
+        else if (fileName.endsWith(cast(string) ScriptExtension.python))
+            script = new PythonScript(name, fileName, ledCount, autoStart);
         else if (fileName.endsWith(cast(string) ScriptExtension.bf))
             script = new BfScript(name, fileName, ledCount, autoStart);
         else
