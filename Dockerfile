@@ -14,7 +14,12 @@ WORKDIR /work/debs
 RUN dpkg --add-architecture armhf
 RUN apt-get update
 RUN chmod 777 .
-RUN apt-get download libc6:armhf ldc:armhf libphobos2-ldc-shared100:armhf libssl3:armhf zlib1g:armhf libluajit-5.1-2:armhf
+RUN apt-get download \
+    libc6:armhf \
+    ldc:armhf libphobos2-ldc-shared100:armhf \
+    libssl3:armhf zlib1g:armhf \
+    libluajit-5.1-2:armhf \
+    libpython3.11:armhf libexpat1:armhf
 RUN for deb in *.deb; do dpkg-deb -R $deb $deb.extracted; done
 RUN mkdir /work/libs
 RUN find . -name "*\.a*" -exec cp "{}" /work/libs/ ";"
@@ -69,9 +74,10 @@ COPY --from=extract-deb-libs /work/libs/* /work/libs/
 COPY --from=build-ws2811 /work/libws2811.a /work/libs/
 RUN arm-linux-gnueabihf-gcc-12 libledstrip.a -o ledstrip -Wl,--gc-sections \
     dlibs.a libs/libws2811.a \
-    libs/ldc_rt.dso.o libs/libdruntime-ldc-shared.so.100 libs/libphobos2-ldc-shared.so.100 \
+    libs/libpython3.11.so.1 libs/libexpat.so.1 \
     libs/libluajit-5.1.so.2 \
     libs/libcrypto.so.3 libs/libssl.so.3 libs/libz.so.1 \
+    libs/ldc_rt.dso.o libs/libdruntime-ldc-shared.so.100 libs/libphobos2-ldc-shared.so.100 \
     libs/libc.so.6 libs/libm.so.6
 
 
