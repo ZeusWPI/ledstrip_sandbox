@@ -33,6 +33,7 @@ static:
 
         InterpContext ctx = new InterpContext;
         ctx.py_stmts(`
+        import json
         class Module:
             def __getitem__(self, key):
                 return getattr(self, key)
@@ -46,164 +47,176 @@ static:
             modules[module_].setattr(name, obj);
         }
 
-        void registerBuiltin(string name)
+        void reRegister(string module_, string name)
         {
-            register("__builtins__", name, ctx.py_eval(name));
+            PydObject obj = ctx.py_eval(f!"%s.%s"(module_, name));
+            register(module_, name, obj);
+        }
+
+        void reRegisterBuiltin(string name)
+        {
+            PydObject obj = ctx.py_eval(name);
+            register("__builtins__", name, obj);
         }
 
         // Values
-        registerBuiltin("__debug__");
+        reRegisterBuiltin("__debug__");
 
         // Core
-        registerBuiltin("callable");
-        registerBuiltin("dir");
-        registerBuiltin("eval");
-        registerBuiltin("exec");
-        registerBuiltin("globals");
-        registerBuiltin("hash");
-        registerBuiltin("id");
-        registerBuiltin("locals");
-        registerBuiltin("type");
-        registerBuiltin("vars");
+        reRegisterBuiltin("callable");
+        reRegisterBuiltin("dir");
+        reRegisterBuiltin("eval");
+        reRegisterBuiltin("exec");
+        reRegisterBuiltin("globals");
+        reRegisterBuiltin("hash");
+        reRegisterBuiltin("id");
+        reRegisterBuiltin("locals");
+        reRegisterBuiltin("type");
+        reRegisterBuiltin("vars");
 
         // Type ctors
-        registerBuiltin("Ellipsis");
-        registerBuiltin("bool");
-        registerBuiltin("bytearray");
-        registerBuiltin("bytes");
-        registerBuiltin("complex");
-        registerBuiltin("dict");
-        registerBuiltin("float");
-        registerBuiltin("frozenset");
-        registerBuiltin("int");
-        registerBuiltin("list");
-        registerBuiltin("memoryview");
-        registerBuiltin("object");
-        registerBuiltin("set");
-        registerBuiltin("slice");
-        registerBuiltin("str");
-        registerBuiltin("tuple");
+        reRegisterBuiltin("Ellipsis");
+        reRegisterBuiltin("bool");
+        reRegisterBuiltin("bytearray");
+        reRegisterBuiltin("bytes");
+        reRegisterBuiltin("complex");
+        reRegisterBuiltin("dict");
+        reRegisterBuiltin("float");
+        reRegisterBuiltin("frozenset");
+        reRegisterBuiltin("int");
+        reRegisterBuiltin("list");
+        reRegisterBuiltin("memoryview");
+        reRegisterBuiltin("object");
+        reRegisterBuiltin("set");
+        reRegisterBuiltin("slice");
+        reRegisterBuiltin("str");
+        reRegisterBuiltin("tuple");
 
         // Attributes
-        registerBuiltin("delattr");
-        registerBuiltin("getattr");
-        registerBuiltin("setattr");
-        registerBuiltin("hasattr");
+        reRegisterBuiltin("delattr");
+        reRegisterBuiltin("getattr");
+        reRegisterBuiltin("setattr");
+        reRegisterBuiltin("hasattr");
 
         // Classes
-        registerBuiltin("classmethod");
-        registerBuiltin("isinstance");
-        registerBuiltin("issubclass");
-        registerBuiltin("property");
-        registerBuiltin("staticmethod");
-        registerBuiltin("super");
+        reRegisterBuiltin("classmethod");
+        reRegisterBuiltin("isinstance");
+        reRegisterBuiltin("issubclass");
+        reRegisterBuiltin("property");
+        reRegisterBuiltin("staticmethod");
+        reRegisterBuiltin("super");
 
         // Collections / iteration
-        registerBuiltin("aiter");
-        registerBuiltin("all");
-        registerBuiltin("anext");
-        registerBuiltin("any");
-        registerBuiltin("enumerate");
-        registerBuiltin("filter");
-        registerBuiltin("iter");
-        registerBuiltin("len");
-        registerBuiltin("map");
-        registerBuiltin("max");
-        registerBuiltin("min");
-        registerBuiltin("next");
-        registerBuiltin("range");
-        registerBuiltin("reversed");
-        registerBuiltin("sorted");
-        registerBuiltin("sum");
-        registerBuiltin("zip");
+        reRegisterBuiltin("aiter");
+        reRegisterBuiltin("all");
+        reRegisterBuiltin("anext");
+        reRegisterBuiltin("any");
+        reRegisterBuiltin("enumerate");
+        reRegisterBuiltin("filter");
+        reRegisterBuiltin("iter");
+        reRegisterBuiltin("len");
+        reRegisterBuiltin("map");
+        reRegisterBuiltin("max");
+        reRegisterBuiltin("min");
+        reRegisterBuiltin("next");
+        reRegisterBuiltin("range");
+        reRegisterBuiltin("reversed");
+        reRegisterBuiltin("sorted");
+        reRegisterBuiltin("sum");
+        reRegisterBuiltin("zip");
 
         // Strings
-        registerBuiltin("ascii");
-        registerBuiltin("bin");
-        registerBuiltin("chr");
-        registerBuiltin("format");
-        registerBuiltin("hex");
-        registerBuiltin("oct");
-        registerBuiltin("ord");
-        registerBuiltin("repr");
+        reRegisterBuiltin("ascii");
+        reRegisterBuiltin("bin");
+        reRegisterBuiltin("chr");
+        reRegisterBuiltin("format");
+        reRegisterBuiltin("hex");
+        reRegisterBuiltin("oct");
+        reRegisterBuiltin("ord");
+        reRegisterBuiltin("repr");
 
         // Math
-        registerBuiltin("abs");
-        registerBuiltin("divmod");
-        registerBuiltin("pow");
-        registerBuiltin("round");
+        reRegisterBuiltin("abs");
+        reRegisterBuiltin("divmod");
+        reRegisterBuiltin("pow");
+        reRegisterBuiltin("round");
 
         // Error types
-        registerBuiltin("ArithmeticError");
-        registerBuiltin("AssertionError");
-        registerBuiltin("AttributeError");
-        registerBuiltin("BaseException");
-        registerBuiltin("BaseExceptionGroup");
-        registerBuiltin("BlockingIOError");
-        registerBuiltin("BrokenPipeError");
-        registerBuiltin("BufferError");
-        registerBuiltin("BytesWarning");
-        registerBuiltin("ChildProcessError");
-        registerBuiltin("ConnectionAbortedError");
-        registerBuiltin("ConnectionError");
-        registerBuiltin("ConnectionRefusedError");
-        registerBuiltin("ConnectionResetError");
-        registerBuiltin("DeprecationWarning");
-        registerBuiltin("EOFError");
-        registerBuiltin("EncodingWarning");
-        registerBuiltin("EnvironmentError");
-        registerBuiltin("Exception");
-        registerBuiltin("ExceptionGroup");
-        registerBuiltin("FileExistsError");
-        registerBuiltin("FileNotFoundError");
-        registerBuiltin("FloatingPointError");
-        registerBuiltin("FutureWarning");
-        registerBuiltin("GeneratorExit");
-        registerBuiltin("IOError");
-        registerBuiltin("ImportError");
-        registerBuiltin("ImportWarning");
-        registerBuiltin("IndentationError");
-        registerBuiltin("IndexError");
-        registerBuiltin("InterruptedError");
-        registerBuiltin("IsADirectoryError");
-        registerBuiltin("KeyError");
-        registerBuiltin("KeyboardInterrupt");
-        registerBuiltin("LookupError");
-        registerBuiltin("MemoryError");
-        registerBuiltin("ModuleNotFoundError");
-        registerBuiltin("NameError");
-        registerBuiltin("NotADirectoryError");
-        registerBuiltin("NotImplemented");
-        registerBuiltin("NotImplementedError");
-        registerBuiltin("OSError");
-        registerBuiltin("OverflowError");
-        registerBuiltin("PendingDeprecationWarning");
-        registerBuiltin("PermissionError");
-        registerBuiltin("ProcessLookupError");
-        registerBuiltin("RecursionError");
-        registerBuiltin("ReferenceError");
-        registerBuiltin("ResourceWarning");
-        registerBuiltin("RuntimeError");
-        registerBuiltin("RuntimeWarning");
-        registerBuiltin("StopAsyncIteration");
-        registerBuiltin("StopIteration");
-        registerBuiltin("SyntaxError");
-        registerBuiltin("SyntaxWarning");
-        registerBuiltin("SystemError");
-        registerBuiltin("SystemExit");
-        registerBuiltin("TabError");
-        registerBuiltin("TimeoutError");
-        registerBuiltin("TypeError");
-        registerBuiltin("UnboundLocalError");
-        registerBuiltin("UnicodeDecodeError");
-        registerBuiltin("UnicodeEncodeError");
-        registerBuiltin("UnicodeError");
-        registerBuiltin("UnicodeTranslateError");
-        registerBuiltin("UnicodeWarning");
-        registerBuiltin("UserWarning");
-        registerBuiltin("ValueError");
-        registerBuiltin("Warning");
-        registerBuiltin("ZeroDivisionError");
+        reRegisterBuiltin("ArithmeticError");
+        reRegisterBuiltin("AssertionError");
+        reRegisterBuiltin("AttributeError");
+        reRegisterBuiltin("BaseException");
+        reRegisterBuiltin("BaseExceptionGroup");
+        reRegisterBuiltin("BlockingIOError");
+        reRegisterBuiltin("BrokenPipeError");
+        reRegisterBuiltin("BufferError");
+        reRegisterBuiltin("BytesWarning");
+        reRegisterBuiltin("ChildProcessError");
+        reRegisterBuiltin("ConnectionAbortedError");
+        reRegisterBuiltin("ConnectionError");
+        reRegisterBuiltin("ConnectionRefusedError");
+        reRegisterBuiltin("ConnectionResetError");
+        reRegisterBuiltin("DeprecationWarning");
+        reRegisterBuiltin("EOFError");
+        reRegisterBuiltin("EncodingWarning");
+        reRegisterBuiltin("EnvironmentError");
+        reRegisterBuiltin("Exception");
+        reRegisterBuiltin("ExceptionGroup");
+        reRegisterBuiltin("FileExistsError");
+        reRegisterBuiltin("FileNotFoundError");
+        reRegisterBuiltin("FloatingPointError");
+        reRegisterBuiltin("FutureWarning");
+        reRegisterBuiltin("GeneratorExit");
+        reRegisterBuiltin("IOError");
+        reRegisterBuiltin("ImportError");
+        reRegisterBuiltin("ImportWarning");
+        reRegisterBuiltin("IndentationError");
+        reRegisterBuiltin("IndexError");
+        reRegisterBuiltin("InterruptedError");
+        reRegisterBuiltin("IsADirectoryError");
+        reRegisterBuiltin("KeyError");
+        reRegisterBuiltin("KeyboardInterrupt");
+        reRegisterBuiltin("LookupError");
+        reRegisterBuiltin("MemoryError");
+        reRegisterBuiltin("ModuleNotFoundError");
+        reRegisterBuiltin("NameError");
+        reRegisterBuiltin("NotADirectoryError");
+        reRegisterBuiltin("NotImplemented");
+        reRegisterBuiltin("NotImplementedError");
+        reRegisterBuiltin("OSError");
+        reRegisterBuiltin("OverflowError");
+        reRegisterBuiltin("PendingDeprecationWarning");
+        reRegisterBuiltin("PermissionError");
+        reRegisterBuiltin("ProcessLookupError");
+        reRegisterBuiltin("RecursionError");
+        reRegisterBuiltin("ReferenceError");
+        reRegisterBuiltin("ResourceWarning");
+        reRegisterBuiltin("RuntimeError");
+        reRegisterBuiltin("RuntimeWarning");
+        reRegisterBuiltin("StopAsyncIteration");
+        reRegisterBuiltin("StopIteration");
+        reRegisterBuiltin("SyntaxError");
+        reRegisterBuiltin("SyntaxWarning");
+        reRegisterBuiltin("SystemError");
+        reRegisterBuiltin("SystemExit");
+        reRegisterBuiltin("TabError");
+        reRegisterBuiltin("TimeoutError");
+        reRegisterBuiltin("TypeError");
+        reRegisterBuiltin("UnboundLocalError");
+        reRegisterBuiltin("UnicodeDecodeError");
+        reRegisterBuiltin("UnicodeEncodeError");
+        reRegisterBuiltin("UnicodeError");
+        reRegisterBuiltin("UnicodeTranslateError");
+        reRegisterBuiltin("UnicodeWarning");
+        reRegisterBuiltin("UserWarning");
+        reRegisterBuiltin("ValueError");
+        reRegisterBuiltin("Warning");
+        reRegisterBuiltin("ZeroDivisionError");
+
+        // Json
+        reRegister("json", "JSONDecodeError");
+        reRegister("json", "dumps");
+        reRegister("json", "loads");
 
         // Custom builtins
         register("__builtins__", "log", py(&PythonLib.log));
