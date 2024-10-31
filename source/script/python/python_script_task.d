@@ -76,6 +76,7 @@ class PythonScriptTask : ScriptTask
                 ctx.sandboxLocals = py_eval("dict()");
                 ctx.py_eval("exec(sourceCode, sandboxGlobals, sandboxLocals)");
             })();
+            logInfo(`Task for python script "%s" exited normally`, m_script.name);
         }
         catch (InterruptException e)
         {
