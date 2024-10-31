@@ -10,7 +10,7 @@ import std.conv : text;
 import std.exception : basicExceptionCtors, enforce;
 import std.format : f = format;
 
-import pyd.embedded : py_eval;
+import pyd.embedded : InterpContext;
 import pyd.make_object : py;
 import pyd.pydobject : PydObject;
 
@@ -29,19 +29,26 @@ static:
     @trusted
     PydObject buildGlobals()
     {
-        PydObject[string][string] modules;
+        PydObject[string] modules;
+
+        InterpContext ctx = new InterpContext;
+        ctx.py_stmts(`
+        class Module:
+            def __getitem__(self, key):
+                return getattr(self, key)
+        `);
 
         void register(string module_, string name, PydObject obj)
         {
             if (module_ !in modules)
-                modules[module_] = null;
-            enf(name !in modules[module_], f!`buildGlobals: Duplicate value "%s.%s"`(module_, name));
-            modules[module_][name] = obj;
+                modules[module_] = ctx.py_eval("Module()");
+            enf(!modules[module_].hasattr(name), f!`buildGlobals: Duplicate value "%s.%s"`(module_, name));
+            modules[module_].setattr(name, obj);
         }
 
         void registerBuiltin(string name)
         {
-            register("__builtins__", name, py_eval(name));
+            register("__builtins__", name, ctx.py_eval(name));
         }
 
         // Values
