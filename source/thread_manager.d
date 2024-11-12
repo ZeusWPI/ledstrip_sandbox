@@ -24,10 +24,11 @@ class ThreadManager
     private TaskPool m_scriptTaskPool;
     private Task[Script] m_scriptTasks;
 
-    private nothrow
+    private synchronized nothrow
     this()
     {
-        uint scriptTaskPoolThreadCount = logicalProcessorCount > 1 ? logicalProcessorCount - 1 : 1;
+        // uint scriptTaskPoolThreadCount = logicalProcessorCount > 1 ? logicalProcessorCount - 1 : 1;
+        uint scriptTaskPoolThreadCount = 1;
         m_scriptTaskPool = new TaskPool(scriptTaskPoolThreadCount, "scriptTaskPool");
     }
 

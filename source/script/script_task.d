@@ -92,38 +92,53 @@ class ScriptTask
     private
     void mailboxSubscriberMethod(string topic, string message)
     {
-        m_localMailbox[topic] = message;
+        synchronized
+        {
+            m_localMailbox[topic] = message;
+        }
     }
 
     final
     void mailboxSubscribe(string topic)
     {
-        Mailbox.instance.subscribe(topic, m_mailboxSubscriber);
+        synchronized
+        {
+            Mailbox.instance.subscribe(topic, m_mailboxSubscriber);
+        }
     }
 
     final
     void mailboxUnsubscribe(string topic)
     {
-        Mailbox.instance.unsubscribe(topic, m_mailboxSubscriber);
+        synchronized
+        {
+            Mailbox.instance.unsubscribe(topic, m_mailboxSubscriber);
+        }
     }
 
     final
     void mailboxUnsubscribeAll()
     {
-        Mailbox.instance.unsubscribeAll(m_mailboxSubscriber);
+        synchronized
+        {
+            Mailbox.instance.unsubscribeAll(m_mailboxSubscriber);
+        }
     }
 
     final
     string mailboxConsume(string topic)
     {
-        enf(topic.length, "Topic cannot be empty");
-        if (topic in m_localMailbox)
+        synchronized
         {
-            scope (exit)
-                m_localMailbox.remove(topic);
-            return m_localMailbox[topic];
+            enf(topic.length, "Topic cannot be empty");
+            if (topic in m_localMailbox)
+            {
+                scope (exit)
+                    m_localMailbox.remove(topic);
+                return m_localMailbox[topic];
+            }
+            return "";
         }
-        return "";
     }
 }
 
