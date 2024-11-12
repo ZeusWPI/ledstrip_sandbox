@@ -16,7 +16,7 @@ RUN apt-get update
 RUN chmod 777 .
 RUN apt-get download \
     libc6:armhf \
-    ldc:armhf libphobos2-ldc-shared100:armhf \
+    ldc:armhf libphobos2-ldc-shared-dev:armhf \
     libssl3:armhf zlib1g:armhf \
     libluajit-5.1-2:armhf \
     libpython3.11:armhf libexpat1:armhf
@@ -26,7 +26,6 @@ RUN find . -name "*\.a*" -exec cp "{}" /work/libs/ ";"
 RUN find . -name "*\.so*" -exec cp "{}" /work/libs/ ";"
 RUN find . -name "*\.o*" -exec cp "{}" /work/libs/ ";"
 RUN rm -rf /work/debs
-
 
 # Cross compile libws2811
 FROM base AS build-ws2811
@@ -77,7 +76,7 @@ RUN arm-linux-gnueabihf-gcc-12 libledstrip.a -o ledstrip -Wl,--gc-sections \
     libs/libpython3.11.so.1 libs/libexpat.so.1 \
     libs/libluajit-5.1.so.2 \
     libs/libcrypto.so.3 libs/libssl.so.3 libs/libz.so.1 \
-    libs/ldc_rt.dso.o libs/libdruntime-ldc-shared.so.100 libs/libphobos2-ldc-shared.so.100 \
+    libs/ldc_rt.dso.o libs/libdruntime-ldc-debug-shared.so.100 libs/libphobos2-ldc-debug-shared.so.100 \
     libs/libc.so.6 libs/libm.so.6
 
 
