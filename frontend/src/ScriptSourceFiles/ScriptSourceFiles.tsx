@@ -27,6 +27,6 @@ export const ScriptSourceFiles = () => {
             </td>
         </tr></tbody></table>
         <br />
-        {!selectedScriptSourceFile && <ScriptSourceFileNew />}
+        {<ScriptSourceFileNew />}
     </div>;
 };
