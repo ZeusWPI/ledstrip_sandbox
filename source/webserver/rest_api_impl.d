@@ -1,16 +1,16 @@
 module webserver.rest_api_impl;
 
-import config : ConfigScript, ConfigSegment, ConfigState;
+import config : ConfigScriptInstance, ConfigSegment, ConfigState;
 import data_dir : DataDir;
 import ledstrip.led_positions : getKelderLedPositions;
 import ledstrip.ledstrip : Ledstrip;
 import ledstrip.ledstrip_segment : LedstripSegment;
 import ledstrip.ledstrip_state : LedstripState, LedstripStateException;
 import ledstrip.ledstrip_states : LedstripStates, LedstripStatesException;
-import script.script : RealScript = Script, ScriptException;
-import script.scripts : Scripts, ScriptsException;
 import mailbox : Mailbox;
-import webserver.rest_api : ConfigApi, RestApi, ScriptApi, SegmentApi, SourceFileApi, StateApi;
+import script.script_instance : ScriptInstance, ScriptInstanceException;
+import script.script_instances : ScriptInstances, ScriptInstancesException;
+import webserver.rest_api : ConfigApi, RestApi, ScriptInstanceApi, ScriptSourceFileApi, SegmentApi, StateApi;
 
 import std.algorithm : remove;
 import std.format : f = format;
@@ -26,15 +26,15 @@ class RestApiImpl : RestApi
 {
     private ConfigApi m_configApi;
     private StateApi m_stateApi;
-    private ScriptApiImpl m_scriptApi;
-    private SourceFileApiImpl m_sourceFileApi;
+    private ScriptInstanceApiImpl m_scriptInstanceApi;
+    private ScriptSourceFileApiImpl m_scriptSourceFileApi;
 
     this()
     {
         m_configApi = new ConfigApiImpl;
         m_stateApi = new StateApiImpl;
-        m_scriptApi = new ScriptApiImpl;
-        m_sourceFileApi = new SourceFileApiImpl;
+        m_scriptInstanceApi = new ScriptInstanceApiImpl;
+        m_scriptSourceFileApi = new ScriptSourceFileApiImpl;
     }
 
     override
@@ -50,12 +50,12 @@ class RestApiImpl : RestApi
         => LedstripStates.constInstance.activeState.name;
 
     override
-    Collection!ScriptApi scripts()
-        => Collection!ScriptApi(m_scriptApi);
+    Collection!ScriptInstanceApi scriptInstances()
+        => Collection!ScriptInstanceApi(m_scriptInstanceApi);
 
     override
-    Collection!SourceFileApi sourceFiles()
-        => Collection!SourceFileApi(m_sourceFileApi);
+    Collection!ScriptSourceFileApi scriptSourceFiles()
+        => Collection!ScriptSourceFileApi(m_scriptSourceFileApi);
 
     override
     void putMailbox(string topic, string message)
@@ -154,19 +154,19 @@ class StateApiImpl : StateApi
 class SegmentApiImpl : SegmentApi
 {
     override
-    Segment[] get(string _state)
+    SegmentPod[] get(string _state)
     {
         const LedstripStates states = LedstripStates.constInstance;
         enforceHTTP(_state in states.states, HTTPStatus.notFound, "No such state");
         const LedstripState state = states.states[_state];
-        Segment[] arr;
+        SegmentPod[] arr;
         foreach (const LedstripSegment seg; state.segments)
-            arr ~= Segment(seg.begin, seg.end, seg.scriptName);
+            arr ~= SegmentPod(seg.begin, seg.end, seg.scriptInstanceName);
         return arr;
     }
 
     override
-    void post(string _state, Segment segment)
+    void post(string _state, SegmentPod segment)
     {
         enforceHTTP(
             _state in LedstripStates.constInstance.states,
@@ -178,7 +178,7 @@ class SegmentApiImpl : SegmentApi
             LedstripStates.instance.states[_state].assignSegment(
                 segment.begin,
                 segment.end,
-                segment.scriptName,
+                segment.scriptInstanceName,
             );
         }
         catch (LedstripStatesException e)
@@ -188,20 +188,20 @@ class SegmentApiImpl : SegmentApi
         DataDir.instance.config.states[_state].segments ~= ConfigSegment(
             segment.begin,
             segment.end,
-            segment.scriptName,
+            segment.scriptInstanceName,
         );
         DataDir.instance.saveConfig;
     }
 
     override
-    Segment get(string _state, uint _begin)
+    SegmentPod get(string _state, uint _begin)
     {
         const LedstripStates states = LedstripStates.constInstance;
         enforceHTTP(_state in states.states, HTTPStatus.notFound, "No such state");
         const LedstripState state = states.states[_state];
         enforceHTTP(_begin in state.segments, HTTPStatus.notFound, "No segment with provided begin led");
         const LedstripSegment seg = state.segments[_begin];
-        return Segment(seg.begin, seg.end, seg.scriptName);
+        return SegmentPod(seg.begin, seg.end, seg.scriptInstanceName);
     }
 
     override
@@ -229,51 +229,55 @@ class SegmentApiImpl : SegmentApi
     }
 }
 
-class ScriptApiImpl : ScriptApi
+class ScriptInstanceApiImpl : ScriptInstanceApi
 {
     override
     string[] get()
     {
         string[] names;
-        foreach (name, realScript; Scripts.constInstance.scripts)
+        foreach (name, scriptInstance; ScriptInstances.constInstance.scriptInstances)
             names ~= name;
         return names;
     }
 
     override
-    void post(Script script)
+    void post(ScriptInstancePod scriptInstance)
     {
         try
         {
-            Scripts.instance.createScript(
-                script.name,
-                script.fileName,
-                script.ledCount,
-                script.autoStart,
+            ScriptInstances.instance.createScriptInstance(
+                scriptInstance.name,
+                scriptInstance.sourceFileName,
+                scriptInstance.ledCount,
+                scriptInstance.autoStart,
             );
         }
-        catch (ScriptsException e)
+        catch (ScriptInstancesException e)
             throw new HTTPStatusException(HTTPStatus.conflict, e.msg, __FILE__, __LINE__, e);
-        catch (ScriptException e)
+        catch (ScriptInstanceException e)
             throw new HTTPStatusException(HTTPStatus.conflict, e.msg, __FILE__, __LINE__, e);
-        DataDir.instance.config.scripts[script.name] = ConfigScript(
-            script.fileName,
-            script.ledCount,
-            script.autoStart,
+        DataDir.instance.config.scriptInstances[scriptInstance.name] = ConfigScriptInstance(
+            scriptInstance.sourceFileName,
+            scriptInstance.ledCount,
+            scriptInstance.autoStart,
         );
         DataDir.instance.saveConfig;
     }
 
     override
-    Script get(string _name)
+    ScriptInstancePod get(string _name)
     {
-        enforceHTTP(_name in Scripts.constInstance.scripts, HTTPStatus.notFound, "No such script");
-        const RealScript realScript = Scripts.constInstance.scripts[_name];
-        return Script(
-            realScript.name,
-            realScript.fileName,
-            realScript.ledCount,
-            realScript.autoStart,
+        enforceHTTP(
+            _name in ScriptInstances.constInstance.scriptInstances,
+            HTTPStatus.notFound,
+            "No such script instance",
+        );
+        const ScriptInstance scriptInstance = ScriptInstances.constInstance.scriptInstances[_name];
+        return ScriptInstancePod(
+            scriptInstance.name,
+            scriptInstance.sourceFileName,
+            scriptInstance.ledCount,
+            scriptInstance.autoStart,
         );
     }
 
@@ -281,26 +285,30 @@ class ScriptApiImpl : ScriptApi
     void delete_(string _name)
     {
         try
-            Scripts.instance.removeScript(_name);
-        catch (ScriptsException e)
+            ScriptInstances.instance.removeScriptInstance(_name);
+        catch (ScriptInstancesException e)
             throw new HTTPStatusException(HTTPStatus.notFound, e.msg, __FILE__, __LINE__, e);
-        DataDir.instance.config.scripts.remove(_name);
+        DataDir.instance.config.scriptInstances.remove(_name);
         DataDir.instance.saveConfig;
     }
 
     override
     bool getRunning(string _name)
     {
-        enforceHTTP(_name in Scripts.constInstance.scripts, HTTPStatus.notFound, "No such script");
-        return Scripts.constInstance.scripts[_name].running;
+        enforceHTTP(
+            _name in ScriptInstances.constInstance.scriptInstances,
+            HTTPStatus.notFound,
+            "No such script instance",
+        );
+        return ScriptInstances.constInstance.scriptInstances[_name].running;
     }
 
     override
     void postStart(string _name)
     {
         try
-            Scripts.instance.startScript(_name);
-        catch (ScriptsException e)
+            ScriptInstances.instance.startScriptInstance(_name);
+        catch (ScriptInstancesException e)
             throw new HTTPStatusException(HTTPStatus.conflict, e.msg, __FILE__, __LINE__, e);
     }
 
@@ -308,8 +316,8 @@ class ScriptApiImpl : ScriptApi
     void postStop(string _name)
     {
         try
-            Scripts.instance.stopScript(_name);
-        catch (ScriptsException e)
+            ScriptInstances.instance.stopScriptInstance(_name);
+        catch (ScriptInstancesException e)
             throw new HTTPStatusException(HTTPStatus.conflict, e.msg, __FILE__, __LINE__, e);
     }
 
@@ -317,52 +325,55 @@ class ScriptApiImpl : ScriptApi
     void postReload(string _name)
     {
         try
-            Scripts.instance.reloadScript(_name);
-        catch (ScriptsException e)
+            ScriptInstances.instance.reloadScriptInstance(_name);
+        catch (ScriptInstancesException e)
             throw new HTTPStatusException(HTTPStatus.conflict, e.msg, __FILE__, __LINE__, e);
     }
 }
 
-class SourceFileApiImpl : SourceFileApi
+class ScriptSourceFileApiImpl : ScriptSourceFileApi
 {
     override
     string[] get()
-        => DataDir.constInstance.listScripts;
+        => DataDir.constInstance.listScriptSourceFiles;
 
     override
-    void post(SourceFile sourceFile)
+    void post(ScriptSourceFilePod scriptSourceFile)
     {
-        DataDir.constInstance.saveScript(sourceFile.name, sourceFile.sourceCode);
+        DataDir.constInstance.saveScriptSourceFile(
+            scriptSourceFile.name,
+            scriptSourceFile.sourceCode,
+        );
     }
 
     override
-    SourceFile get(string _name)
+    ScriptSourceFilePod get(string _name)
     {
         string sourceCode;
         try
         {
-            sourceCode = DataDir.constInstance.loadScript(_name);
+            sourceCode = DataDir.constInstance.loadScriptSourceFile(_name);
         }
         catch (Exception e)
         {
             throw new HTTPStatusException(
                 HTTPStatus.notFound,
-                f!`Can't load source file "%s": %s`(_name, e.msg),
+                f!`Can't load script source file "%s": %s`(_name, e.msg),
             );
         }
 
-        return SourceFile(_name, sourceCode);
+        return ScriptSourceFilePod(_name, sourceCode);
     }
 
     override
     void put(string _name, string sourceCode)
     {
-        DataDir.constInstance.saveScript(_name, sourceCode);
+        DataDir.constInstance.saveScriptSourceFile(_name, sourceCode);
     }
 
     override
     void delete_(string _name)
     {
-        DataDir.constInstance.deleteScript(_name);
+        DataDir.constInstance.deleteScriptSourceFile(_name);
     }
 }

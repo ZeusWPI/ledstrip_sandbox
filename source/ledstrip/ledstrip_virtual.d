@@ -3,16 +3,8 @@ module ledstrip.ledstrip_virtual;
 version (LedstripVirtual)  :  //
 
 import ledstrip.led : Led;
-import ledstrip.ledstrip_states : LedstripStates;
-import ledstrip.ledstrip : Ledstrip, LedStripException;
+import ledstrip.ledstrip : Ledstrip;
 import thread_manager : ThreadManager;
-
-import core.time : Duration;
-
-import std.algorithm : map;
-import std.format : f = format;
-
-import vibe.core.log;
 
 @safe:
 package:

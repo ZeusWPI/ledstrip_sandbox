@@ -1,7 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { ConfigPage } from "./Config/ConfigPage";
-import { ScriptsPage } from "./Scripts/ScriptsPage";
-import { SourceFilesPage } from "./SourceFiles/SourceFilesPage";
+import { ScriptInstancesPage } from "./Scripts/ScriptInstancesPage";
+import { ScriptSourceFilesPage } from "./ScriptSourceFiles/ScriptSourceFilesPage";
 import { StatesSegmentsPage } from "./StatesSegments/StatesSegmentsPage";
 
 import "./App.css";
@@ -34,15 +34,15 @@ export const App = () => {
             <h2>Ledstrip</h2>
             <div className="tabList">
                 <Tab path="/statesSegments" name="States and segments" />
-                <Tab path="/scripts" name="Scripts" />
-                <Tab path="/sourceFiles" name="Source files" />
+                <Tab path="/scriptInstances" name="Script instances" />
+                <Tab path="/scriptSourceFiles" name="Script source files" />
                 <Tab path="/config" name="Config" />
             </div>
             <Routes>
                 <Route path="/" element={<Navigate to="statesSegments" />} />
                 <Route path="/statesSegments" element={<StatesSegmentsPage />} />
-                <Route path="/scripts" element={<ScriptsPage />} />
-                <Route path="/sourceFiles" element={<SourceFilesPage />} />
+                <Route path="/scriptInstances" element={<ScriptInstancesPage />} />
+                <Route path="/scriptSourceFiles" element={<ScriptSourceFilesPage />} />
                 <Route path="/config" element={<ConfigPage />} />
                 <Route path="/*" element={<Navigate to="/" />} />
             </Routes>

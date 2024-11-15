@@ -1,4 +1,4 @@
-module script.script;
+module script.script_instance;
 
 import data_dir : DataDir;
 import ledstrip.led : Led;
@@ -11,14 +11,14 @@ import std.traits : EnumMembers;
 @safe:
 
 abstract shared
-class Script
+class ScriptInstance
 {
-    private alias enf = enforce!ScriptException;
+    private alias enf = enforce!ScriptInstanceException;
 
-    alias TaskEntrypoint = void function(Script) nothrow @safe;
+    alias TaskEntrypoint = void function(ScriptInstance) nothrow @safe;
 
     private string m_name;
-    private string m_fileName;
+    private string m_sourceFileName;
     private uint m_ledCount;
     private bool m_autoStart;
 
@@ -30,17 +30,17 @@ class Script
     @disable this(ref typeof(this));
 
     protected synchronized
-    this(string name, string fileName, uint ledCount, bool autoStart)
+    this(string name, string sourceFileName, uint ledCount, bool autoStart)
     {
-        enf(name.isValidScriptName, f!`Invalid script name "%s"`(name));
-        enf(fileName.isValidScriptFileName, f!`Invalid file name "%s"`(fileName));
+        enf(name.isValidScriptInstanceName, f!`Invalid script instance name "%s"`(name));
+        enf(sourceFileName.isValidScriptSourceFileName, f!`Invalid source file name "%s"`(sourceFileName));
 
         m_name = name;
-        m_fileName = fileName;
+        m_sourceFileName = sourceFileName;
         m_ledCount = ledCount;
         m_autoStart = autoStart;
 
-        m_sourceCode = DataDir.constInstance.loadScript(fileName);
+        m_sourceCode = DataDir.constInstance.loadScriptSourceFile(sourceFileName);
         if (ledCount > 0)
             m_leds = new Led[ledCount];
     }
@@ -50,8 +50,8 @@ class Script
         string name() const
             => m_name;
 
-        string fileName() const
-            => m_fileName;
+        string sourceFileName() const
+            => m_sourceFileName;
 
         uint ledCount() const
             => m_ledCount;
@@ -95,7 +95,7 @@ class Script
     abstract TaskEntrypoint taskEntrypoint();
 }
 
-class ScriptException : Exception
+class ScriptInstanceException : Exception
 {
     mixin basicExceptionCtors;
 }
@@ -108,11 +108,11 @@ enum ScriptExtension : string
 }
 
 pure nothrow @nogc
-bool isValidScriptName(string name)
+bool isValidScriptInstanceName(string name)
     => name.length > 0;
 
 pure nothrow @nogc
-bool isValidScriptFileName(string name)
+bool isValidScriptSourceFileName(string name)
 {
     if (name.canFind("/"))
         return false;

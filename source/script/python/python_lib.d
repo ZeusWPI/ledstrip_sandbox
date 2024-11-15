@@ -2,8 +2,8 @@ module script.python.python_lib;
 // dfmt off
 
 import script.common_lib : CommonLib;
-import script.python.python_script : PythonScript;
-import script.python.python_script_task : PythonScriptTask;
+import script.python.python_script_instance : PythonScriptInstance;
+import script.python.python_script_instance_task : PythonScriptInstanceTask;
 
 import std.algorithm : map;
 import std.conv : text;
@@ -228,10 +228,10 @@ static:
         register("led", "setAll",   py(&CommonLib.LedModule.setAll));
 
         // State module
-        register("state", "activeName",               py(&CommonLib.StateModule.activeName));
-        register("state", "activeContainsThisScript", py(&CommonLib.StateModule.activeContainsThisScript));
-        register("state", "setActiveByName",          py(&CommonLib.StateModule.setActiveByName));
-        register("state", "setDefaultActive",         py(&CommonLib.StateModule.setDefaultActive));
+        register("state", "activeName",                       py(&CommonLib.StateModule.activeName));
+        register("state", "activeContainsThisScriptInstance", py(&CommonLib.StateModule.activeContainsThisScriptInstance));
+        register("state", "setActiveByName",                  py(&CommonLib.StateModule.setActiveByName));
+        register("state", "setDefaultActive",                 py(&CommonLib.StateModule.setDefaultActive));
 
         // Time module
         register("time", "stdTimeHnsecs",   py(&CommonLib.TimeModule.stdTimeHnsecs));
@@ -249,27 +249,27 @@ static:
     }
 
     private
-    PythonScriptTask task()
-        => PythonScriptTask.instance;
+    PythonScriptInstanceTask task()
+        => PythonScriptInstanceTask.instance;
 
     private
-    const(PythonScriptTask) constTask()
-        => PythonScriptTask.constInstance;
+    const(PythonScriptInstanceTask) constTask()
+        => PythonScriptInstanceTask.constInstance;
 
     private
-    PythonScript script()
-        => task.pythonScript;
+    PythonScriptInstance scriptInstance()
+        => task.pythonScriptInstance;
 
     private
-    const(PythonScript) constScript()
-        => constTask.constPythonScript;
+    const(PythonScriptInstance) constScriptInstance()
+        => constTask.constPythonScriptInstance;
     
     @trusted
     void log(PydObject obj)
     {
         logInfo(
-            `Script "%s": log: %s`,
-            constScript.name,
+            `Script instance "%s": log: %s`,
+            constScriptInstance.name,
             (() @trusted => obj.toString)(),
         );
     }

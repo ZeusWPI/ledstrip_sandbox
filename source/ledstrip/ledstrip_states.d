@@ -2,8 +2,6 @@ module ledstrip.ledstrip_states;
 
 import data_dir : DataDir;
 import ledstrip.ledstrip_state : LedstripState;
-import script.script : Script;
-import script.scripts : Scripts;
 import singleton : sharedSingleton;
 
 import std.exception : basicExceptionCtors, enforce;
@@ -46,7 +44,13 @@ class LedstripStates
         {
             LedstripState state = addState(stateName);
             foreach (configSegment; configState.segments)
-                state.assignSegment(configSegment.begin, configSegment.end, configSegment.scriptName);
+            {
+                state.assignSegment(
+                    configSegment.begin,
+                    configSegment.end,
+                    configSegment.scriptInstanceName,
+                );
+            }
         }
     }
 

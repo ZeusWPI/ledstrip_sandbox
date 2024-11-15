@@ -14,9 +14,9 @@ interface RestApi
 
     string getActiveState();
 
-    Collection!ScriptApi scripts();
+    Collection!ScriptInstanceApi scriptInstances();
 
-    Collection!SourceFileApi sourceFiles();
+    Collection!ScriptSourceFileApi scriptSourceFiles();
 
     @path("/mailbox.json")
     void putMailbox(string topic, string message);
@@ -37,7 +37,8 @@ interface ConfigApi
 
 interface StateApi
 {
-    struct CollectionIndices {
+    struct CollectionIndices
+    {
         string _state;
     }
 
@@ -56,44 +57,47 @@ interface StateApi
 
 interface SegmentApi
 {
-    struct CollectionIndices {
+    struct CollectionIndices
+    {
         string _state;
         uint _begin;
     }
 
-    struct Segment
+    struct SegmentPod
     {
         uint begin, end;
-        string scriptName;
+        string scriptInstanceName;
     }
 
-    Segment[] get(string _state);
+    SegmentPod[] get(string _state);
 
-    void post(string _state, Segment segment);
+    void post(string _state, SegmentPod segment);
 
-    Segment get(string _state, uint _begin);
+    SegmentPod get(string _state, uint _begin);
 
     void delete_(string _state, uint _begin);
 }
 
-interface ScriptApi
+interface ScriptInstanceApi
 {
-    struct CollectionIndices {
+    struct CollectionIndices
+    {
         string _name;
     }
 
-    struct Script {
+    struct ScriptInstancePod
+    {
         string name;
-        string fileName;
+        string sourceFileName;
         uint ledCount;
         bool autoStart;
     }
 
     string[] get();
 
-    void post(Script script);
+    void post(ScriptInstancePod scriptInstance);
 
-    Script get(string _name);
+    ScriptInstancePod get(string _name);
 
     void delete_(string _name);
 
@@ -106,22 +110,24 @@ interface ScriptApi
     void postReload(string _name);
 }
 
-interface SourceFileApi
+interface ScriptSourceFileApi
 {
-    struct CollectionIndices {
+    struct CollectionIndices
+    {
         string _name;
     }
 
-    struct SourceFile {
+    struct ScriptSourceFilePod
+    {
         string name;
         string sourceCode;
     }
 
     string[] get();
 
-    void post(SourceFile sourceFile);
+    void post(ScriptSourceFilePod scriptSourceFile);
 
-    SourceFile get(string _name);
+    ScriptSourceFilePod get(string _name);
 
     void put(string _name, string sourceCode);
 

@@ -1,7 +1,7 @@
-module script.bf.bf_script;
+module script.bf.bf_script_instance;
 
-import script.bf.bf_script_task : BfScriptTask;
-import script.script : Script;
+import script.bf.bf_script_instance_task : BfScriptInstanceTask;
+import script.script_instance : ScriptInstance;
 
 @safe:
 
@@ -17,14 +17,14 @@ import script.script : Script;
  * The output instruction '.' dumps debug info about the current state.
  */
 final shared
-class BfScript : Script
+class BfScriptInstance : ScriptInstance
 {
-    this(string name, string fileName, uint ledCount, bool autoStart)
+    this(string name, string sourceFileName, uint ledCount, bool autoStart)
     {
-        super(name, fileName, ledCount, autoStart);
+        super(name, sourceFileName, ledCount, autoStart);
     }
 
     override
     TaskEntrypoint taskEntrypoint()
-        => &BfScriptTask.entrypoint;
+        => &BfScriptInstanceTask.entrypoint;
 }

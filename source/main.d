@@ -4,7 +4,7 @@ import data_dir : DataDir;
 import ledstrip.ledstrip : Ledstrip;
 import ledstrip.ledstrip_states : LedstripStates;
 import mailbox : Mailbox;
-import script.scripts : Scripts;
+import script.script_instances : ScriptInstances;
 import thread_manager : ThreadManager;
 import webserver.webserver : Webserver;
 
@@ -39,13 +39,13 @@ void main()
     DataDir.createInstance;
 
     // These depend on DataDir and/or ThreadManager
-    Scripts.createInstance;
+    ScriptInstances.createInstance;
     LedstripStates.createInstance;
     Ledstrip.createInstance;
     Webserver.createInstance;
 
     Ledstrip.instance.startRenderLoopTask;
-    Scripts.instance.startAutoStartTask;
+    ScriptInstances.instance.startAutoStartTask;
     Webserver.instance.start;
 
     spawnProcess(["node", "luals/ws-wrapper.js"]);

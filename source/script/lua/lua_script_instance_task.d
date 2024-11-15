@@ -1,9 +1,9 @@
-module script.lua.lua_script_task;
+module script.lua.lua_script_instance_task;
 
 import script.lua.lua_lib : LuaLib;
-import script.lua.lua_script : LuaScript;
-import script.script : Script;
-import script.script_task : ScriptTask;
+import script.lua.lua_script_instance : LuaScriptInstance;
+import script.script_instance : ScriptInstance;
+import script.script_instance_task : ScriptInstanceTask;
 import thread_manager : ThreadManager;
 
 import std.algorithm : canFind;
@@ -20,33 +20,33 @@ import bindbc.lua.v51 : lua_Debug, lua_Hook, LUA_MASKLINE, lua_sethook, lua_Stat
 @safe:
 
 final
-class LuaScriptTask : ScriptTask
+class LuaScriptInstanceTask : ScriptInstanceTask
 {
-    private alias enf = enforce!LuaScriptTaskException;
+    private alias enf = enforce!LuaScriptInstanceTaskException;
 
     private LuaState m_luaState;
     private LuaTable m_env; // Has @system dtor
 
     static nothrow
-    void entrypoint(Script script)
+    void entrypoint(ScriptInstance scriptInstance)
     in (
-        ThreadManager.constInstance.inScriptTaskPool,
-        "LuaScriptTask: entrypoint must be called from a script task",
+        ThreadManager.constInstance.inScriptInstanceTaskPool,
+        "LuaScriptInstanceTask: entrypoint must be called from a script instance task",
     )
     {
-        LuaScriptTask instance;
+        LuaScriptInstanceTask instance;
         try
-            instance = new typeof(this)(script);
+            instance = new typeof(this)(scriptInstance);
         catch (Exception e)
-            logError("LuaScriptTask entrypoint failed: %s", (() @trusted => e.toString)());
+            logError("LuaScriptInstanceTask entrypoint failed: %s", (() @trusted => e.toString)());
         instance.run;
     }
 
     protected @trusted // Calls @system dtor on throw
-    this(Script script)
+    this(ScriptInstance scriptInstance)
     {
-        super(script);
-        enf(cast(LuaScript) script, "Script is not a LuaScript");
+        super(scriptInstance);
+        enf(cast(LuaScriptInstance) scriptInstance, "scriptInstance is not a LuaScriptInstance");
     }
 
     protected override nothrow
@@ -54,10 +54,10 @@ class LuaScriptTask : ScriptTask
     {
         scope (exit)
         {
-            m_script.setStopped;
+            m_scriptInstance.setStopped;
         }
 
-        logInfo(`Task for lua script "%s" started`, m_script.name);
+        logInfo(`Task for lua script instance "%s" started`, m_scriptInstance.name);
 
         createLuaState;
         setupHook;
@@ -65,21 +65,21 @@ class LuaScriptTask : ScriptTask
 
         try
         {
-            (() @trusted => m_luaState.doString(m_script.sourceCode, m_env))();
-            logInfo(`Task for lua script "%s" exited normally`, m_script.name);
+            (() @trusted => m_luaState.doString(m_scriptInstance.sourceCode, m_env))();
+            logInfo(`Task for lua script instance "%s" exited normally`, m_scriptInstance.name);
         }
         catch (Exception e)
         {
             // An InterruptException gets rethrown as a LuaException with the msg embedded
             if (e.msg.canFind("interrupted"))
             {
-                logInfo(`Task for lua script "%s" exited by interruption`, m_script.name);
+                logInfo(`Task for lua script instance "%s" exited by interruption`, m_scriptInstance.name);
             }
             else
             {
                 logError(
-                    `Task for lua script "%s" failed: %s`,
-                    m_script.name, (() @trusted => e.toString)(),
+                    `Task for lua script instance "%s" failed: %s`,
+                    m_scriptInstance.name, (() @trusted => e.toString)(),
                 );
             }
         }
@@ -98,8 +98,8 @@ class LuaScriptTask : ScriptTask
         {
             assert(
                 false,
-                f!`Task for lua script "%s": Fatal error creating LuaState: %s`(
-                    m_script.name, e.toString,
+                f!`Task for lua script instance "%s": Fatal error creating LuaState: %s`(
+                    m_scriptInstance.name, e.toString,
             ),
             );
         }
@@ -135,28 +135,28 @@ class LuaScriptTask : ScriptTask
         {
             assert(
                 false,
-                f!`Task for lua script "%s": Fatal error building env: %s`(
-                    m_script.name, e.toString,
+                f!`Task for lua script instance "%s": Fatal error building env: %s`(
+                    m_scriptInstance.name, e.toString,
             ),
             );
         }
     }
 
     static nothrow
-    LuaScriptTask instance()
-        => cast(LuaScriptTask) super.instance;
+    LuaScriptInstanceTask instance()
+        => cast(LuaScriptInstanceTask) super.instance;
 
     static nothrow
-    const(LuaScriptTask) constInstance()
-        => cast(const(LuaScriptTask)) super.constInstance;
+    const(LuaScriptInstanceTask) constInstance()
+        => cast(const(LuaScriptInstanceTask)) super.constInstance;
 
     pure nothrow @nogc
-    LuaScript luaScript()
-        => cast(LuaScript) script;
+    LuaScriptInstance luaScriptInstance()
+        => cast(LuaScriptInstance) scriptInstance;
 
     pure nothrow @nogc
-    const(LuaScript) constLuaScript() const
-        => cast(const(LuaScript)) constScript;
+    const(LuaScriptInstance) constLuaScriptInstance() const
+        => cast(const(LuaScriptInstance)) constScriptInstance;
 
     pure nothrow @nogc
     ref inout(LuaState) luaState() inout
@@ -164,7 +164,7 @@ class LuaScriptTask : ScriptTask
         => m_luaState;
 }
 
-class LuaScriptTaskException : Exception
+class LuaScriptInstanceTaskException : Exception
 {
     mixin basicExceptionCtors;
 }

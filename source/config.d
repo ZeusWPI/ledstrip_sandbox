@@ -16,7 +16,7 @@ struct Config
     ubyte maxBrightness = 0x80;
     int dmaNumber = 10;
     int gpioPin = 18;
-    ConfigScript[string] scripts;
+    ConfigScriptInstance[string] scriptInstances;
     ConfigState[string] states;
 
     pure nothrow @nogc
@@ -35,16 +35,16 @@ struct Config
         ret.maxBrightness     = maxBrightness;
         ret.dmaNumber         = dmaNumber;
         ret.gpioPin           = gpioPin;
-        foreach (k, v; scripts) ret.scripts[k] = v;
+        foreach (k, v; scriptInstances) ret.scriptInstances[k] = v;
         foreach (k, v; states)  ret.states[k]  = v.sharedDup;
         // dfmt on
         return ret;
     }
 }
 
-struct ConfigScript
+struct ConfigScriptInstance
 {
-    string fileName;
+    string sourceFileName;
     uint ledCount;
     bool autoStart;
 }
@@ -65,5 +65,5 @@ struct ConfigState
 struct ConfigSegment
 {
     uint begin, end;
-    string scriptName;
+    string scriptInstanceName;
 }

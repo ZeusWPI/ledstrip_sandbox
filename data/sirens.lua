@@ -1,5 +1,5 @@
 while true do
-    while not state.activeContainsThisScript() do
+    while not state.activeContainsThisScriptInstance() do
         time.waitFrames(1)
     end
     for i=0, 120 do

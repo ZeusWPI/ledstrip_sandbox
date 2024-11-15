@@ -5,8 +5,7 @@ version (LedstripWs2811)  :  //
 import ct_config : ct_ledStripType, ct_targetFreq;
 import data_dir : DataDir;
 import ledstrip.led : Led;
-import ledstrip.ledstrip : Ledstrip, LedStripException;
-import ledstrip.ledstrip_states : LedstripStates;
+import ledstrip.ledstrip : Ledstrip, LedstripException;
 import thread_manager : ThreadManager;
 
 import core.time : Duration;
@@ -87,7 +86,7 @@ class LedstripWs2811 : Ledstrip
         if (initResult != ws2811_return_t.WS2811_SUCCESS)
         {
             const char* reason = ws2811_get_return_t_str(initResult);
-            throw new LedStripException(f!"ws2811_init failed: %s"(reason));
+            throw new LedstripException(f!"ws2811_init failed: %s"(reason));
         }
 
         m_setupWs2811Done = true;

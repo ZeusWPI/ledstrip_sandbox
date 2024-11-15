@@ -1,5 +1,5 @@
 while true do
-    while not state.activeContainsThisScript() do
+    while not state.activeContainsThisScriptInstance() do
         time.waitFrames(1)
     end
     brights = {0, 10, 50, 200, 255}

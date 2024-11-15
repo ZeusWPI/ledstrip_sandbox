@@ -8,49 +8,49 @@
 	"maxBrightness": 64,
 	"dmaNumber": 10,
 	"gpioPin": 18,
-	"scripts": {
+	"scriptInstances": {
 		"binary_counter": {
-			"fileName": "binary_counter.bf",
+			"sourceFileName": "binary_counter.bf",
 			"ledCount": 30,
 			"autoStart": true
 		},
 		"sirens": {
-			"fileName": "sirens.lua",
+			"sourceFileName": "sirens.lua",
 			"ledCount": 690,
 			"autoStart": true
 		},
 		"cammie_watch_count": {
-			"fileName": "cammie_watch_count.lua",
+			"sourceFileName": "cammie_watch_count.lua",
 			"ledCount": 60,
 			"autoStart": true
 		},
 		"cammiechat_morse": {
-			"fileName": "cammiechat_morse.lua",
+			"sourceFileName": "cammiechat_morse.lua",
 			"ledCount": 69,
 			"autoStart": true
 		},
 		"weather": {
-			"fileName": "weather.lua",
+			"sourceFileName": "weather.lua",
 			"ledCount": 68,
 			"autoStart": true
 		},
 		"zeus3d": {
-			"fileName": "zeus3d.lua",
+			"sourceFileName": "zeus3d.lua",
 			"ledCount": 69,
 			"autoStart": true
 		},
 		"flashlight": {
-			"fileName": "flashlight.py",
+			"sourceFileName": "flashlight.py",
 			"ledCount": 690,
 			"autoStart": true
 		},
 		"alarm": {
-			"fileName": "alarm.lua",
+			"sourceFileName": "alarm.lua",
 			"ledCount": 690,
 			"autoStart": true
 		},
 		"binary_clock": {
-			"fileName": "binary_clock.lua",
+			"sourceFileName": "binary_clock.lua",
 			"ledCount": 32,
 			"autoStart": true
 		}
@@ -61,7 +61,7 @@
 				{
 					"begin": 0,
 					"end": 690,
-					"scriptName": "alarm"
+					"scriptInstanceName": "alarm"
 				}
 			]
 		},
@@ -70,32 +70,32 @@
 				{
 					"begin": 0,
 					"end": 30,
-					"scriptName": "binary_counter"
+					"scriptInstanceName": "binary_counter"
 				},
 				{
 					"begin": 30,
 					"end": 90,
-					"scriptName": "cammie_watch_count"
+					"scriptInstanceName": "cammie_watch_count"
 				},
 				{
 					"begin": 138,
 					"end": 207,
-					"scriptName": "cammiechat_morse"
+					"scriptInstanceName": "cammiechat_morse"
 				},
 				{
 					"begin": 345,
 					"end": 413,
-					"scriptName": "weather"
+					"scriptInstanceName": "weather"
 				},
 				{
 					"begin": 450,
 					"end": 482,
-					"scriptName": "binary_clock"
+					"scriptInstanceName": "binary_clock"
 				},
 				{
 					"begin": 552,
 					"end": 621,
-					"scriptName": "zeus3d"
+					"scriptInstanceName": "zeus3d"
 				}
 			]
 		},
@@ -104,7 +104,7 @@
 				{
 					"begin": 0,
 					"end": 690,
-					"scriptName": "flashlight"
+					"scriptInstanceName": "flashlight"
 				}
 			]
 		},
@@ -113,7 +113,7 @@
 				{
 					"begin": 0,
 					"end": 690,
-					"scriptName": "sirens"
+					"scriptInstanceName": "sirens"
 				}
 			]
 		}

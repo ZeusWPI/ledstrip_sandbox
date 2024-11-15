@@ -7,13 +7,13 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { CloseAction, ErrorAction } from 'vscode-languageclient/browser.js';
 import { toSocket, WebSocketMessageReader, WebSocketMessageWriter } from 'vscode-ws-jsonrpc';
 import { LogLevel } from 'vscode/services';
-import { SelectedSourceFileContext } from "../contexts/SelectedSourceFileContext";
-import { SourceCodeContext } from "../contexts/SourceCodeContext";
-import { getExtension } from "../types/Script";
+import { SelectedScriptSourceFileContext } from "../contexts/SelectedScriptSourceFileContext";
+import { ScriptSourceCodeContext } from "../contexts/ScriptSourceCodeContext";
+import { getExtension } from "../types/ScriptInstance";
 
 // @ts-ignore
 import * as lua_language from "monaco-languages/release/esm/lua/lua.js";
-import { SourceCodeModifiedContext } from '../contexts/SourceCodeModifiedContext';
+import { ScriptSourceCodeModifiedContext } from '../contexts/ScriptSourceCodeModifiedContext';
 
 let initMonacoCalled = false;
 const initMonaco = async () => {
@@ -67,40 +67,38 @@ const initMonaco = async () => {
 };
 await initMonaco();
 
-const sourceFileModelUri = monaco.Uri.parse("inmemory://sourceFile");
+const scriptSourceFileModelUri = monaco.Uri.parse("inmemory://scriptSourceFile");
 const apiFileModelUri = monaco.Uri.parse("inmemory://apiFile");
 
-export const SourceFileEditor = () => {
+export const ScriptSourceFileEditor = () => {
     const editorElementRef = useRef<HTMLDivElement | null>(null);
-    const { selectedSourceFile } = useContext(SelectedSourceFileContext)!;
-    const { sourceCode, setSourceCode } = useContext(SourceCodeContext)!;
-    const { setSourceCodeModified } = useContext(SourceCodeModifiedContext)!;
+    const { selectedScriptSourceFile } = useContext(SelectedScriptSourceFileContext)!;
+    const { scriptSourceCode, setScriptSourceCode } = useContext(ScriptSourceCodeContext)!;
+    const { setScriptSourceCodeModified } = useContext(ScriptSourceCodeModifiedContext)!;
     const [initialized, setInitialized] = useState<boolean>(false);
 
-    const ext = useMemo<string>(() => getExtension(selectedSourceFile), [selectedSourceFile]);
-
-    console.log("sourcefileeditor render")
+    const ext = useMemo<string>(() => getExtension(selectedScriptSourceFile), [selectedScriptSourceFile]);
 
     // Create models and editor
     useEffect(() => {
-        if (editorElementRef.current && selectedSourceFile && sourceCode !== null && !initialized) {
+        if (editorElementRef.current && selectedScriptSourceFile && scriptSourceCode !== null && !initialized) {
             setInitialized(true);
 
-            monaco.editor.createModel(sourceCode, ext, sourceFileModelUri);
+            monaco.editor.createModel(scriptSourceCode, ext, scriptSourceFileModelUri);
             monaco.editor.createModel("", ext, apiFileModelUri);
 
-            monaco.editor.getModel(sourceFileModelUri)!.onDidChangeContent(() => {
-                setSourceCode(monaco.editor.getModel(sourceFileModelUri)!.getValue());
-                setSourceCodeModified(true);
+            monaco.editor.getModel(scriptSourceFileModelUri)!.onDidChangeContent(() => {
+                setScriptSourceCode(monaco.editor.getModel(scriptSourceFileModelUri)!.getValue());
+                setScriptSourceCodeModified(true);
             });
 
             monaco.editor.create(editorElementRef.current, {
-                model: monaco.editor.getModel(sourceFileModelUri)!,
+                model: monaco.editor.getModel(scriptSourceFileModelUri)!,
                 automaticLayout: true,
                 theme: "vs-dark",
             });
         }
-    }, [editorElementRef, selectedSourceFile, sourceCode]);
+    }, [editorElementRef, selectedScriptSourceFile, scriptSourceCode]);
 
     // Set apiFileModel contents
     // useEffect(() => {
@@ -120,7 +118,7 @@ export const SourceFileEditor = () => {
             monaco.editor.getModels().forEach(model => model.dispose());
             setInitialized(false);
         };
-    }, [selectedSourceFile]);
+    }, [selectedScriptSourceFile]);
 
     return <>
         <div ref={editorElementRef} style={{ width: "80vw", height: "70vh" }}>

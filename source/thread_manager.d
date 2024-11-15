@@ -1,6 +1,6 @@
 module thread_manager;
 
-import script.script : Script;
+import script.script_instance : ScriptInstance;
 import singleton : sharedSingleton;
 
 import core.thread : Thread;
@@ -21,15 +21,15 @@ class ThreadManager
     mixin sharedSingleton;
 
     private alias enf = enforce!ThreadManagerException;
-    private TaskPool m_scriptTaskPool;
-    private Task[Script] m_scriptTasks;
+    private TaskPool m_scriptInstanceTaskPool;
+    private Task[ScriptInstance] m_scriptInstanceTasks;
 
     private synchronized nothrow
     this()
     {
         // uint scriptTaskPoolThreadCount = logicalProcessorCount > 1 ? logicalProcessorCount - 1 : 1;
-        uint scriptTaskPoolThreadCount = 1;
-        m_scriptTaskPool = new TaskPool(scriptTaskPoolThreadCount, "scriptTaskPool");
+        uint scriptInstanceTaskPoolThreadCount = 1;
+        m_scriptInstanceTaskPool = new TaskPool(scriptInstanceTaskPoolThreadCount, "scriptInstanceTaskPool");
     }
 
     nothrow @nogc @trusted
@@ -37,36 +37,40 @@ class ThreadManager
         => Thread.getThis.isMainThread;
 
     nothrow
-    bool inScriptTaskPool() const
+    bool inScriptInstanceTaskPool() const
     {
         // TODO: Find a better solution.
-        // Note: task might not be in m_scriptTasks at this point.
+        // Note: task might not be in m_scriptInstanceTasks at this point.
         return !inMainThread;
     }
 
     synchronized
-    void addAndStartScriptTask(Script script)
+    void addAndStartScriptInstanceTask(ScriptInstance scriptInstance)
     {
         enf(
-            script !in m_scriptTasks,
-            f!`addAndStartScriptTask: Task for script "%s" already exists`(script.name),
+            scriptInstance !in m_scriptInstanceTasks,
+            f!`addAndStartScriptInstanceTask: Task for script instance "%s" already exists`(
+                scriptInstance.name,
+        ),
         );
-        logDiagnostic(`Starting task for script "%s"`, script.name);
-        Task task = m_scriptTaskPool.runTaskH(script.taskEntrypoint, script);
-        m_scriptTasks[script] = task;
+        logDiagnostic(`Starting task for script instance "%s"`, scriptInstance.name);
+        Task task = m_scriptInstanceTaskPool.runTaskH(scriptInstance.taskEntrypoint, scriptInstance);
+        m_scriptInstanceTasks[scriptInstance] = task;
     }
 
     synchronized
-    void stopAndRemoveScriptTask(Script script)
+    void stopAndRemoveScriptInstanceTask(ScriptInstance scriptInstance)
     {
         enf(
-            script in m_scriptTasks,
-            f!`stopAndRemoveScriptTask: Task for script "%s" doesn't exists`(script.name),
+            scriptInstance in m_scriptInstanceTasks,
+            f!`stopAndRemoveScriptInstanceTask: Task for script instance "%s" doesn't exists`(
+                scriptInstance.name,
+        ),
         );
-        Task task = m_scriptTasks[script];
+        Task task = m_scriptInstanceTasks[scriptInstance];
         if (task.running)
             task.interrupt;
-        m_scriptTasks.remove(script);
+        m_scriptInstanceTasks.remove(scriptInstance);
     }
 }
 

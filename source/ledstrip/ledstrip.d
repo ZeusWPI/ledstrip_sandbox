@@ -5,8 +5,8 @@ import ledstrip.led : Led;
 import ledstrip.ledstrip_segment : LedstripSegment;
 import ledstrip.ledstrip_state : LedstripState;
 import ledstrip.ledstrip_states : LedstripStates;
-import script.script : Script;
-import script.scripts : Scripts;
+import script.script_instance : ScriptInstance;
+import script.script_instances : ScriptInstances;
 import singleton : sharedSingleton;
 import thread_manager : ThreadManager;
 
@@ -47,7 +47,7 @@ class Ledstrip
         }
     }
 
-    private alias enf = enforce!LedStripException;
+    private alias enf = enforce!LedstripException;
     private enum uint ct_framesBetweenWarns = 10;
 
     private const uint m_ledCount;
@@ -123,32 +123,38 @@ class Ledstrip
         ubyte maxBrightness = DataDir.sharedConfig.maxBrightness;
         if (m_fullRefresh)
             leds[] = Led(0, 0, 0);
-        synchronized (Scripts.classinfo)
+        synchronized (ScriptInstances.classinfo)
         {
-            Script[string] changedScripts;
-            foreach (string name, Script script; Scripts.instance.scripts)
-                if (script.ledsChanged || m_fullRefresh)
+            ScriptInstance[string] changedScriptInstances;
+            auto scriptInstances = ScriptInstances.instance.scriptInstances;
+            foreach (string name, ScriptInstance scriptInstance; scriptInstances)
+                if (scriptInstance.ledsChanged || m_fullRefresh)
                 {
-                    script.resetLedsChanged;
-                    changedScripts[name] = script;
+                    scriptInstance.resetLedsChanged;
+                    changedScriptInstances[name] = scriptInstance;
                 }
             const LedstripState activeState = LedstripStates.constInstance.activeState;
             foreach (uint begin, const LedstripSegment seg; activeState.segments)
             {
-                if (seg.scriptName in changedScripts)
+                if (seg.scriptInstanceName in changedScriptInstances)
                 {
-                    const Script script = changedScripts[seg.scriptName];
-                    if (script.ledCount == seg.end - seg.begin)
+                    const ScriptInstance scriptInstance
+                        = changedScriptInstances[seg.scriptInstanceName];
+                    if (scriptInstance.ledCount == seg.end - seg.begin)
                     {
-                        foreach (i; 0 .. script.ledCount)
-                            leds[seg.begin + i] = script.leds[i].limitBrightness(maxBrightness);
+                        foreach (i; 0 .. scriptInstance.ledCount)
+                        {
+                            shared(Led) led = scriptInstance.leds[i];
+                            led = led.limitBrightness(maxBrightness);
+                            leds[seg.begin + i] = led;
+                        }
                     }
                     else
                     {
                         logWarn(
                             `copySegmentLeds: Segment in state "%s" with begin "%u" and led count "%u"`
-                                ~ ` doesn't match the led count "%u" of script "%s"`,
-                            activeState.name, begin, seg.ledCount, script.ledCount, script.name,
+                                ~ ` doesn't match the led count "%u" of script instance "%s"`,
+                            activeState.name, begin, seg.ledCount, scriptInstance.ledCount, scriptInstance.name,
                         );
                     }
                 }
@@ -192,7 +198,7 @@ class Ledstrip
     shared(Led)[] leds();
 }
 
-class LedStripException : Exception
+class LedstripException : Exception
 {
     mixin basicExceptionCtors;
 }

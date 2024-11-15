@@ -50,8 +50,8 @@ class Webserver
         m_router.registerRestInterface(m_restApi, m_restApiSettings);
         m_router.get("/", m_indexFileServer);
         m_router.get("/statesSegments", m_indexFileServer);
-        m_router.get("/scripts", m_indexFileServer);
-        m_router.get("/sourceFiles", m_indexFileServer);
+        m_router.get("/scriptInstances", m_indexFileServer);
+        m_router.get("/scriptSourceFiles", m_indexFileServer);
         m_router.get("/config", m_indexFileServer);
         m_router.get("*", m_fileServer);
     }

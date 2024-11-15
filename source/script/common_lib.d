@@ -4,8 +4,8 @@ import ledstrip.led : Led;
 import ledstrip.ledstrip : Ledstrip;
 import ledstrip.ledstrip_segment : LedstripSegment;
 import ledstrip.ledstrip_states : LedstripStates;
-import script.script : Script;
-import script.script_task : ScriptTask;
+import script.script_instance : ScriptInstance;
+import script.script_instance_task : ScriptInstanceTask;
 import util : sleepFrameFraction;
 
 import core.time : msecs;
@@ -27,31 +27,31 @@ class CommonLib
 
 static:
     private
-    ScriptTask task()
-        => ScriptTask.instance;
+    ScriptInstanceTask task()
+        => ScriptInstanceTask.instance;
 
     private
-    const(ScriptTask) constTask()
-        => ScriptTask.constInstance;
+    const(ScriptInstanceTask) constTask()
+        => ScriptInstanceTask.constInstance;
 
     private
-    Script script()
-        => task.script;
+    ScriptInstance scriptInstance()
+        => task.scriptInstance;
 
     private
-    const(Script) constScript()
-        => constTask.constScript;
+    const(ScriptInstance) constScriptInstance()
+        => constTask.constScriptInstance;
 
     private
     void enfContext(bool value, string msg)
     {
-        enf(value, f!`Script "%s": %s`(constScript.name, msg));
+        enf(value, f!`Script instance "%s": %s`(constScriptInstance.name, msg));
     }
 
     private
     void enfContext(bool value, string method, string msg)
     {
-        enf(value, f!`Script "%s": %s: %s`(constScript.name, method, msg));
+        enf(value, f!`Script "%s": %s: %s`(constScriptInstance.name, method, msg));
     }
 
     class LedModule
@@ -62,7 +62,7 @@ static:
     static:
         private
         shared(Led[]) leds()
-            => script.leds;
+            => scriptInstance.leds;
 
         private
         const(shared(Led[])) constLeds()
@@ -70,7 +70,7 @@ static:
 
         private
         void setLedsChanged()
-            => script.setLedsChanged;
+            => scriptInstance.setLedsChanged;
 
         uint count()
             => cast(uint) constLeds.length;
@@ -118,12 +118,12 @@ static:
         string activeName()
             => LedstripStates.constInstance.activeState.name;
 
-        bool activeContainsThisScript()
+        bool activeContainsThisScriptInstance()
         {
-            const Script thisScript = script;
+            const ScriptInstance thisScriptInstance = scriptInstance;
             auto segments = LedstripStates.constInstance.activeState.segments;
             foreach (begin, const LedstripSegment seg; segments)
-                if (seg.scriptName == thisScript.name)
+                if (seg.scriptInstanceName == thisScriptInstance.name)
                     return true;
             return false;
         }

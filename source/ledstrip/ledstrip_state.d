@@ -34,9 +34,9 @@ class LedstripState
     ref const(shared(LedstripSegment[uint])) segments() const
         => m_segments;
 
-    void assignSegment(uint begin, uint end, string scriptName)
+    void assignSegment(uint begin, uint end, string scriptInstanceName)
     {
-        LedstripSegment segToAssign = new LedstripSegment(begin, end, scriptName, m_totalLedCount);
+        LedstripSegment segToAssign = new LedstripSegment(begin, end, scriptInstanceName, m_totalLedCount);
         foreach (k, seg; segments)
         {
             enf(

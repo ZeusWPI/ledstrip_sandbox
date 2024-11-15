@@ -1,7 +1,7 @@
 module data_dir;
 
 import config : Config;
-import script.script : isValidScriptFileName;
+import script.script_instance : isValidScriptSourceFileName;
 import singleton : threadLocalSingleton;
 import thread_manager : ThreadManager;
 
@@ -54,7 +54,7 @@ class DataDir
     pure nothrow @nogc
     ref inout(Config) config() inout
         => m_config;
-    
+
     static nothrow @nogc
     ref const(shared(Config)) sharedConfig()
         => s_config;
@@ -72,54 +72,54 @@ class DataDir
     }
 
     @trusted
-    string[] listScripts() const
+    string[] listScriptSourceFiles() const
     {
         return dirEntries(ct_dirName, SpanMode.shallow)
             .filter!(entry => entry.isFile)
             .map!(entry => entry.name.baseName)
-            .filter!(name => name.isValidScriptFileName)
+            .filter!(name => name.isValidScriptSourceFileName)
             .array;
     }
 
-    string loadScript(string fileName) const
+    string loadScriptSourceFile(string sourceFileName) const
     {
-        string scriptFilePath = getScriptFilePath(fileName);
+        string scriptSourceFilePath = getScriptSourceFilePath(sourceFileName);
         enforce!DataDirException(
-            scriptFilePath.exists,
-            f!`loadScript: Script file "%s" doesn't exist`(fileName),
+            scriptSourceFilePath.exists,
+            f!`loadScriptSourceFile: Script source file "%s" doesn't exist`(sourceFileName),
         );
         enforce!DataDirException(
-            scriptFilePath.isFile,
-            f!`loadScript: Script file "%s" is not a regular file`(fileName),
+            scriptSourceFilePath.isFile,
+            f!`loadScriptSourceFile: Script source file "%s" is not a regular file`(sourceFileName),
         );
-        return scriptFilePath.readText;
+        return scriptSourceFilePath.readText;
     }
 
-    void saveScript(string fileName, string sourceCode) const
+    void saveScriptSourceFile(string sourceFileName, string sourceCode) const
     {
-        string scriptFilePath = getScriptFilePath(fileName);
-        if (scriptFilePath.exists)
+        string scriptSourceFilePath = getScriptSourceFilePath(sourceFileName);
+        if (scriptSourceFilePath.exists)
         {
             enforce!DataDirException(
-                scriptFilePath.isFile,
-                f!`saveScript: Script file "%s" is not a regular file`(fileName),
+                scriptSourceFilePath.isFile,
+                f!`saveScriptSourceFile: Script source file "%s" is not a regular file`(sourceFileName),
             );
         }
-        scriptFilePath.write(sourceCode);
+        scriptSourceFilePath.write(sourceCode);
     }
 
-    void deleteScript(string fileName) const
+    void deleteScriptSourceFile(string sourceFileName) const
     {
-        string scriptFilePath = getScriptFilePath(fileName);
+        string scriptSourceFilePath = getScriptSourceFilePath(sourceFileName);
         enforce!DataDirException(
-            scriptFilePath.exists,
-            f!`removeScript: Script file "%s" doesn't exist`(fileName),
+            scriptSourceFilePath.exists,
+            f!`deleteScriptSourceFile: Script source file "%s" doesn't exist`(sourceFileName),
         );
         enforce!DataDirException(
-            scriptFilePath.isFile,
-            f!`removeScript: Script file "%s" is not a regular file`(fileName),
+            scriptSourceFilePath.isFile,
+            f!`deleteScriptSourceFile: Script source file "%s" is not a regular file`(sourceFileName),
         );
-        scriptFilePath.remove;
+        scriptSourceFilePath.remove;
     }
 
     private
@@ -141,14 +141,14 @@ class DataDir
     }
 
     private
-    string getScriptFilePath(string fileName) const
+    string getScriptSourceFilePath(string sourceFileName) const
     {
         createIfNeeded;
         enforce!DataDirException(
-            fileName.isValidScriptFileName,
-            f!`Invalid script file name "%s"`(fileName),
+            sourceFileName.isValidScriptSourceFileName,
+            f!`Invalid script source file name "%s"`(sourceFileName),
         );
-        return buildPath(ct_dirName, fileName);
+        return buildPath(ct_dirName, sourceFileName);
     }
 
     static

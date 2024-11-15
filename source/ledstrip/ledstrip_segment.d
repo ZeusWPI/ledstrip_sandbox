@@ -1,7 +1,7 @@
 module ledstrip.ledstrip_segment;
 
 import ledstrip.led : Led;
-import script.script : isValidScriptName;
+import script.script_instance : isValidScriptInstanceName;
 import util : inRange;
 
 import std.exception : basicExceptionCtors, enforce;
@@ -15,13 +15,13 @@ class LedstripSegment
 {
     private uint m_begin;
     private uint m_end;
-    private string m_scriptName;
+    private string m_scriptInstanceName;
 
-    this(uint begin, uint end, string scriptName, uint totalLedCount)
+    this(uint begin, uint end, string scriptInstanceName, uint totalLedCount)
     {
         m_begin = begin;
         m_end = end;
-        m_scriptName = scriptName;
+        m_scriptInstanceName = scriptInstanceName;
         enforceIsValid(totalLedCount);
     }
 
@@ -38,8 +38,8 @@ class LedstripSegment
         => m_end - m_begin;
 
     pure nothrow @nogc
-    string scriptName() const
-        => m_scriptName;
+    string scriptInstanceName() const
+        => m_scriptInstanceName;
 
     pure
     void enforceIsValid(uint totalLedCount) const
@@ -47,7 +47,7 @@ class LedstripSegment
         alias enf = enforce!LedstripSegmentException;
         enf(m_end > m_begin, "Invalid segment: end <= begin");
         enf(totalLedCount >= m_end, "Invalid segment: totalLedCount < end");
-        enf(m_scriptName.isValidScriptName, "Invalid segment: invalid script name");
+        enf(m_scriptInstanceName.isValidScriptInstanceName, "Invalid segment: invalid script instance name");
     }
 
     pure nothrow @nogc

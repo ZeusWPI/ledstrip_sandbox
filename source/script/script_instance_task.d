@@ -1,7 +1,7 @@
-module script.script_task;
+module script.script_instance_task;
 
 import mailbox : Mailbox;
-import script.script : Script;
+import script.script_instance : ScriptInstance;
 
 import std.exception : basicExceptionCtors, enforce;
 
@@ -12,13 +12,13 @@ import vibe.core.task : Task;
 @safe:
 
 abstract
-class ScriptTask
+class ScriptInstanceTask
 {
-    private alias enf = enforce!ScriptTaskException;
+    private alias enf = enforce!ScriptInstanceTaskException;
 
     private static typeof(this)[Tid] tls_tidInstanceMap;
 
-    protected Script m_script;
+    protected ScriptInstance m_scriptInstance;
     protected Task m_task;
 
     private string[string] m_localMailbox;
@@ -27,10 +27,10 @@ class ScriptTask
     @disable this(ref typeof(this));
 
     protected
-    this(Script script)
+    this(ScriptInstance scriptInstance)
     {
-        enf(script !is null, "Script is null");
-        m_script = script;
+        enf(scriptInstance !is null, "scriptInstance is null");
+        m_scriptInstance = scriptInstance;
         m_task = Task.getThis;
         registerInstance;
         m_mailboxSubscriber = &mailboxSubscriberMethod;
@@ -46,7 +46,7 @@ class ScriptTask
         }
         catch (Exception e)
         {
-            logError("Exception in ScriptTask dtor: %s", (() @trusted => e.toString)());
+            logError("Exception in ScriptInstanceTask dtor: %s", (() @trusted => e.toString)());
         }
     }
 
@@ -66,7 +66,7 @@ class ScriptTask
     void run();
 
     static nothrow
-    ScriptTask instance()
+    ScriptInstanceTask instance()
     {
         Tid tid;
         try
@@ -78,16 +78,16 @@ class ScriptTask
     }
 
     static nothrow
-    const(ScriptTask) constInstance()
+    const(ScriptInstanceTask) constInstance()
         => cast(const) instance;
 
     final pure nothrow @nogc
-    Script script()
-        => m_script;
+    ScriptInstance scriptInstance()
+        => m_scriptInstance;
 
     final pure nothrow @nogc
-    const(Script) constScript() const
-        => m_script;
+    const(ScriptInstance) constScriptInstance() const
+        => m_scriptInstance;
 
     private
     void mailboxSubscriberMethod(string topic, string message)
@@ -142,7 +142,7 @@ class ScriptTask
     }
 }
 
-class ScriptTaskException : Exception
+class ScriptInstanceTaskException : Exception
 {
     mixin basicExceptionCtors;
 }

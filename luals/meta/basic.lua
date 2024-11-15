@@ -255,11 +255,11 @@ state = {}
 ---@nodiscard
 function state.activeName() end
 
----Returns true if the currently active state is one that shows this script.
----A single script can be shown in multiple states.
+---Returns true if the currently active state is one that shows this script instance.
+---A single script instance can be shown in multiple states.
 ---@return boolean
 ---@nodiscard
-function state.activeContainsThisScript() end
+function state.activeContainsThisScriptInstance() end
 
 ---Change the active state to the state with name `stateName`.
 ---@param stateName string
@@ -308,7 +308,7 @@ function mailbox.unsubscribe(topic) end
 ---Unsubscribes from all topics.
 function mailbox.unsubscribeAll() end
 
----Returns and deletes any message in this script's local mailbox for topic `topic`.
+---Returns and deletes any message in this script instance's local mailbox for topic `topic`.
 ---Returns an empty string if no message was available.
 ---In order for messages for a topic to end up in the local mailbox, `subscribe(topic)` must be called first.
 ---@param topic string

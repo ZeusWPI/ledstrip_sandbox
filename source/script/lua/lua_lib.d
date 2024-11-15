@@ -2,8 +2,8 @@ module script.lua.lua_lib;
 // dfmt off
 
 import script.common_lib : CommonLib;
-import script.lua.lua_script : LuaScript;
-import script.lua.lua_script_task : LuaScriptTask;
+import script.lua.lua_script_instance : LuaScriptInstance;
+import script.lua.lua_script_instance_task : LuaScriptInstanceTask;
 
 import std.conv : text;
 import std.exception : basicExceptionCtors, enforce;
@@ -27,19 +27,19 @@ class LuaLib
 
 static:
     nothrow @trusted
-    LuaTable buildEnv(LuaScriptTask scriptTask)
+    LuaTable buildEnv(LuaScriptInstanceTask scriptInstanceTask)
     {
         LuaTable createTable()
         {
-            return LuaTable.makeNew(&scriptTask.luaState());
+            return LuaTable.makeNew(&scriptInstanceTask.luaState());
         }
 
         T getGlobal(T)(string key)
         {
-            lua_getglobal(scriptTask.luaState.handle, key.toStringz);
+            lua_getglobal(scriptInstanceTask.luaState.handle, key.toStringz);
             scope (exit)
-                scriptTask.luaState.pop(1);
-            return scriptTask.luaState.get!T(scriptTask.luaState.top);
+                scriptInstanceTask.luaState.pop(1);
+            return scriptInstanceTask.luaState.get!T(scriptInstanceTask.luaState.top);
         }
 
         try
@@ -175,10 +175,10 @@ static:
             register(&CommonLib.LedModule.setAll,   "led", "setAll"  );
 
             // State module
-            register(&CommonLib.StateModule.activeName,               "state", "activeName"              );
-            register(&CommonLib.StateModule.activeContainsThisScript, "state", "activeContainsThisScript");
-            register(&CommonLib.StateModule.setActiveByName,          "state", "setActiveByName"         );
-            register(&CommonLib.StateModule.setDefaultActive,         "state", "setDefaultActive"        );
+            register(&CommonLib.StateModule.activeName,                       "state", "activeName"                      );
+            register(&CommonLib.StateModule.activeContainsThisScriptInstance, "state", "activeContainsThisScriptInstance");
+            register(&CommonLib.StateModule.setActiveByName,                  "state", "setActiveByName"                 );
+            register(&CommonLib.StateModule.setDefaultActive,                 "state", "setDefaultActive"                );
 
             // Time module
             register(&CommonLib.TimeModule.stdTimeHnsecs,   "time", "stdTimeHnsecs"  );
@@ -201,20 +201,20 @@ static:
     }
 
     private
-    LuaScriptTask task()
-        => LuaScriptTask.instance;
+    LuaScriptInstanceTask task()
+        => LuaScriptInstanceTask.instance;
 
     private
-    const(LuaScriptTask) constTask()
-        => LuaScriptTask.constInstance;
+    const(LuaScriptInstanceTask) constTask()
+        => LuaScriptInstanceTask.constInstance;
 
     private
-    LuaScript script()
-        => task.luaScript;
+    LuaScriptInstance scriptInstance()
+        => task.luaScriptInstance;
 
     private
-    const(LuaScript) constScript()
-        => constTask.constLuaScript;
+    const(LuaScriptInstance) constScriptInstance()
+        => constTask.constLuaScriptInstance;
 
     @trusted
     void log(LuaVariadic args)
@@ -238,7 +238,7 @@ static:
             }
         }
 
-        logInfo(`Script "%s": log: %-(%s%)`, constScript.name, stringArgs);
+        logInfo(`Script instance "%s": log: %-(%s%)`, constScriptInstance.name, stringArgs);
     }
 }
 

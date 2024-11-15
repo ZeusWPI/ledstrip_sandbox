@@ -1,10 +1,10 @@
-module script.bf.bf_script_task;
+module script.bf.bf_script_instance_task;
 
 import ledstrip.led : Led;
 import ledstrip.ledstrip : Ledstrip;
-import script.bf.bf_script : BfScript;
-import script.script : Script;
-import script.script_task : ScriptTask;
+import script.bf.bf_script_instance : BfScriptInstance;
+import script.script_instance : ScriptInstance;
+import script.script_instance_task : ScriptInstanceTask;
 import thread_manager : ThreadManager;
 import util : sleepFrameFraction;
 
@@ -21,32 +21,32 @@ import vibe.core.task : InterruptException;
 @safe:
 
 final
-class BfScriptTask : ScriptTask
+class BfScriptInstanceTask : ScriptInstanceTask
 {
-    private alias enf = enforce!BfScriptTaskException;
+    private alias enf = enforce!BfScriptInstanceTaskException;
 
     private enum string ct_instructionSet = "><+-.,[]";
 
     static nothrow
-    void entrypoint(Script script)
+    void entrypoint(ScriptInstance scriptInstance)
     in (
-        ThreadManager.constInstance.inScriptTaskPool,
-        "BfScriptTask: entrypoint must be called from a script task",
+        ThreadManager.constInstance.inScriptInstanceTaskPool,
+        "BfScriptInstanceTask: entrypoint must be called from a script instance task",
     )
     {
-        BfScriptTask instance;
+        BfScriptInstanceTask instance;
         try
-            instance = new typeof(this)(script);
+            instance = new typeof(this)(scriptInstance);
         catch (Exception e)
-            logError("BfScriptTask entrypoint failed: %s", (() @trusted => e.toString)());
+            logError("BfScriptInstanceTask entrypoint failed: %s", (() @trusted => e.toString)());
         instance.run;
     }
 
     protected
-    this(Script script)
+    this(ScriptInstance scriptInstance)
     {
-        super(script);
-        enf(cast(BfScript) script, "Script is not a BfScript");
+        super(scriptInstance);
+        enf(cast(BfScriptInstance) scriptInstance, "ScriptInstance is not a BfScriptInstance");
     }
 
     protected override nothrow
@@ -54,19 +54,19 @@ class BfScriptTask : ScriptTask
     {
         scope (exit)
         {
-            m_script.setStopped;
+            m_scriptInstance.setStopped;
         }
 
-        logInfo(`Task for bf script "%s" started`, m_script.name);
+        logInfo(`Task for bf script instance "%s" started`, m_scriptInstance.name);
 
         try
         {
             immutable string code = filterInstructions;
             const size_t[size_t] bracketMap = makeBracketMap(code);
-            ubyte[] tape = new ubyte[m_script.leds.length * 3];
+            ubyte[] tape = new ubyte[m_scriptInstance.leds.length * 3];
             size_t tapePtr;
 
-            logDiagnostic(`Bf script "%s" source code after filtering: "%s"`, m_script.name, code);
+            logDiagnostic(`Bf script instance "%s" source code after filtering: "%s"`, m_scriptInstance.name, code);
 
             ulong lastFrameCount;
             int ticksSinceLastYield;
@@ -76,8 +76,8 @@ class BfScriptTask : ScriptTask
                 if (currFrameCount != lastFrameCount)
                 {
                     foreach (i, chunk; tape.chunks(3).enumerate)
-                        m_script.leds[i] = Led(chunk[0], chunk[1], chunk[2]);
-                    m_script.setLedsChanged;
+                        m_scriptInstance.leds[i] = Led(chunk[0], chunk[1], chunk[2]);
+                    m_scriptInstance.setLedsChanged;
                     lastFrameCount = currFrameCount;
                 }
 
@@ -107,8 +107,8 @@ class BfScriptTask : ScriptTask
                     break;
                 case '.':
                     logInfo(
-                        `Bf script "%s" dump instruction ('.'): ip=%u, tapePtr=%u, value=%u, tape=%s`,
-                        m_script.name, ip, tapePtr, tape[tapePtr], tape,
+                        `Bf script instance "%s" dump instruction ('.'): ip=%u, tapePtr=%u, value=%u, tape=%s`,
+                        m_scriptInstance.name, ip, tapePtr, tape[tapePtr], tape,
                     );
                     break;
                 case '[':
@@ -128,17 +128,20 @@ class BfScriptTask : ScriptTask
                     ticksSinceLastYield = 0;
                 }
             }
-            logInfo(`Task for bf script "%s" exited normally`, m_script.name);
+            logInfo(`Task for bf script instance "%s" exited normally`, m_scriptInstance.name);
         }
         catch (InterruptException e)
         {
-            logInfo(`Task for bf script "%s" exited by interruption`, m_script.name);
+            logInfo(
+                `Task for bf script instance "%s" exited by interruption`,
+                m_scriptInstance.name,
+            );
         }
         catch (Exception e)
         {
             logError(
-                `Task for bf script "%s" failed: %s`,
-                m_script.name, (() @trusted => e.toString)(),
+                `Task for bf script instance "%s" failed: %s`,
+                m_scriptInstance.name, (() @trusted => e.toString)(),
             );
         }
     }
@@ -148,7 +151,7 @@ class BfScriptTask : ScriptTask
     {
         try
         {
-            return m_script.sourceCode
+            return m_scriptInstance.sourceCode
                 .filter!(c => ct_instructionSet.canFind(c))
                 .to!string;
         }
@@ -156,8 +159,8 @@ class BfScriptTask : ScriptTask
         {
             assert(
                 false,
-                f!`Task for lua script "%s": Fatal error creating LuaState: %s`(
-                    m_script.name, (() @trusted => e.toString)(),
+                f!`Task for bf script instance "%s": Fatal error filtering instructions: %s`(
+                    m_scriptInstance.name, (() @trusted => e.toString)(),
             )
             );
         }
@@ -179,7 +182,7 @@ class BfScriptTask : ScriptTask
             {
                 enf(
                     stack.length,
-                    f!`Task for bf script "%s": Found unmatched ]`(m_script.name),
+                    f!`Task for bf script instance "%s": Found unmatched ]`(m_scriptInstance.name),
                 );
                 bracketMap[stack[$ - 1]] = i;
                 bracketMap[i] = stack[$ - 1];
@@ -188,30 +191,30 @@ class BfScriptTask : ScriptTask
         }
         enf(
             !stack.length,
-            f!`Task for bf script "%s": Found unmatched [`(m_script.name),
+            f!`Task for bf script instance "%s": Found unmatched [`(m_scriptInstance.name),
         );
 
         return bracketMap;
     }
 
     static nothrow
-    BfScriptTask instance()
-        => cast(BfScriptTask) super.instance;
+    BfScriptInstanceTask instance()
+        => cast(BfScriptInstanceTask) super.instance;
 
     static nothrow
-    const(BfScriptTask) constInstance()
-        => cast(const(BfScriptTask)) super.constInstance;
+    const(BfScriptInstanceTask) constInstance()
+        => cast(const(BfScriptInstanceTask)) super.constInstance;
 
     pure nothrow @nogc
-    BfScript bfScript()
-        => cast(BfScript) script;
+    BfScriptInstance bfScriptInstance()
+        => cast(BfScriptInstance) scriptInstance;
 
     pure nothrow @nogc
-    const(BfScript) constBfScript() const
-        => cast(const(BfScript)) constScript;
+    const(BfScriptInstance) constBfScriptInstance() const
+        => cast(const(BfScriptInstance)) constScriptInstance;
 }
 
-class BfScriptTaskException : Exception
+class BfScriptInstanceTaskException : Exception
 {
     mixin basicExceptionCtors;
 }
