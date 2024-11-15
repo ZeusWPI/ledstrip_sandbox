@@ -13,6 +13,8 @@ import { getExtension } from "../types/ScriptInstance";
 
 // @ts-ignore
 import * as lua_language from "monaco-languages/release/esm/lua/lua.js";
+// @ts-ignore
+import * as python_language from "monaco-languages/release/esm/python/python.js";
 import { ScriptSourceCodeModifiedContext } from '../contexts/ScriptSourceCodeModifiedContext';
 
 let initMonacoCalled = false;
@@ -42,6 +44,10 @@ const initMonaco = async () => {
     monaco.languages.register({ id: "lua" });
     monaco.languages.setLanguageConfiguration("lua", lua_language.conf);
     monaco.languages.setMonarchTokensProvider("lua", lua_language.language);
+
+    monaco.languages.register({ id: "py" });
+    monaco.languages.setLanguageConfiguration("py", python_language.conf);
+    monaco.languages.setMonarchTokensProvider("py", python_language.language);
 
     const luaLanguageClientWs = new WebSocket(`ws://${window.location.hostname}:9999`);
     let luaLanguageClient = null;
