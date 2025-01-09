@@ -5,11 +5,11 @@ while true do
     for i=0, 120 do
         i_mod = (i % 12);
         if i_mod < 4 then
-            led.setAll(0xFF, 0, 0)
+            led.setAll(0x20, 0x04, 0)
         elseif i_mod < 6 then
             led.setAll(0, 0, 0)
         elseif i_mod < 10 then
-            led.setAll(0, 0, 0xFF)
+            led.setAll(0x20, 0, 0)
         else
             led.setAll(0, 0, 0)
         end

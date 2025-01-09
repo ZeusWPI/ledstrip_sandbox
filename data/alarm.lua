@@ -2,10 +2,9 @@ while true do
     while not state.activeContainsThisScriptInstance() do
         time.waitFrames(1)
     end
-    brights = {0, 10, 50, 200, 255}
-    for j=1,5 do
-        for i=1, 5 do
-        led.setAll(brights[i], 0, 0)
+    for i=0,4 do
+        for j=0,30,2 do
+            led.setAll(j, j==0 and 0 or (j>8 and j/8 or 1), 0)
             time.waitFrames(1)
         end
     end
