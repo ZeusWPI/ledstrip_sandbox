@@ -118,8 +118,8 @@ class ScriptInstances
         ScriptInstance scriptInstance;
         if (sourceFileName.endsWith(cast(string) ScriptExtension.lua))
             scriptInstance = new LuaScriptInstance(name, sourceFileName, ledCount, autoStart);
-        else if (sourceFileName.endsWith(cast(string) ScriptExtension.python))
-            scriptInstance = new PythonScriptInstance(name, sourceFileName, ledCount, autoStart);
+        // else if (sourceFileName.endsWith(cast(string) ScriptExtension.python))
+        //     scriptInstance = new PythonScriptInstance(name, sourceFileName, ledCount, autoStart);
         else if (sourceFileName.endsWith(cast(string) ScriptExtension.bf))
             scriptInstance = new BfScriptInstance(name, sourceFileName, ledCount, autoStart);
         else
