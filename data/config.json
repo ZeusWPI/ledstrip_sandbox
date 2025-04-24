@@ -49,6 +49,11 @@
 			"ledCount": 690,
 			"autoStart": true
 		},
+		"3dprinter": {
+			"sourceFileName": "3dprinter.lua",
+			"ledCount": 20,
+			"autoStart": true
+		},
 		"binary_clock": {
 			"sourceFileName": "binary_clock.lua",
 			"ledCount": 32,
@@ -96,6 +101,11 @@
 					"begin": 552,
 					"end": 621,
 					"scriptInstanceName": "zeus3d"
+				},
+				{
+					"begin": 118,
+					"end": 138,
+					"scriptInstanceName": "3dprinter"
 				}
 			]
 		},
