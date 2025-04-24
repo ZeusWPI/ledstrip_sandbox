@@ -49,7 +49,7 @@ export const Segments = () => {
                     <tr><td>Begin:</td><td>{selectedSegment.begin}</td></tr>
                     <tr><td>End:</td><td>{selectedSegment.end}</td></tr>
                     <tr><td>Led count:</td><td>{selectedSegment.end - selectedSegment.begin}</td></tr>
-                    <tr><td>Script name:</td><td>"{selectedSegment.scriptName}"</td></tr>
+                    <tr><td>Script name:</td><td>"{selectedSegment.scriptInstanceName}"</td></tr>
                 </tbody></table>
                 <input
                     className="inline"
@@ -93,10 +93,10 @@ export const Segments = () => {
         <input
             className="inline"
             type="text"
-            defaultValue={newSegment.scriptName}
+            defaultValue={newSegment.scriptInstanceName}
             onChange={(e) => {
                 let seg = newSegment;
-                seg.scriptName = e.target.value;
+                seg.scriptInstanceName = e.target.value;
                 setNewSegment(seg);
             }}
         />

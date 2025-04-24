@@ -16,11 +16,11 @@ export const SelectedSegmentContextProvider = ({ children }: PropsWithChildren) 
     const [selectedSegment, setSelectedSegment] = useState<Segment>(segmentInit);
 
     useEffect(() => {
-        setSelectedSegment({ begin: 0, end: 0, scriptName: "" })
+        setSelectedSegment({ begin: 0, end: 0, scriptInstanceName: "" })
     }, [selectedState]);
 
     useEffect(() => {
-        if (selectedSegment.scriptName === "" && segments.length) {
+        if (selectedSegment.scriptInstanceName === "" && segments.length) {
             setSelectedSegment(segments[0]);
         }
     }, [selectedSegment, segments]);

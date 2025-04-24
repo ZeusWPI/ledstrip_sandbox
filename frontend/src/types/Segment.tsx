@@ -1,13 +1,13 @@
 export interface Segment {
     begin: number;
     end: number;
-    scriptName: string;
+    scriptInstanceName: string;
 }
 
 export const segmentInit: Segment = {
     begin: 0,
     end: 0,
-    scriptName: "",
+    scriptInstanceName: "",
 };
 
 export const compareSegments = (a: Segment, b: Segment) => a.begin - b.begin;
