@@ -3,9 +3,15 @@ assert(led.count >= 68, "This script must have at least 68 leds assigned")
 mailbox.subscribe("weather")
 
 led.setAll(4, 0, 0)
+
+local lastMessageTimestamp = time.unixTimeSeconds()
 while true do
     local msg = mailbox.consume("weather")
-    if #msg > 0 then
+    if #msg == 0 then
+        if time.unixTimeSeconds() - lastMessageTimestamp > 120 then
+            led.setAll(4, 0, 0)
+        end
+    else
         local i = 0
         for tuple in msg:gmatch("%(([%d, ]+)%)") do
             r, g, b = tuple:match("(%d+), (%d+), (%d+)")
@@ -18,6 +24,6 @@ while true do
             end
         end
         led.setSlice(i, led.count, 0, 0, 0)
+        lastMessageTimestamp = time.unixTimeSeconds()
     end
-    time.sleepMsecs(1000)
 end
