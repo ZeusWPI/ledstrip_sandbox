@@ -8,7 +8,7 @@ local lastMessageTimestamp = time.unixTimeSeconds()
 while true do
     local msg = mailbox.consume("weather")
     if #msg == 0 then
-        if time.unixTimeSeconds() - lastMessageTimestamp > 120 then
+        if time.unixTimeSeconds() - lastMessageTimestamp > 600 then
             led.setAll(4, 0, 0)
         end
     else

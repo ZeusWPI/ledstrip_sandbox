@@ -14,6 +14,11 @@
 			"ledCount": 30,
 			"autoStart": true
 		},
+		"music_progress": {
+			"sourceFileName": "music_progress.lua",
+			"ledCount": 60,
+			"autoStart": true
+		},
 		"sirens": {
 			"sourceFileName": "sirens.lua",
 			"ledCount": 690,
@@ -106,6 +111,11 @@
 					"begin": 118,
 					"end": 138,
 					"scriptInstanceName": "3dprinter"
+				},
+				{
+					"begin": 490,
+					"end": 550,
+					"scriptInstanceName": "music_progress"
 				}
 			]
 		},
