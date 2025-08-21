@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-set -e
-
+set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-[ -e build-cross ] && rm -r build-cross
-mkdir build-cross
-docker build -o build-cross .
+if [ ! -e build-cross/ledstrip ]; then
+    echo "Run ./build.sh first"
+    exit 1
+fi
 
 ssh root@ledstrip rm -r ledstrip || true
 echo Running rsync...
