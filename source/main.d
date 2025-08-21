@@ -1,5 +1,7 @@
 module main;
 
+import core.stdc.stdlib : exit;
+
 import data_dir : DataDir;
 import ledstrip.ledstrip : Ledstrip;
 import ledstrip.ledstrip_states : LedstripStates;
@@ -8,7 +10,7 @@ import script.script_instances : ScriptInstances;
 import thread_manager : ThreadManager;
 import webserver.webserver : Webserver;
 
-import vibe.core.core : runEventLoopOnce;
+import vibe.core.core : runApplication;
 import vibe.core.log;
 import vibe.core.path;
 import vibe.core.process : Config, execute, spawnProcess;
@@ -26,8 +28,12 @@ import vibe.core.process : Config, execute, spawnProcess;
 // TODO: improve autoStartTask
 // TODO: improve in...TaskPool
 
-void main()
+int main()
 {
+    scope(exit) (() @trusted {
+        exit(1); // Kill other threads when this one goes before runApplication
+    })();
+
     setLogLevel(LogLevel.diagnostic);
     setLogFormat(FileLogger.Format.thread, FileLogger.Format.thread);
 
@@ -51,8 +57,5 @@ void main()
     try spawnProcess(["node", "luals/ws-wrapper.js"]);
     catch (Exception e) logWarn("Failed to spawn luals");
     
-    while (true)
-    {
-        runEventLoopOnce;
-    }
+    return runApplication;
 }
