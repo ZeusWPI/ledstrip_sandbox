@@ -3,14 +3,18 @@ authors "Zeus WPI"
 copyright "Copyright © 2024, Zeus WPI"
 license "MIT"
 
+toolchainRequirements dmd="no" gdc="no" ldc="~>1.30.0"
+
 dependency "lumars" version="~>1.12.1"
 dependency "pyd" version="~>0.14.4"
 dependency "vibe-d" version="~>0.10.1"
 dependency "vibe-stream:tls" version="~>1"
 
+subConfiguration "vibe-stream:tls" "openssl-3.0"
 subConfiguration "pyd" "python311"
 
-dflags "--preview=inclusiveincontracts"
+dflags "--preview=inclusiveincontracts" "--preview=shortenedMethods"
+lflags "-flto"
 
 configuration "local-testing" {
 	targetType "executable"
@@ -19,8 +23,6 @@ configuration "local-testing" {
 
 configuration "rpi2-bookworm" {
 	targetType "staticLibrary"
-	subConfiguration "vibe-stream:tls" "openssl-3.0"
-	dflags "--preview=shortenedMethods"
 	versions "LedstripVirtual" "LedstripWs2811"
 }
 

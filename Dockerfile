@@ -49,10 +49,7 @@ RUN rm -rf /work/rpi_ws281x
 # Cross compile the ledstrip D backend
 FROM base AS build-backend
 
-RUN apt-get update && apt-get install -y gcc-12-arm-linux-gnueabihf
-
-# Needed for the openssl package
-RUN apt-get update && apt-get install -y gcc dub ldc
+RUN apt-get update && apt-get install -y gcc-12-arm-linux-gnueabihf dub ldc
 ENV DC=ldc2
 
 WORKDIR /work
@@ -71,13 +68,16 @@ RUN bash -c "xargs ar -rcT dlibs.a $(dub describe --data=linker-files)"
 RUN mkdir /work/libs
 COPY --from=extract-deb-libs /work/libs/* /work/libs/
 COPY --from=build-ws2811 /work/libws2811.a /work/libs/
-RUN arm-linux-gnueabihf-gcc-12 libledstrip.a -o ledstrip -Wl,--gc-sections \
+RUN arm-linux-gnueabihf-gcc-12 \
+    -Wl,--gc-sections -flto \
+    libledstrip.a \
     dlibs.a libs/libws2811.a \
     libs/libpython3.11.so.1 libs/libexpat.so.1 \
     libs/libluajit-5.1.so.2 \
     libs/libcrypto.so.3 libs/libssl.so.3 libs/libz.so.1 \
     libs/ldc_rt.dso.o libs/libdruntime-ldc-debug-shared.so.100 libs/libphobos2-ldc-debug-shared.so.100 \
-    libs/libc.so.6 libs/libm.so.6
+    libs/libc.so.6 libs/libm.so.6 \
+    -o ledstrip
 
 
 # Build the ledstrip frontend

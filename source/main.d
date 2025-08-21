@@ -48,7 +48,8 @@ void main()
     ScriptInstances.instance.startAutoStartTask;
     Webserver.instance.start;
 
-    spawnProcess(["node", "luals/ws-wrapper.js"]);
+    try spawnProcess(["node", "luals/ws-wrapper.js"]);
+    catch (Exception e) logWarn("Failed to spawn luals");
     
     while (true)
     {
