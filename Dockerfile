@@ -4,7 +4,7 @@ ARG DUB_BUILD_TYPE="debug"
 
 FROM debian:bookworm AS base
 FROM --platform=linux/arm/v7 debian:bookworm AS base-target
-FROM node:lts AS base-node
+FROM node:22 AS base-node
 
 
 # Fetch static and dynamic libs from cross target
