@@ -63,7 +63,7 @@ RUN dub build --config="${DUB_CONFIG}" --arch="${DUB_ARCH}" --build="${DUB_BUILD
 
 COPY source/ source/
 RUN dub build --config="${DUB_CONFIG}" --arch="${DUB_ARCH}" --build="${DUB_BUILD_TYPE}"
-RUN bash -c "xargs ar -rcT dlibs.a $(dub describe --data=linker-files)"
+RUN bash -c "xargs arm-linux-gnueabihf-ar -rcT dlibs.a $(dub describe --data=linker-files)"
 
 RUN mkdir /work/libs
 COPY --from=extract-deb-libs /work/libs/* /work/libs/
