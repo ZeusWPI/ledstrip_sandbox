@@ -1,11 +1,11 @@
-module script.bf.bf_script_instance_task;
+module script.bf.bf_script_instance_thread;
 
 import ledstrip.led : Led;
 import ledstrip.ledstrip : Ledstrip;
 import script.bf.bf_script_instance : BfScriptInstance;
 import script.script_instance : ScriptInstance;
-import script.script_instance_task : ScriptInstanceTask;
-import thread_manager : ThreadManager;
+import script.script_instance_thread : ScriptInstanceThread;
+import thread_manager : inThreadKind, ThreadKind;
 import util : sleepFrameFraction;
 
 import std.algorithm : canFind, filter;
@@ -14,31 +14,26 @@ import std.exception : basicExceptionCtors, enforce;
 import std.format : f = format;
 import std.range : chunks, enumerate;
 
-import vibe.core.core : yield;
 import vibe.core.log;
-import vibe.core.task : InterruptException;
 
 @safe:
 
 final
-class BfScriptInstanceTask : ScriptInstanceTask
+class BfScriptInstanceThread : ScriptInstanceThread
 {
-    private alias enf = enforce!BfScriptInstanceTaskException;
+    private alias enf = enforce!BfScriptInstanceThreadException;
 
     private enum string ct_instructionSet = "><+-.,[]";
 
     static nothrow
     void entrypoint(ScriptInstance scriptInstance)
-    in (
-        ThreadManager.constInstance.inScriptInstanceTaskPool,
-        "BfScriptInstanceTask: entrypoint must be called from a script instance task",
-    )
+    in (inThreadKind(ThreadKind.scriptInstance), "BfScriptInstanceThread: entrypoint must be called from a script instance thread")
     {
-        BfScriptInstanceTask instance;
+        BfScriptInstanceThread instance;
         try
             instance = new typeof(this)(scriptInstance);
         catch (Exception e)
-            logError("BfScriptInstanceTask entrypoint failed: %s", (() @trusted => e.toString)());
+            logError("BfScriptInstanceThread entrypoint failed: %s", (() @trusted => e.toString)());
         instance.run;
     }
 
@@ -57,7 +52,7 @@ class BfScriptInstanceTask : ScriptInstanceTask
             m_scriptInstance.setStopped;
         }
 
-        logInfo(`Task for bf script instance "%s" started`, m_scriptInstance.name);
+        logInfo(`Thread for bf script instance "%s" started`, m_scriptInstance.name);
 
         try
         {
@@ -69,7 +64,6 @@ class BfScriptInstanceTask : ScriptInstanceTask
             logDiagnostic(`Bf script instance "%s" source code after filtering: "%s"`, m_scriptInstance.name, code);
 
             ulong lastFrameCount;
-            int ticksSinceLastYield;
             for (size_t ip = 0; ip < code.length; ip++)
             {
                 ulong currFrameCount = Ledstrip.constInstance.frameCount;
@@ -103,7 +97,6 @@ class BfScriptInstanceTask : ScriptInstanceTask
                 case ',':
                     while (Ledstrip.constInstance.frameCount == lastFrameCount)
                         sleepFrameFraction(5);
-                    ticksSinceLastYield = 0;
                     break;
                 case '.':
                     logInfo(
@@ -120,27 +113,13 @@ class BfScriptInstanceTask : ScriptInstanceTask
                         ip = bracketMap[ip];
                     break;
                 }
-
-                ticksSinceLastYield++;
-                if (ticksSinceLastYield == 10)
-                {
-                    yield;
-                    ticksSinceLastYield = 0;
-                }
             }
-            logInfo(`Task for bf script instance "%s" exited normally`, m_scriptInstance.name);
-        }
-        catch (InterruptException e)
-        {
-            logInfo(
-                `Task for bf script instance "%s" exited by interruption`,
-                m_scriptInstance.name,
-            );
+            logInfo(`Thread for bf script instance "%s" exited normally`, m_scriptInstance.name);
         }
         catch (Exception e)
         {
             logError(
-                `Task for bf script instance "%s" failed: %s`,
+                `Thread for bf script instance "%s" failed: %s`,
                 m_scriptInstance.name, (() @trusted => e.toString)(),
             );
         }
@@ -159,7 +138,7 @@ class BfScriptInstanceTask : ScriptInstanceTask
         {
             assert(
                 false,
-                f!`Task for bf script instance "%s": Fatal error filtering instructions: %s`(
+                f!`Thread for bf script instance "%s": Fatal error filtering instructions: %s`(
                     m_scriptInstance.name, (() @trusted => e.toString)(),
             )
             );
@@ -182,7 +161,7 @@ class BfScriptInstanceTask : ScriptInstanceTask
             {
                 enf(
                     stack.length,
-                    f!`Task for bf script instance "%s": Found unmatched ]`(m_scriptInstance.name),
+                    f!`Thread for bf script instance "%s": Found unmatched ]`(m_scriptInstance.name),
                 );
                 bracketMap[stack[$ - 1]] = i;
                 bracketMap[i] = stack[$ - 1];
@@ -191,19 +170,19 @@ class BfScriptInstanceTask : ScriptInstanceTask
         }
         enf(
             !stack.length,
-            f!`Task for bf script instance "%s": Found unmatched [`(m_scriptInstance.name),
+            f!`Thread for bf script instance "%s": Found unmatched [`(m_scriptInstance.name),
         );
 
         return bracketMap;
     }
 
     static nothrow
-    BfScriptInstanceTask instance()
-        => cast(BfScriptInstanceTask) super.instance;
+    BfScriptInstanceThread instance()
+        => cast(BfScriptInstanceThread) super.instance;
 
     static nothrow
-    const(BfScriptInstanceTask) constInstance()
-        => cast(const(BfScriptInstanceTask)) super.constInstance;
+    const(BfScriptInstanceThread) constInstance()
+        => cast(const(BfScriptInstanceThread)) super.constInstance;
 
     pure nothrow @nogc
     BfScriptInstance bfScriptInstance()
@@ -214,7 +193,7 @@ class BfScriptInstanceTask : ScriptInstanceTask
         => cast(const(BfScriptInstance)) constScriptInstance;
 }
 
-class BfScriptInstanceTaskException : Exception
+class BfScriptInstanceThreadException : Exception
 {
     mixin basicExceptionCtors;
 }

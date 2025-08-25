@@ -1,7 +1,7 @@
 module script.lua.lua_script_instance;
 
-import script.lua.lua_script_instance_task : LuaScriptInstanceTask;
-import script.script_instance : ScriptInstance;
+import script.lua.lua_script_instance_thread : LuaScriptInstanceThread;
+import script.script_instance : ScriptExtension, ScriptInstance;
 
 @safe:
 
@@ -13,7 +13,12 @@ class LuaScriptInstance : ScriptInstance
         super(name, sourceFileName, ledCount, autoStart);
     }
 
+scope:
     override
-    TaskEntrypoint taskEntrypoint()
-        => &LuaScriptInstanceTask.entrypoint;
+    ThreadEntrypoint threadEntrypoint()
+        => &LuaScriptInstanceThread.entrypoint;
+
+    override pure nothrow @nogc
+    ScriptExtension extension() const
+        => ScriptExtension.lua;
 }

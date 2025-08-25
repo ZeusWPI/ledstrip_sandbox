@@ -4,7 +4,7 @@ version (LedstripVirtual)  :  //
 
 import ledstrip.led : Led;
 import ledstrip.ledstrip : Ledstrip;
-import thread_manager : ThreadManager;
+import thread_manager : inThreadKind, ThreadKind;
 
 @safe:
 package:
@@ -14,22 +14,21 @@ class LedstripVirtual : Ledstrip
 {
     private Led[] m_leds;
 
-    @disable this(ref typeof(this));
-
     package synchronized
     this()
+    in (inThreadKind(ThreadKind.main))
     {
         super();
         m_leds = new Led[](ledCount);
     }
 
-    protected override
+    protected override synchronized
     void render()
-    in (ThreadManager.constInstance.inMainThread, "LedstripVirtual: render must be called from main thread")
+    in (inThreadKind(ThreadKind.renderer))
     {
     }
 
-    override pure nothrow @nogc
+    override synchronized pure nothrow @nogc
     shared(Led[]) leds()
         => m_leds;
 }

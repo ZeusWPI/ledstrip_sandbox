@@ -3,7 +3,7 @@ module script.python.python_lib;
 
 import script.common_lib : CommonLib;
 import script.python.python_script_instance : PythonScriptInstance;
-import script.python.python_script_instance_task : PythonScriptInstanceTask;
+import script.python.python_script_instance_thread : PythonScriptInstanceThread;
 
 import std.algorithm : map;
 import std.conv : text;
@@ -249,20 +249,20 @@ static:
     }
 
     private
-    PythonScriptInstanceTask task()
-        => PythonScriptInstanceTask.instance;
+    PythonScriptInstanceThread thread()
+        => PythonScriptInstanceThread.instance;
 
     private
-    const(PythonScriptInstanceTask) constTask()
-        => PythonScriptInstanceTask.constInstance;
+    const(PythonScriptInstanceThread) constThread()
+        => PythonScriptInstanceThread.constInstance;
 
     private
     PythonScriptInstance scriptInstance()
-        => task.pythonScriptInstance;
+        => thread.pythonScriptInstance;
 
     private
     const(PythonScriptInstance) constScriptInstance()
-        => constTask.constPythonScriptInstance;
+        => constThread.constPythonScriptInstance;
     
     @trusted
     void log(PydObject obj)

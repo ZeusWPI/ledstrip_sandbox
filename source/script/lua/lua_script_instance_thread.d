@@ -1,10 +1,10 @@
-module script.lua.lua_script_instance_task;
+module script.lua.lua_script_instance_thread;
 
 import script.lua.lua_lib : LuaLib;
 import script.lua.lua_script_instance : LuaScriptInstance;
 import script.script_instance : ScriptInstance;
-import script.script_instance_task : ScriptInstanceTask;
-import thread_manager : ThreadManager;
+import script.script_instance_thread : ScriptInstanceThread;
+import thread_manager : inThreadKind, ThreadKind;
 
 import std.algorithm : canFind;
 import std.exception : basicExceptionCtors, enforce;
@@ -12,33 +12,27 @@ import std.format : f = format;
 
 import lumars : LuaState, LuaTable;
 
-import vibe.core.core : yield;
 import vibe.core.log;
-
-import bindbc.lua.v51 : lua_Debug, lua_Hook, LUA_MASKLINE, lua_sethook, lua_State;
 
 @safe:
 
 final
-class LuaScriptInstanceTask : ScriptInstanceTask
+class LuaScriptInstanceThread : ScriptInstanceThread
 {
-    private alias enf = enforce!LuaScriptInstanceTaskException;
+    private alias enf = enforce!LuaScriptInstanceThreadException;
 
     private LuaState m_luaState;
     private LuaTable m_env; // Has @system dtor
 
     static nothrow
     void entrypoint(ScriptInstance scriptInstance)
-    in (
-        ThreadManager.constInstance.inScriptInstanceTaskPool,
-        "LuaScriptInstanceTask: entrypoint must be called from a script instance task",
-    )
+    in (inThreadKind(ThreadKind.scriptInstance), "LuaScriptInstanceThread: entrypoint must be called from a script instance thread")
     {
-        LuaScriptInstanceTask instance;
+        LuaScriptInstanceThread instance;
         try
             instance = new typeof(this)(scriptInstance);
         catch (Exception e)
-            logError("LuaScriptInstanceTask entrypoint failed: %s", (() @trusted => e.toString)());
+            logError("LuaScriptInstanceThread entrypoint failed: %s", (() @trusted => e.toString)());
         instance.run;
     }
 
@@ -57,31 +51,22 @@ class LuaScriptInstanceTask : ScriptInstanceTask
             m_scriptInstance.setStopped;
         }
 
-        logInfo(`Task for lua script instance "%s" started`, m_scriptInstance.name);
+        logInfo(`Thread for lua script instance "%s" started`, m_scriptInstance.name);
 
         createLuaState;
-        setupHook;
         buildEnv;
 
         try
         {
             (() @trusted => m_luaState.doString(m_scriptInstance.sourceCode, m_env))();
-            logInfo(`Task for lua script instance "%s" exited normally`, m_scriptInstance.name);
+            logInfo(`Thread for lua script instance "%s" exited normally`, m_scriptInstance.name);
         }
         catch (Exception e)
         {
-            // An InterruptException gets rethrown as a LuaException with the msg embedded
-            if (e.msg.canFind("interrupted"))
-            {
-                logInfo(`Task for lua script instance "%s" exited by interruption`, m_scriptInstance.name);
-            }
-            else
-            {
-                logError(
-                    `Task for lua script instance "%s" failed: %s`,
-                    m_scriptInstance.name, (() @trusted => e.toString)(),
-                );
-            }
+            logError(
+                `Thread for lua script instance "%s" failed: %s`,
+                m_scriptInstance.name, (() @trusted => e.toString)(),
+            );
         }
     }
 
@@ -98,28 +83,11 @@ class LuaScriptInstanceTask : ScriptInstanceTask
         {
             assert(
                 false,
-                f!`Task for lua script instance "%s": Fatal error creating LuaState: %s`(
+                f!`Thread for lua script instance "%s": Fatal error creating LuaState: %s`(
                     m_scriptInstance.name, e.toString,
             ),
             );
         }
-    }
-
-    private nothrow @trusted
-    void setupHook()
-    {
-        lua_sethook(
-            m_luaState.handle,
-            cast(lua_Hook)&hook, // Cast away nothrow so yield can raise an InterruptException
-            LUA_MASKLINE,
-            0,
-        );
-    }
-
-    private static
-    void hook(lua_State* handle, lua_Debug* dbg)
-    {
-        yield;
     }
 
     private nothrow @trusted
@@ -133,22 +101,19 @@ class LuaScriptInstanceTask : ScriptInstanceTask
         }
         catch (Exception e)
         {
-            assert(
-                false,
-                f!`Task for lua script instance "%s": Fatal error building env: %s`(
+            assert(false, f!`Thread for lua script instance "%s": Fatal error building env: %s`(
                     m_scriptInstance.name, e.toString,
-            ),
-            );
+            ));
         }
     }
 
     static nothrow
-    LuaScriptInstanceTask instance()
-        => cast(LuaScriptInstanceTask) super.instance;
+    LuaScriptInstanceThread instance()
+        => cast(LuaScriptInstanceThread) super.instance;
 
     static nothrow
-    const(LuaScriptInstanceTask) constInstance()
-        => cast(const(LuaScriptInstanceTask)) super.constInstance;
+    const(LuaScriptInstanceThread) constInstance()
+        => cast(const(LuaScriptInstanceThread)) super.constInstance;
 
     pure nothrow @nogc
     LuaScriptInstance luaScriptInstance()
@@ -164,7 +129,7 @@ class LuaScriptInstanceTask : ScriptInstanceTask
         => m_luaState;
 }
 
-class LuaScriptInstanceTaskException : Exception
+class LuaScriptInstanceThreadException : Exception
 {
     mixin basicExceptionCtors;
 }

@@ -3,7 +3,7 @@ module data_dir;
 import config : Config;
 import script.script_instance : isValidScriptSourceFileName;
 import singleton : threadLocalSingleton;
-import thread_manager : ThreadManager;
+import thread_manager : inMainThread;
 
 import std.algorithm : endsWith, filter, map;
 import std.array : array;
@@ -30,7 +30,7 @@ class DataDir
 
     private
     this()
-    in (ThreadManager.constInstance.inMainThread, "DataDir: ctor must be called from main thread")
+    in (inMainThread, "DataDir: ctor must be called from main thread")
     {
         loadConfig;
     }

@@ -1,25 +1,33 @@
-module script.script_instance_task;
+module script.script_instance_thread;
 
 import mailbox : Mailbox;
 import script.script_instance : ScriptInstance;
+import thread_manager : inThreadKind, ThreadKind;
 
+import std.concurrency : thisTid, Tid;
 import std.exception : basicExceptionCtors, enforce;
 
-import vibe.core.concurrency : thisTid, Tid;
 import vibe.core.log;
-import vibe.core.task : Task;
+
+import core.sync.mutex : Mutex;
 
 @safe:
 
 abstract
-class ScriptInstanceTask
+class ScriptInstanceThread
 {
-    private alias enf = enforce!ScriptInstanceTaskException;
+    private alias enf = enforce!ScriptInstanceThreadException;
 
-    private static typeof(this)[Tid] tls_tidInstanceMap;
+    private __gshared typeof(this)[Tid] g_tidInstanceMap;
+    private static shared Mutex g_tidInstanceMapMutex;
+
+    shared static this()
+    {
+        g_tidInstanceMapMutex = new shared Mutex;
+    }
 
     protected ScriptInstance m_scriptInstance;
-    protected Task m_task;
+    protected Tid m_tid;
 
     private string[string] m_localMailbox;
     private Mailbox.Subscriber m_mailboxSubscriber;
@@ -28,16 +36,18 @@ class ScriptInstanceTask
 
     protected
     this(ScriptInstance scriptInstance)
+    in (inThreadKind(ThreadKind.scriptInstance))
     {
         enf(scriptInstance !is null, "scriptInstance is null");
         m_scriptInstance = scriptInstance;
-        m_task = Task.getThis;
+        m_tid = thisTid;
         registerInstance;
         m_mailboxSubscriber = &mailboxSubscriberMethod;
     }
 
     protected nothrow  //
      ~this()
+    in (inThreadKind(ThreadKind.scriptInstance))
     {
         unregisterInstance;
         try
@@ -46,39 +56,49 @@ class ScriptInstanceTask
         }
         catch (Exception e)
         {
-            logError("Exception in ScriptInstanceTask dtor: %s", (() @trusted => e.toString)());
+            logError("Exception in ScriptInstanceThread dtor: %s", (() @trusted => e.toString)());
         }
     }
 
-    private nothrow
+    private nothrow @trusted
     void registerInstance()
     {
-        tls_tidInstanceMap[m_task.tid] = this;
+        g_tidInstanceMapMutex.lock_nothrow;
+        scope(exit) g_tidInstanceMapMutex.unlock_nothrow;
+
+        g_tidInstanceMap[m_tid] = this;
     }
 
-    private nothrow
+    private nothrow @trusted
     void unregisterInstance()
     {
-        tls_tidInstanceMap.remove(m_task.tid);
+        g_tidInstanceMapMutex.lock_nothrow;
+        scope(exit) g_tidInstanceMapMutex.unlock_nothrow;
+
+        g_tidInstanceMap.remove(m_tid);
     }
 
     protected abstract nothrow
     void run();
 
-    static nothrow
-    ScriptInstanceTask instance()
+    static nothrow @trusted
+    ScriptInstanceThread instance()
     {
         Tid tid;
         try
             tid = thisTid;
         catch (Exception e)
             assert(false, (() @trusted => e.toString)());
-        assert(tid in tls_tidInstanceMap);
-        return tls_tidInstanceMap[tid];
+
+        g_tidInstanceMapMutex.lock_nothrow;
+        scope(exit) g_tidInstanceMapMutex.unlock_nothrow;
+
+        assert(tid in g_tidInstanceMap);
+        return g_tidInstanceMap[tid];
     }
 
     static nothrow
-    const(ScriptInstanceTask) constInstance()
+    const(ScriptInstanceThread) constInstance()
         => cast(const) instance;
 
     final pure nothrow @nogc
@@ -142,7 +162,7 @@ class ScriptInstanceTask
     }
 }
 
-class ScriptInstanceTaskException : Exception
+class ScriptInstanceThreadException : Exception
 {
     mixin basicExceptionCtors;
 }

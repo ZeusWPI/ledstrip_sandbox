@@ -4,6 +4,7 @@ import ledstrip.ledstrip_segment : LedstripSegment;
 
 import std.exception : basicExceptionCtors, enforce;
 import std.format : f = format;
+
 import vibe.core.log;
 
 @safe:

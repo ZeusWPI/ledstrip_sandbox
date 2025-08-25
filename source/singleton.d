@@ -4,6 +4,8 @@ module singleton;
 
 mixin template sharedSingleton(bool customCreateInstance = false)
 {
+    import core.atomic : atomicLoad, atomicStore;
+
     static assert(is(typeof(this) == class));
     static assert(is(typeof(this) == shared));
 
@@ -18,7 +20,7 @@ mixin template sharedSingleton(bool customCreateInstance = false)
         {
             try
             {
-                s_instance = new typeof(this);
+                atomicStore(s_instance, new typeof(this));
             }
             catch (Exception e)
             {
@@ -32,14 +34,18 @@ mixin template sharedSingleton(bool customCreateInstance = false)
     @disable this(ref typeof(this));
 
     static nothrow @nogc
+    bool hasInstance()
+        => atomicLoad(s_instance) !is null;
+
+    static nothrow @nogc
     typeof(this) instance()
     in (s_instance !is null, typeof(this).stringof ~ ".s_instance is null")
-        => s_instance;
+        => atomicLoad(s_instance);
 
     static nothrow @nogc
     const(typeof(this)) constInstance()
     in (s_instance !is null, typeof(this).stringof ~ ".s_instance is null")
-        => s_instance;
+        => atomicLoad(s_instance);
 }
 
 mixin template threadLocalSingleton(bool customCreateInstance = false)
@@ -70,6 +76,10 @@ mixin template threadLocalSingleton(bool customCreateInstance = false)
             }
         }
     }
+
+    static nothrow @nogc
+    bool hasInstance()
+        => tls_instance !is null;
 
     static nothrow @nogc
     typeof(this) instance()

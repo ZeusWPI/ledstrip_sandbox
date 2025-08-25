@@ -2,16 +2,15 @@ module webserver.webserver;
 
 import data_dir : DataDir;
 import singleton : threadLocalSingleton;
-import thread_manager : ThreadManager;
+import thread_manager : inMainThread;
 
 import webserver.rest_api;
 import webserver.rest_api_impl;
 
 import vibe.data.json;
-import vibe.http.fileserver : HTTPFileServerSettings, serveStaticFiles, serveStaticFile;
+import vibe.http.fileserver : HTTPFileServerSettings, serveStaticFile, serveStaticFiles;
 import vibe.http.router : URLRouter;
-import vibe.http.server : HTTPListener, HTTPServerOption, HTTPServerRequest, HTTPServerRequestDelegateS,
-    HTTPServerResponse, HTTPServerSettings, listenHTTP, staticRedirect;
+import vibe.http.server : HTTPListener, HTTPServerOption, HTTPServerRequest, HTTPServerRequestDelegateS, HTTPServerResponse, HTTPServerSettings, listenHTTP, staticRedirect;
 import vibe.web.rest : path, registerRestInterface, RestInterfaceSettings;
 
 @safe:
@@ -31,7 +30,7 @@ class Webserver
     private HTTPListener m_listener;
 
     this()
-    in (ThreadManager.constInstance.inMainThread)
+    in (inMainThread)
     {
         m_httpServerSettings = new HTTPServerSettings;
         m_httpServerSettings.port = DataDir.sharedConfig.httpPort;
@@ -57,11 +56,13 @@ class Webserver
     }
 
     ~this()
+    in (inMainThread)
     {
         m_listener.stopListening;
     }
 
     void start()
+    in (inMainThread)
     {
         m_listener = listenHTTP(m_httpServerSettings, m_router);
     }

@@ -11,6 +11,7 @@ while true do
         if time.unixTimeSeconds() - lastMessageTimestamp > 600 then
             led.setAll(4, 0, 0)
         end
+        time.sleepMsecs(100)
     else
         local i = 0
         for tuple in msg:gmatch("%(([%d, ]+)%)") do

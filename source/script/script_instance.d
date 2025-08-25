@@ -15,7 +15,7 @@ class ScriptInstance
 {
     private alias enf = enforce!ScriptInstanceException;
 
-    alias TaskEntrypoint = void function(ScriptInstance) nothrow @safe;
+    alias ThreadEntrypoint = void function(ScriptInstance) nothrow @safe;
 
     private string m_name;
     private string m_sourceFileName;
@@ -26,6 +26,7 @@ class ScriptInstance
     private Led[] m_leds;
     private bool m_ledsChanged;
     private bool m_running;
+    private bool m_startedOnce;
 
     @disable this(ref typeof(this));
 
@@ -45,6 +46,7 @@ class ScriptInstance
             m_leds = new Led[ledCount];
     }
 
+scope:
     final pure nothrow @nogc
     {
         string name() const
@@ -58,6 +60,9 @@ class ScriptInstance
 
         bool autoStart() const
             => m_autoStart;
+
+        bool autoStarted() const
+            => m_startedOnce;
 
         string sourceCode() const
             => m_sourceCode;
@@ -81,9 +86,13 @@ class ScriptInstance
         bool running() const
             => m_running;
 
+        bool startedOnce() const
+            => m_startedOnce;
+
         void setRunning()
         {
             m_running = true;
+            m_startedOnce = true;
         }
 
         void setStopped()
@@ -92,7 +101,10 @@ class ScriptInstance
         }
     }
 
-    abstract TaskEntrypoint taskEntrypoint();
+    abstract ThreadEntrypoint threadEntrypoint();
+
+    pure nothrow @nogc
+    abstract ScriptExtension extension() const;
 }
 
 class ScriptInstanceException : Exception

@@ -1,11 +1,13 @@
 module ledstrip.ledstrip_states;
 
 import data_dir : DataDir;
+import ledstrip.ledstrip : Ledstrip;
 import ledstrip.ledstrip_state : LedstripState;
 import singleton : sharedSingleton;
 
 import std.exception : basicExceptionCtors, enforce;
 import std.format : f = format;
+
 import vibe.core.log;
 
 @safe:
@@ -21,7 +23,6 @@ class LedstripStates
     private uint m_ledCount;
     private LedstripState[string] m_states;
     private LedstripState m_activeState;
-    private void delegate() shared nothrow @safe m_onActiveStateChange;
 
     @disable this(ref typeof(this));
 
@@ -36,7 +37,7 @@ class LedstripStates
         setDefaultActive;
     }
 
-    private
+    private synchronized
     void loadConfigStates()
     {
         const configStates = DataDir.sharedConfig.states;
@@ -54,11 +55,11 @@ class LedstripStates
         }
     }
 
-    pure nothrow @nogc
+    synchronized pure nothrow @nogc
     uint ledCount() const
         => m_ledCount;
 
-    pure nothrow @nogc
+    synchronized pure nothrow @nogc
     inout(shared(LedstripState[string])) states() inout
         => m_states;
 
@@ -82,29 +83,25 @@ class LedstripStates
         m_states.remove(stateName);
     }
 
-    pure nothrow @nogc
+    synchronized pure nothrow @nogc
     inout(LedstripState) activeState() inout
         => m_activeState;
 
+    synchronized 
     void setActiveState(string stateName)
     {
         enf(stateName in m_states, f!`setActiveState: Unknown state "%s"`(stateName));
         m_activeState = m_states[stateName];
-        if (m_onActiveStateChange)
-            m_onActiveStateChange();
+        if (Ledstrip.hasInstance)
+            Ledstrip.instance.fullRefresh;
     }
 
+    synchronized 
     void setDefaultActive()
     {
         if (ct_defaultStateName !in states)
             addState(ct_defaultStateName);
         setActiveState(ct_defaultStateName);
-    }
-
-    pure nothrow @nogc
-    void setOnActiveStateChange(shared void delegate() shared nothrow @safe onActiveStateChange)
-    {
-        m_onActiveStateChange = onActiveStateChange;
     }
 
     static pure

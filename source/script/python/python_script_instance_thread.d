@@ -1,52 +1,36 @@
-module script.python.python_script_instance_task;
+module script.python.python_script_instance_thread;
 
 import script.python.python_script_instance : PythonScriptInstance;
 import script.python.python_lib : PythonLib;
 import script.script_instance : ScriptInstance;
-import script.script_instance_task : ScriptInstanceTask;
-import thread_manager : ThreadManager;
+import script.script_instance_thread : ScriptInstanceThread;
+import thread_manager : inThreadKind, ThreadKind;
 
 import std.exception : basicExceptionCtors, enforce;
 
 import pyd.def : py_init, py_finish;
 import pyd.embedded : InterpContext, py_eval;
 
-import vibe.core.core : yield;
 import vibe.core.log;
-import vibe.core.task : InterruptException;
-import vibe.core.process;
 
 @safe:
 
-@trusted
-shared static this()
-{
-    py_init;
-}
-
-@trusted
-shared static ~this()
-{
-    py_finish;
-}
-
 final
-class PythonScriptInstanceTask : ScriptInstanceTask
+class PythonScriptInstanceThread : ScriptInstanceThread
 {
-    private alias enf = enforce!PythonScriptInstanceTaskException;
+    private alias enf = enforce!PythonScriptInstanceThreadException;
+
+    private __gshared bool g_init;
 
     static nothrow
     void entrypoint(ScriptInstance scriptInstance)
-    in (
-        ThreadManager.constInstance.inScriptInstanceTaskPool,
-        "PythonScriptInstanceTask: entrypoint must be called from a script instance task",
-    )
+    in (inThreadKind(ThreadKind.scriptInstance), "PythonScriptInstanceThread: entrypoint must be called from a script instance thread")
     {
-        PythonScriptInstanceTask instance;
+        PythonScriptInstanceThread instance;
         try
             instance = new typeof(this)(scriptInstance);
         catch (Exception e)
-            logError("PythonScriptInstanceTask entrypoint failed: %s", (() @trusted => e.toString)());
+            logError("PythonScriptInstanceThread entrypoint failed: %s", (() @trusted => e.toString)());
         instance.run;
     }
 
@@ -65,42 +49,40 @@ class PythonScriptInstanceTask : ScriptInstanceTask
             m_scriptInstance.setStopped;
         }
 
-        logInfo(`Task for python script instance "%s" started`, m_scriptInstance.name);
+        logInfo(`Thread for python script instance "%s" started`, m_scriptInstance.name);
 
         try
         {
             (() @trusted {
+                synchronized (typeof(this).classinfo)
+                {
+                    py_init;
+                    g_init = true;
+                }
                 InterpContext ctx = (() @trusted => new InterpContext)();
                 ctx.sourceCode = m_scriptInstance.sourceCode;
                 ctx.sandboxGlobals = PythonLib.buildGlobals;
                 ctx.sandboxLocals = py_eval("dict()");
                 ctx.py_eval("exec(sourceCode, sandboxGlobals, sandboxLocals)");
             })();
-            logInfo(`Task for python script instance "%s" exited normally`, m_scriptInstance.name);
-        }
-        catch (InterruptException e)
-        {
-            logInfo(
-                `Task for python script instance "%s" exited by interruption`,
-                m_scriptInstance.name,
-            );
+            logInfo(`Thread for python script instance "%s" exited normally`, m_scriptInstance.name);
         }
         catch (Exception e)
         {
             logError(
-                `Task for python script instance "%s" failed: %s`,
+                `Thread for python script instance "%s" failed: %s`,
                 m_scriptInstance.name, (() @trusted => e.toString)(),
             );
         }
     }
 
     static nothrow
-    PythonScriptInstanceTask instance()
-        => cast(PythonScriptInstanceTask) super.instance;
+    PythonScriptInstanceThread instance()
+        => cast(PythonScriptInstanceThread) super.instance;
 
     static nothrow
-    const(PythonScriptInstanceTask) constInstance()
-        => cast(const(PythonScriptInstanceTask)) super.constInstance;
+    const(PythonScriptInstanceThread) constInstance()
+        => cast(const(PythonScriptInstanceThread)) super.constInstance;
 
     pure nothrow @nogc
     PythonScriptInstance pythonScriptInstance()
@@ -111,7 +93,7 @@ class PythonScriptInstanceTask : ScriptInstanceTask
         => cast(const(PythonScriptInstance)) constScriptInstance;
 }
 
-class PythonScriptInstanceTaskException : Exception
+class PythonScriptInstanceThreadException : Exception
 {
     mixin basicExceptionCtors;
 }

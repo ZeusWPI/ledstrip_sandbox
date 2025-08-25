@@ -8,9 +8,10 @@ import ledstrip.ledstrip_states : LedstripStates;
 import script.script_instance : ScriptInstance;
 import script.script_instances : ScriptInstances;
 import singleton : sharedSingleton;
-import thread_manager : ThreadManager;
+import thread_manager : inThreadKind, ThreadKind;
 
-import core.atomic : atomicOp;
+import core.atomic : atomicLoad, atomicOp, atomicStore;
+import core.thread : Thread;
 import core.time : Duration;
 
 import std.datetime : Clock, SysTime;
@@ -19,7 +20,6 @@ import std.format : f = format;
 import std.stdio : stderr, stdout, write, writef, writefln, writeln;
 import std.traits : isInstanceOf;
 
-import vibe.core.core : runTask, sleep, yield;
 import vibe.core.log;
 
 @safe:
@@ -58,33 +58,29 @@ class Ledstrip
 
     protected synchronized
     this()
+    in (inThreadKind(ThreadKind.main))
     {
         m_ledCount = DataDir.sharedConfig.ledCount;
         m_stopRenderLoop = true;
         m_framesSinceTimeWarn = uint.max;
-
-        LedstripStates.instance.setOnActiveStateChange(&onActiveStateChange);
     }
 
     @disable this(ref typeof(this));
 
-    final synchronized
-    void startRenderLoopTask()
-    in (ThreadManager.constInstance.inMainThread, "Ledstrip: startRenderLoopTask must be called from main thread")
-    in (m_stopRenderLoop)
-    out (; !m_stopRenderLoop)
+    nothrow @trusted //
+     ~this()
+    in (inThreadKind(ThreadKind.main))
     {
-        m_stopRenderLoop = false;
-        runTask(&renderLoop);
     }
 
-    private nothrow
+    final nothrow synchronized
     void renderLoop()
-    in (ThreadManager.constInstance.inMainThread, "Ledstrip: renderLoop must be called from main thread")
+    in (inThreadKind(ThreadKind.renderer))
     {
-        try
+        m_stopRenderLoop = false;
+        while (!m_stopRenderLoop)
         {
-            while (!m_stopRenderLoop)
+            try
             {
                 SysTime entryTime = Clock.currTime;
                 copySegmentLeds;
@@ -103,27 +99,27 @@ class Ledstrip
                         logWarn("Passed frame time before sleeping. Consider lowering fps.");
                         m_framesSinceTimeWarn = 0;
                     }
-                    yield;
                 }
                 else
                 {
-                    sleep(timeToSleep);
+                    (() @trusted => Thread.sleep(timeToSleep))();
                 }
             }
-        }
-        catch (Exception e)
-        {
-            logError("Exception in render loop: %s", (() @trusted => e.toString)());
+            catch (Exception e)
+            {
+                logError("Exception in render loop: %s", (() @trusted => e.toString)());
+            }
         }
     }
 
     private synchronized
     void copySegmentLeds()
+    in (inThreadKind(ThreadKind.renderer))
     {
         ubyte maxBrightness = DataDir.sharedConfig.maxBrightness;
         if (m_fullRefresh)
             leds[] = Led(0, 0, 0);
-        synchronized (ScriptInstances.classinfo)
+        synchronized (ScriptInstances.instance)
         {
             ScriptInstance[string] changedScriptInstances;
             auto scriptInstances = ScriptInstances.instance.scriptInstances;
@@ -170,31 +166,25 @@ class Ledstrip
 
     final pure nothrow @nogc
     ulong frameCount() const
-        => m_frameCount;
+        => m_frameCount.atomicLoad;
 
     final pure nothrow @nogc
     void stopRenderLoop()
     {
-        m_stopRenderLoop = true;
+        m_stopRenderLoop.atomicStore(true);
     }
 
     final pure nothrow @nogc
     void fullRefresh()
     {
-        m_fullRefresh = true;
+        m_fullRefresh.atomicStore(true);
     }
 
-    private synchronized nothrow @nogc
-    void onActiveStateChange()
-    {
-        fullRefresh;
-    }
-
-    protected abstract
+    protected abstract synchronized
     void render()
-    in (ThreadManager.constInstance.inMainThread, "Ledstrip: render must be called from main thread");
+    in (inThreadKind(ThreadKind.renderer));
 
-    abstract nothrow @nogc
+    abstract synchronized nothrow @nogc
     shared(Led)[] leds();
 }
 

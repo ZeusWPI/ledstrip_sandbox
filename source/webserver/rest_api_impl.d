@@ -10,6 +10,7 @@ import ledstrip.ledstrip_states : LedstripStates, LedstripStatesException;
 import mailbox : Mailbox;
 import script.script_instance : ScriptInstance, ScriptInstanceException;
 import script.script_instances : ScriptInstances, ScriptInstancesException;
+import thread_manager : inMainThread;
 import webserver.rest_api : ConfigApi, RestApi, ScriptInstanceApi, ScriptSourceFileApi, SegmentApi, StateApi;
 
 import std.algorithm : remove;
@@ -29,7 +30,13 @@ class RestApiImpl : RestApi
     private ScriptInstanceApiImpl m_scriptInstanceApi;
     private ScriptSourceFileApiImpl m_scriptSourceFileApi;
 
+    invariant
+    {
+        assert(inMainThread);
+    }
+
     this()
+    in (inMainThread)
     {
         m_configApi = new ConfigApiImpl;
         m_stateApi = new StateApiImpl;

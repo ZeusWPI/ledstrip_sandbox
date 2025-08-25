@@ -1,18 +1,7 @@
 .dub
-docs.json
-__dummy.html
-docs/
+
 /ledstrip
-ledstrip.so
-ledstrip.dylib
-ledstrip.dll
-ledstrip.a
-ledstrip.lib
-ledstrip-test-*
-*.exe
-*.pdb
-*.o
-*.obj
-*.lst
+/ledstrip-test-*
+/libledstrip.a
 
 /build-cross

@@ -6,6 +6,7 @@ import util : inRange;
 
 import std.exception : basicExceptionCtors, enforce;
 import std.format : f = format;
+
 import vibe.core.log;
 
 @safe:

@@ -1,7 +1,7 @@
 module script.python.python_script_instance;
 
-import script.python.python_script_instance_task : PythonScriptInstanceTask;
-import script.script_instance : ScriptInstance;
+import script.python.python_script_instance_thread : PythonScriptInstanceThread;
+import script.script_instance : ScriptExtension, ScriptInstance;
 
 @safe:
 
@@ -13,7 +13,12 @@ class PythonScriptInstance : ScriptInstance
         super(name, sourceFileName, ledCount, autoStart);
     }
 
+scope:
     override
-    TaskEntrypoint taskEntrypoint()
-        => &PythonScriptInstanceTask.entrypoint;
+    ThreadEntrypoint threadEntrypoint()
+        => &PythonScriptInstanceThread.entrypoint;
+
+    override pure nothrow @nogc
+    ScriptExtension extension() const
+        => ScriptExtension.python;
 }

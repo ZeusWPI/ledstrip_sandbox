@@ -3,7 +3,7 @@ module script.lua.lua_lib;
 
 import script.common_lib : CommonLib;
 import script.lua.lua_script_instance : LuaScriptInstance;
-import script.lua.lua_script_instance_task : LuaScriptInstanceTask;
+import script.lua.lua_script_instance_thread : LuaScriptInstanceThread;
 
 import std.conv : text;
 import std.exception : basicExceptionCtors, enforce;
@@ -27,19 +27,19 @@ class LuaLib
 
 static:
     nothrow @trusted
-    LuaTable buildEnv(LuaScriptInstanceTask scriptInstanceTask)
+    LuaTable buildEnv(LuaScriptInstanceThread scriptInstanceThread)
     {
         LuaTable createTable()
         {
-            return LuaTable.makeNew(&scriptInstanceTask.luaState());
+            return LuaTable.makeNew(&scriptInstanceThread.luaState());
         }
 
         T getGlobal(T)(string key)
         {
-            lua_getglobal(scriptInstanceTask.luaState.handle, key.toStringz);
+            lua_getglobal(scriptInstanceThread.luaState.handle, key.toStringz);
             scope (exit)
-                scriptInstanceTask.luaState.pop(1);
-            return scriptInstanceTask.luaState.get!T(scriptInstanceTask.luaState.top);
+                scriptInstanceThread.luaState.pop(1);
+            return scriptInstanceThread.luaState.get!T(scriptInstanceThread.luaState.top);
         }
 
         try
@@ -201,20 +201,20 @@ static:
     }
 
     private
-    LuaScriptInstanceTask task()
-        => LuaScriptInstanceTask.instance;
+    LuaScriptInstanceThread thread()
+        => LuaScriptInstanceThread.instance;
 
     private
-    const(LuaScriptInstanceTask) constTask()
-        => LuaScriptInstanceTask.constInstance;
+    const(LuaScriptInstanceThread) constThread()
+        => LuaScriptInstanceThread.constInstance;
 
     private
     LuaScriptInstance scriptInstance()
-        => task.luaScriptInstance;
+        => thread.luaScriptInstance;
 
     private
     const(LuaScriptInstance) constScriptInstance()
-        => constTask.constLuaScriptInstance;
+        => constThread.constLuaScriptInstance;
 
     @trusted
     void log(LuaVariadic args)

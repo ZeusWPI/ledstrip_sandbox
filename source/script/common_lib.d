@@ -5,7 +5,7 @@ import ledstrip.ledstrip : Ledstrip;
 import ledstrip.ledstrip_segment : LedstripSegment;
 import ledstrip.ledstrip_states : LedstripStates;
 import script.script_instance : ScriptInstance;
-import script.script_instance_task : ScriptInstanceTask;
+import script.script_instance_thread : ScriptInstanceThread;
 import util : sleepFrameFraction;
 
 import core.time : msecs;
@@ -27,20 +27,20 @@ class CommonLib
 
 static:
     private
-    ScriptInstanceTask task()
-        => ScriptInstanceTask.instance;
+    ScriptInstanceThread thread()
+        => ScriptInstanceThread.instance;
 
     private
-    const(ScriptInstanceTask) constTask()
-        => ScriptInstanceTask.constInstance;
+    const(ScriptInstanceThread) constThread()
+        => ScriptInstanceThread.constInstance;
 
     private
     ScriptInstance scriptInstance()
-        => task.scriptInstance;
+        => thread.scriptInstance;
 
     private
     const(ScriptInstance) constScriptInstance()
-        => constTask.constScriptInstance;
+        => constThread.constScriptInstance;
 
     private
     void enfContext(bool value, string msg)
@@ -178,21 +178,21 @@ static:
     static:
         void subscribe(string topic)
         {
-            task.mailboxSubscribe(topic);
+            thread.mailboxSubscribe(topic);
         }
 
         void unsubscribe(string topic)
         {
-            task.mailboxUnsubscribe(topic);
+            thread.mailboxUnsubscribe(topic);
         }
 
         void unsubscribeAll()
         {
-            task.mailboxUnsubscribeAll();
+            thread.mailboxUnsubscribeAll();
         }
 
         string consume(string topic)
-            => task.mailboxConsume(topic);
+            => thread.mailboxConsume(topic);
     }
 }
 

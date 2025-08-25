@@ -1,7 +1,7 @@
 module script.bf.bf_script_instance;
 
-import script.bf.bf_script_instance_task : BfScriptInstanceTask;
-import script.script_instance : ScriptInstance;
+import script.bf.bf_script_instance_thread : BfScriptInstanceThread;
+import script.script_instance : ScriptExtension, ScriptInstance;
 
 @safe:
 
@@ -24,7 +24,12 @@ class BfScriptInstance : ScriptInstance
         super(name, sourceFileName, ledCount, autoStart);
     }
 
+scope:
     override
-    TaskEntrypoint taskEntrypoint()
-        => &BfScriptInstanceTask.entrypoint;
+    ThreadEntrypoint threadEntrypoint()
+        => &BfScriptInstanceThread.entrypoint;
+
+    override pure nothrow @nogc
+    ScriptExtension extension() const
+        => ScriptExtension.bf;
 }
