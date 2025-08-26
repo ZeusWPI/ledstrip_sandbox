@@ -20,20 +20,6 @@ import vibe.core.process : Config, execute, spawnProcess;
 
 @safe:
 
-// TODO:
-// fix: synchronize entire rest api procedures on the objects they interact with
-// fix: re-enable python now that we have threads instead of fibers
-// feat: mqtt
-// fix: switch to something more efficient than REST (ws graph? https://github.com/jnms-me/netsim-prototype/blob/2c93ce7/server/source/netsim/graph/graph.d#L185)
-// => feat: send proper errors in api
-//   => feat: show errors in frontend
-//     => feat: on segment/script instance led count mismatch, render partially, but warn in frontend
-// => feat: script logging, exposed via api
-//   => feat: show script logs in frontend
-// => feat: visualize leds in frontend
-// feat: track script cpu usage, for now: htop, H, F4 ledstrip
-// feat: scripting api for segments
-
 extern(C) __gshared string[] rt_options = [ "gcopt=parallel:0" ];
 
 int main()
