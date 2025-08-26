@@ -44,8 +44,8 @@
 			"ledCount": 69,
 			"autoStart": true
 		},
-		"flashlight": {
-			"sourceFileName": "flashlight.lua",
+		"rainbow": {
+			"sourceFileName": "rainbow.lua",
 			"ledCount": 690,
 			"autoStart": true
 		},
@@ -119,12 +119,12 @@
 				}
 			]
 		},
-		"flashlight": {
+		"rainbow": {
 			"segments": [
 				{
 					"begin": 0,
 					"end": 690,
-					"scriptInstanceName": "flashlight"
+					"scriptInstanceName": "rainbow"
 				}
 			]
 		},
