@@ -13,7 +13,7 @@ struct Config
     ushort httpPort = 80;
     uint ledCount = 690;
     uint fps = 15;
-    ubyte maxBrightness = 0x80;
+    ubyte maxBrightness = 0x3F;
     int dmaNumber = 10;
     int gpioPin = 18;
     ConfigScriptInstance[string] scriptInstances;
