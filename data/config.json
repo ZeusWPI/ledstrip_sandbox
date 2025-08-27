@@ -3,6 +3,8 @@
 		"0.0.0.0"
 	],
 	"httpPort": 80,
+	"mqttBrokerHost": "koin",
+	"mqttBrokerPort": 1883,
 	"ledCount": 690,
 	"fps": 30,
 	"maxBrightness": 63,

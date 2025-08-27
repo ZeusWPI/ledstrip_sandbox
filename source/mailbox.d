@@ -1,6 +1,8 @@
 module mailbox;
 
+import mqtt : Mqtt;
 import singleton : sharedSingleton;
+import thread_manager : inMainThread;
 
 import std.algorithm : canFind, countUntil, remove;
 import std.exception : basicExceptionCtors, enforce;
@@ -23,6 +25,7 @@ class Mailbox
 
     private nothrow
     this()
+    in (inMainThread)
     {
     }
 
@@ -32,7 +35,10 @@ class Mailbox
         enforceValidTopic("subscribe", topic);
         enforceValidSubscriber("subscribe", subscriber);
         if (topic !in m_mailbox)
+        {
             m_mailbox[topic] = [];
+            Mqtt.subscribe(topic);
+        }
         enf(!m_mailbox[topic].canFind(subscriber), "subscribe: Subscriber already exists");
         m_mailbox[topic] ~= subscriber;
     }

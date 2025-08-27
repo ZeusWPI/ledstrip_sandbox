@@ -11,6 +11,8 @@ struct Config
 {
     string[] httpBindAddresses = ["0.0.0.0"];
     ushort httpPort = 80;
+    string mqttBrokerHost = "koin";
+    ushort mqttBrokerPort = 1883;
     uint ledCount = 690;
     uint fps = 15;
     ubyte maxBrightness = 0x3F;
@@ -30,6 +32,8 @@ struct Config
         // dfmt off
         ret.httpBindAddresses = httpBindAddresses.to!(shared(string)[]);
         ret.httpPort          = httpPort;
+        ret.mqttBrokerHost    = mqttBrokerHost;
+        ret.mqttBrokerPort    = mqttBrokerPort;
         ret.ledCount          = ledCount;
         ret.fps               = fps;
         ret.maxBrightness     = maxBrightness;

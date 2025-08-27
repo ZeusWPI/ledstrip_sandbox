@@ -6,6 +6,7 @@ license "MIT"
 toolchainRequirements dmd="no" gdc="no" ldc="~>1.30.0"
 
 dependency "vibe-d" version="~>0.10.2"
+dependency "vibe-mqtt" version="~>1.1.0"
 dependency "lumars" version="~>1.12.1"
 dependency "pyd" version="~>0.14.5"
 

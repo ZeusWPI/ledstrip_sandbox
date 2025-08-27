@@ -1,6 +1,6 @@
 ARG DUB_CONFIG="rpi2-bookworm"
 ARG DUB_ARCH="arm-linux-cortex-7a-gnueabihf"
-ARG DUB_BUILD_TYPE="debug"
+ARG DUB_BUILD_TYPE="release-debug"
 
 FROM debian:bookworm AS base
 FROM --platform=linux/arm/v7 debian:bookworm AS base-target
