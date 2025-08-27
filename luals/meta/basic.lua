@@ -225,7 +225,7 @@ led = {}
 ---This value can change during script execution.
 ---@return number
 ---@nodiscard
-function maxBrightness() end
+function led.maxBrightness() end
 
 ---Sets the led at `index` to the color `r`, `g`, `b`.
 ---@param index number
