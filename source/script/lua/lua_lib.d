@@ -223,9 +223,9 @@ static:
 
         foreach (LuaValue arg; args)
         {
-            final switch (arg.kind)
+            sw: final switch (arg.kind)
             {
-                foreach (alias kind; EnumMembers!(LuaValue.Kind))
+                static foreach (alias kind; EnumMembers!(LuaValue.Kind))
                 {
             case kind:
                     auto val = arg.value!kind;
@@ -233,7 +233,7 @@ static:
                         stringArgs ~= "nil";
                     else
                         stringArgs ~= text(val);
-                    break;
+                    break sw;
                 }
             }
         }
