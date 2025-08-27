@@ -1,7 +1,7 @@
-Step = 8
-Rainbows = 3
-FramesToWait = 1
-State = "rainbow"
+Step = 1
+Rainbows = 1
+FramesToWait = 2
+State = "default"
 
 MaxBrightness = 0
 R, G, B = {}, {}, {}

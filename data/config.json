@@ -26,6 +26,11 @@
 			"ledCount": 690,
 			"autoStart": true
 		},
+		"rainbow_small": {
+			"sourceFileName": "rainbow_small.lua",
+			"ledCount": 40,
+			"autoStart": true
+		},
 		"cammie_watch_count": {
 			"sourceFileName": "cammie_watch_count.lua",
 			"ledCount": 60,
@@ -46,11 +51,6 @@
 			"ledCount": 69,
 			"autoStart": true
 		},
-		"rainbow": {
-			"sourceFileName": "rainbow.lua",
-			"ledCount": 690,
-			"autoStart": true
-		},
 		"alarm": {
 			"sourceFileName": "alarm.lua",
 			"ledCount": 690,
@@ -59,6 +59,11 @@
 		"3dprinter": {
 			"sourceFileName": "3dprinter.lua",
 			"ledCount": 20,
+			"autoStart": true
+		},
+		"rainbow": {
+			"sourceFileName": "rainbow.lua",
+			"ledCount": 690,
 			"autoStart": true
 		},
 		"song_vote_test": {
@@ -128,6 +133,11 @@
 					"begin": 626,
 					"end": 636,
 					"scriptInstanceName": "song_vote_test"
+				},
+				{
+					"begin": 239,
+					"end": 279,
+					"scriptInstanceName": "rainbow_small"
 				}
 			]
 		},
