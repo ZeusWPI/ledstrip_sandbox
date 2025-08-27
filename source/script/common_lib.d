@@ -1,5 +1,6 @@
 module script.common_lib;
 
+import data_dir : DataDir;
 import ledstrip.led : Led;
 import ledstrip.ledstrip : Ledstrip;
 import ledstrip.ledstrip_segment : LedstripSegment;
@@ -107,6 +108,10 @@ static:
             leds[] = Led(r, g, b);
             setLedsChanged;
         }
+
+        nothrow @nogc
+        ubyte maxBrightness()
+            => DataDir.sharedConfig.maxBrightness;
     }
 
     class StateModule
