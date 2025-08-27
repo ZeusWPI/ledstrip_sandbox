@@ -222,10 +222,11 @@ static:
         register("__builtins__", "log", py(&PythonLib.log));
 
         // Led module
-        register("led", "count",    py(CommonLib.LedModule.count));
-        register("led", "set",      py(&CommonLib.LedModule.set));
-        register("led", "setSlice", py(&CommonLib.LedModule.setSlice));
-        register("led", "setAll",   py(&CommonLib.LedModule.setAll));
+        register("led", "count",         py(CommonLib.LedModule.count));
+        register("led", "maxBrightness", py(&CommonLib.LedModule.maxBrightness));
+        register("led", "set",           py(&CommonLib.LedModule.set));
+        register("led", "setSlice",      py(&CommonLib.LedModule.setSlice));
+        register("led", "setAll",        py(&CommonLib.LedModule.setAll));
 
         // State module
         register("state", "activeName",                       py(&CommonLib.StateModule.activeName));

@@ -7,7 +7,7 @@ local function round(a)
 return math.floor(a+0.5)
 end
 local function fixColorChannel(color)
-    return round(color*led.maxBrightness/255)
+    return round(color*led.maxBrightness()/255)
 end
 
 local function fixColors(colorTable) 

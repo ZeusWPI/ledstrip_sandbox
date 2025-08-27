@@ -218,12 +218,14 @@ function log(...) end
 ---
 ---The total number of leds. Does not change during script execution.
 ---@field count number
----
+led = {}
+
 ---Each rgb value is clamped to the range `[0, maxBrightness]`.
 ---This is `63` by default, but can anything from `[1, 255]`.
 ---This value can change during script execution.
----@field maxBrightness number
-led = {}
+---@return number
+---@nodiscard
+function maxBrightness() end
 
 ---Sets the led at `index` to the color `r`, `g`, `b`.
 ---@param index number
