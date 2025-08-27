@@ -5,12 +5,15 @@ license "MIT"
 
 toolchainRequirements dmd="no" gdc="no" ldc="~>1.30.0"
 
+dependency "vibe-d" version="~>0.10.2"
 dependency "lumars" version="~>1.12.1"
-dependency "pyd" version="~>0.14.4"
-dependency "vibe-d" version="~>0.10.1"
-dependency "vibe-stream:tls" version="~>1"
+dependency "pyd" version="~>0.14.5"
 
-subConfiguration "vibe-stream:tls" "openssl-3.0"
+dependency "taggedalgebraic" version="~>0.11.24" # Multiple dependants, pin the version
+
+dependency "vibe-stream:tls" version="*" # Declare first so we can choose its configuration
+subConfiguration "vibe-stream:tls" "notls"
+
 subConfiguration "pyd" "python311"
 
 dflags "--preview=inclusiveincontracts" "--preview=shortenedMethods"
