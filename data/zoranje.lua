@@ -1,2 +1,2 @@
 -- je kan geen zoranje doen :(
-led.setAll(148, 0, 211)
+led.setAll(64, 32, 0)

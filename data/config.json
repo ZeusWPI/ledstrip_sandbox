@@ -59,6 +59,11 @@
 			"ledCount": 20,
 			"autoStart": true
 		},
+		"song_vote_test": {
+			"sourceFileName": "song_vote.lua",
+			"ledCount": 10,
+			"autoStart": true
+		},
 		"binary_clock": {
 			"sourceFileName": "binary_clock.lua",
 			"ledCount": 32,
@@ -116,6 +121,11 @@
 					"begin": 490,
 					"end": 550,
 					"scriptInstanceName": "music_progress"
+				},
+				{
+					"begin": 626,
+					"end": 636,
+					"scriptInstanceName": "song_vote_test"
 				}
 			]
 		},
