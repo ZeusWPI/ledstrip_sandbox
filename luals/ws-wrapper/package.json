@@ -10,6 +10,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "packageManager": "pnpm@10.15.0",
   "dependencies": {
     "vscode-languageserver": "^9.0.1",
     "vscode-ws-jsonrpc": "^3.3.2",

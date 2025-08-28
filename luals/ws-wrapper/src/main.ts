@@ -30,7 +30,7 @@ wsServer.on("connection", (ws) => {
         send: (content) => {
             ws.send(content, (error) => {
                 if (error) {
-                    throw error;
+                    console.warn(`Error in send: ${error.message}`);
                 }
             });
         },
