@@ -1,34 +1,43 @@
 module main;
 
-import core.memory : GC;
-import core.stdc.stdlib : exit;
-
-import std.exception : enforce;
-
 import data_dir : DataDir;
 import ledstrip.ledstrip : Ledstrip;
 import ledstrip.ledstrip_states : LedstripStates;
 import mailbox : Mailbox;
 import mqtt : Mqtt;
 import script.script_instances : ScriptInstances;
-import thread_manager : ThreadManager;
+import thread_manager : inMainThread, inThreadKind, ThreadKind, ThreadManager;
 import webserver.webserver : Webserver;
 
-import vibe.core.core : disableDefaultSignalHandlers, runApplication;
+import core.atomic : atomicLoad, atomicStore;
+import core.stdc.stdlib : _Exit;
+import core.time : msecs;
+
+import std.exception : enforce;
+
+import vibe.core.core : runEventLoopOnce;
 import vibe.core.log;
 import vibe.core.path;
-import vibe.core.process : Config, execute, spawnProcess;
+import vibe.core.process : spawnProcess;
 
 @safe:
 
 extern(C) __gshared string[] rt_options = [ "gcopt=parallel:0" ];
 
+shared bool g_exitMain = false;
+
 int main()
 {
+    int ret = 0;
+    scope (exit)
+    {
+        logWarn("main: Exiting with status %d.", ret);
+        (() @trusted => _Exit(ret))();
+    }
+
     try
     {
         (() @trusted {
-            disableDefaultSignalHandlers;
             registerSignalHandlers;
         })();
 
@@ -57,46 +66,46 @@ int main()
         try spawnProcess(["node", "luals/ws-wrapper.js"]);
         catch (Exception e) logWarn("Failed to spawn luals");
         
-        return runApplication;
+        while (!g_exitMain.atomicLoad)
+            runEventLoopOnce(100.msecs);
     }
     catch (Exception e)
     {
-        (() @trusted {
-            logError("Error in main thread: ", e.toString);
-            exit(1); // Kill other threads
-        })();
-        assert(false);
+        logError("Error in main thread: ", (() @trusted => e.toString)());
+        ret = 1;
     }
+
+    logWarn("main: Reaper was awakened, killing all threads.");
+    ThreadManager.instance.killAllButMain;
 }
 
-@system
+@trusted
 void registerSignalHandlers()
 {
-    import core.sys.posix.stdlib : _Exit;
     import core.sys.posix.pthread : pthread_exit;
     import core.sys.posix.signal : sigaction, sigaction_t, sigemptyset, SIGHUP, SIGINT, SIGTERM;
 
-    extern (C)
-    static void handler(int sig)
+    extern (C) nothrow
+    static void signalHandler(int sig)
     {
-        switch (sig)
+        final switch (sig)
         {
         case SIGHUP:
+            logWarn("signalHandler: Interpreting SIGHUP as just exit this thread.");
+            logWarn("signalHandler: Calling pthread_exit.");
             pthread_exit(null);
             assert(false);
-        default:
-            _Exit(1);
-            assert(false);
+        case SIGINT:
+        case SIGTERM:
+            logWarn("signalHandler: Interpreting SIGINT/TERM as exit application.");
+            logWarn("signalHandler: Awakening the reaper.");
+            g_exitMain.atomicStore(true);
+            return;
         }
     }
     
-    extern (C)
-    static void handler_exit_thread(int)
-    {
-    }
-
     sigaction_t sa;
-    sa.sa_handler = &handler;
+    sa.sa_handler = &signalHandler;
     sigemptyset(&sa.sa_mask);
     enforce(sigaction(SIGHUP, &sa, null) == 0);
     enforce(sigaction(SIGINT, &sa, null) == 0);

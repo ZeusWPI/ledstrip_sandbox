@@ -40,7 +40,7 @@ bool inThreadKind(in ThreadKind kind)
     catch (ThreadManagerException e)
         return false;
     catch (Exception e)
-        assert(false);
+        assert(false, (() @trusted => e.toString)());
 }
 
 final shared
@@ -214,6 +214,18 @@ scope:
         if (reg.kind == ThreadKind.scriptInstance)
             reg.scriptInstance.setStopped;
         g_threads.remove(thread);
+    }
+
+    synchronized @trusted
+    void killAllButMain()
+    {
+        foreach (ThreadRegistration reg; g_threads.values)
+            if (reg.kind != ThreadKind.main)
+            {
+                logInfo(`ThreadManager: Killing "%s"`, reg.determineName);
+                reg.thread.kill;
+                reg.thread.join(false);
+            }
     }
 }
 
