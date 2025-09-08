@@ -2,9 +2,9 @@ FOR_COLOR = { 0x00, 0xFF, 0x00 }
 AGAINST_COLOR = { 0xFF, 0x7F / 4, 0x00 }
 UNDECIDED_COLOR = { 0xFF, 0x00, 0xFF }
 
-PAUSE_TOPIC = "music/events/pause"
+PAUSE_TOPIC = "music/events/paused"
 STOP_TOPIC = "music/events/stopped"
-PLAYING_TOPIC = "music/current_song_data"
+PLAYING_TOPIC = "music/current_song_info"
 VOTE_TOPIC = "music/votes"
 
 current_song = ""
@@ -34,13 +34,11 @@ end
 
 local function handlePlayUpdate(jsonMsg)
     if jsonMsg == "" then return end
-    msg = json.loads(jsonMsg)
-    local id = msg["spotifyId"]
-    if current_song ~= id then
-        log("Song playing: ", id)
-        current_song = id
-        led.setAll(fixColors(UNDECIDED_COLOR))
-    end
+    local success, msg = pcall(json.loads, jsonMsg)
+    if not success then log("invalid play json: ", msg) return end
+    current_song = msg["spotifyId"]
+    log("Song playing: ", current_song)
+    led.setAll(fixColors(UNDECIDED_COLOR))
 end
 
 local function handlePauseUpdate(jsonMsg)
@@ -49,12 +47,13 @@ local function handlePauseUpdate(jsonMsg)
     led.setAll(fixColors(UNDECIDED_COLOR))
 end
 
-local function handleVoteUpdate(voteMsg)
-    if voteMsg ~= "" then return end
-    local success, votes = pcall(json.loads(voteMsg))
-    if success and votes["songId"] == current_song then
-        local votesFor = votes["votesFor"]
-        local votesAgainst = votes["votesAgainst"]
+local function handleVoteUpdate(jsonMsg)
+    if jsonMsg == "" then return end
+    local success, msg = pcall(json.loads, jsonMsg)
+    if not success then log("invalid vote json: ", msg) return end
+    if success and msg["songId"] == current_song then
+        local votesFor = msg["votesFor"]
+        local votesAgainst = msg["votesAgainst"]
         log("Votes updated: ", votesFor, " - ", votesAgainst)
         showVotes(votesFor, votesAgainst)
     end
