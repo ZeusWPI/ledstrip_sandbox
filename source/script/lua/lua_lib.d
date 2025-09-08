@@ -271,7 +271,8 @@ static:
             LuaState* state = &thread.luaState();
             try
             {
-                Json json = parseJson(jsonString);
+                auto jsonStringCpy = jsonString;
+                Json json = parseJson(jsonStringCpy);
 
                 LuaValue jsonToLua(Json json)
                 {
@@ -285,7 +286,7 @@ static:
                     case Json.Type.int_:
                     case Json.Type.bigInt:
                     case Json.Type.float_:
-                        return LuaValue(json.get!LuaNumber);
+                        return LuaValue(json.to!LuaNumber);
                     case Json.Type.string:
                         return LuaValue(json.get!string);
                     case Json.Type.array:
@@ -308,8 +309,7 @@ static:
             }
             catch (Exception e)
             {
-                enfContext(false, "json.loads", "Failed to parse given string as json.");
-                assert(false);
+                throw new LuaLibException(f!`json.loads: Failed to parse string "%s" as json: %s`(jsonString, e.toString), e);
             }
         }
     }
