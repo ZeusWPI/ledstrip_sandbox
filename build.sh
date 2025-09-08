@@ -5,4 +5,4 @@ command -v podman &>/dev/null && podman=podman || podman=docker
 
 [ -e build-cross ] && rm -r build-cross
 mkdir build-cross
-$podman build -o build-cross .
+$podman build --jobs=0 -o build-cross .
