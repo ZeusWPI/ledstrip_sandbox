@@ -322,3 +322,16 @@ function mailbox.unsubscribeAll() end
 ---@return string
 ---@nodiscard
 function mailbox.consume(topic) end
+
+
+---Json module.
+---@class json
+json = {}
+
+---Parses the `json` string, returning its lua value.
+---Arrays become zero-indexed tables. Objects become string-indexed tables.
+---Raises an error if the parsing fails.
+---@param json string
+---@return any
+---@nodiscard
+function json.loads(json) end

@@ -7,14 +7,16 @@ import script.lua.lua_script_instance_thread : LuaScriptInstanceThread;
 
 import std.conv : text;
 import std.exception : basicExceptionCtors, enforce;
+import std.format : f = format;
 import std.string : toStringz;
 import std.traits : EnumMembers;
 
-import vibe.core.log;
-
 import bindbc.lua.v51 : lua_getglobal;
 
-import lumars : LuaFunc, LuaNil, LuaNumber, LuaTable, LuaValue, LuaVariadic;
+import lumars : LuaFunc, LuaNil, LuaNumber, LuaState, LuaTable, LuaValue, LuaVariadic;
+
+import vibe.core.log;
+import vibe.data.json : Json, parseJson, serializeToJson;
 
 @safe:
 
@@ -26,6 +28,18 @@ class LuaLib
     @disable this(ref typeof(this));
 
 static:
+    private
+    void enfContext(bool value, string msg)
+    {
+        enf(value, f!`Script instance "%s": %s`(constScriptInstance.name, msg));
+    }
+
+    private
+    void enfContext(bool value, string method, string msg)
+    {
+        enf(value, f!`Script "%s": %s: %s`(constScriptInstance.name, method, msg));
+    }
+
     nothrow @trusted
     LuaTable buildEnv(LuaScriptInstanceThread scriptInstanceThread)
     {
@@ -193,6 +207,9 @@ static:
             register(&CommonLib.MailboxModule.unsubscribeAll, "mailbox", "unsubscribeAll");
             register(&CommonLib.MailboxModule.consume,        "mailbox", "consume"       );
 
+            // Json module
+            register(&JsonModule.loads, "json", "loads");
+
             return env;
         }
         catch (Exception e)
@@ -201,19 +218,19 @@ static:
         }
     }
 
-    private
+    private nothrow
     LuaScriptInstanceThread thread()
         => LuaScriptInstanceThread.instance;
 
-    private
+    private nothrow
     const(LuaScriptInstanceThread) constThread()
         => LuaScriptInstanceThread.constInstance;
 
-    private
+    private nothrow
     LuaScriptInstance scriptInstance()
         => thread.luaScriptInstance;
 
-    private
+    private nothrow
     const(LuaScriptInstance) constScriptInstance()
         => constThread.constLuaScriptInstance;
 
@@ -240,6 +257,61 @@ static:
         }
 
         logInfo(`Script instance "%s": log: %-(%s%)`, constScriptInstance.name, stringArgs);
+    }
+
+    class JsonModule
+    {
+        @disable this();
+        @disable this(ref typeof(this));
+
+    static:
+        @trusted
+        LuaValue loads(const(char)[] jsonString)
+        {
+            LuaState* state = &thread.luaState();
+            try
+            {
+                Json json = parseJson(jsonString);
+
+                LuaValue jsonToLua(Json json)
+                {
+                    final switch (json.type)
+                    {
+                    case Json.Type.undefined:
+                    case Json.Type.null_:
+                        return LuaValue(LuaNil.init);
+                    case Json.Type.bool_:
+                        return LuaValue(json.get!bool);
+                    case Json.Type.int_:
+                    case Json.Type.bigInt:
+                    case Json.Type.float_:
+                        return LuaValue(json.get!LuaNumber);
+                    case Json.Type.string:
+                        return LuaValue(json.get!string);
+                    case Json.Type.array:
+                    {
+                        LuaTable table = LuaTable.makeNew(state, cast(int)json.length, 0);
+                        foreach (size_t i, Json el; json.byIndexValue)
+                            table[i] = jsonToLua(el);
+                        return LuaValue(table);
+                    }
+                    case Json.Type.object:
+                    {
+                        LuaTable table = LuaTable.makeNew(state, 0, cast(int)json.length);
+                        foreach (string k, Json v; json.byKeyValue)
+                            table[k] = jsonToLua(v);
+                        return LuaValue(table);
+                    }
+                    }
+                }
+                return jsonToLua(json);
+            }
+            catch (Exception e)
+            {
+                enfContext(false, "json.loads", "Failed to parse given string as json.");
+                assert(false);
+            }
+        }
     }
 }
 

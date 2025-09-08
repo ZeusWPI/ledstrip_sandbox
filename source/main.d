@@ -17,7 +17,6 @@ import std.exception : enforce;
 
 import vibe.core.core : runEventLoopOnce;
 import vibe.core.log;
-import vibe.core.path;
 import vibe.core.process : spawnProcess;
 
 @safe:
