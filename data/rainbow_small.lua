@@ -1,17 +1,16 @@
 Step = 1
 Rainbows = 1
 FramesToWait = 2
-State = "default"
 
 MaxBrightness = 0
 R, G, B = {}, {}, {}
 function BuildColorPalette()
-    if MaxBrightness == led.maxBrightness() then return end
     log("Rebuilding")
     MaxBrightness = led.maxBrightness()
     R, G, B = {}, {}, {}
     for i = 0, led.count - 1 do
         local hue = i / led.count * 360
+        hue = (hue * Rainbows) % 360
         local c = led.maxBrightness()
         local x = c * (1 - math.abs((hue / 60) % 2 - 1))
         local r, g, b
@@ -28,15 +27,12 @@ function BuildColorPalette()
     end
 end
 while true do
-    for offset = 0, led.count - 1, Step do
-        if state.activeName() == State then
-            BuildColorPalette()
-            local ci = offset
-            for i = 0, led.count - 1 do
-                led.set(i, R[ci], G[ci], B[ci])
-                ci = ci + Rainbows < led.count and ci + Rainbows or 0
-            end
+    if MaxBrightness ~= led.maxBrightness() then
+        BuildColorPalette()
+        for i = 0, led.count - 1 do
+            led.set(i, R[i], G[i], B[i])
         end
-        time.waitFrames(FramesToWait)
     end
+    led.shift(Step)
+    time.waitFrames(FramesToWait)
 end
