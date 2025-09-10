@@ -5,6 +5,7 @@ import mailbox : Mailbox;
 import singleton : threadLocalSingleton;
 import thread_manager : inMainThread;
 
+import core.atomic;
 import core.time : seconds;
 
 import std.string : assumeUTF;
@@ -83,19 +84,24 @@ class Mqtt
             while (true)
             {
                 g_onResubcribeRequest.wait;
-                synchronized (g_newTopicsToSubMutex)
-                {
-                    if (m_mqttClient.connected && g_newTopicsToSub.length)
+
+                immutable string[] newTopicsToSub = {
+                    synchronized (g_newTopicsToSubMutex)
                     {
-                        int emitCount = m_onSubAckEvent.emitCount;
-                        m_mqttClient.subscribe(g_newTopicsToSub.idup, QoSLevel.QoS2);
-                        if (emitCount == m_onSubAckEvent.emitCount)
-                            m_onSubAckEvent.wait;
+                        // Always consume newTopicsToSub, on (re)connect we'll sub to everything.
+                        scope (exit) g_newTopicsToSub = [];
+                        return g_newTopicsToSub.idup;
                     }
-                    // Consume newTopicsToSub regardless, on (re)connect we'll sub to everything.
-                    m_subscribedTopics ~= g_newTopicsToSub;
-                    g_newTopicsToSub = [];
+                }();
+
+                if (m_mqttClient.connected && newTopicsToSub.length)
+                {
+                    int emitCount = m_onSubAckEvent.emitCount;
+                    m_mqttClient.subscribe(newTopicsToSub, QoSLevel.QoS2);
+                    if (emitCount == m_onSubAckEvent.emitCount)
+                        m_onSubAckEvent.wait;
                 }
+                m_subscribedTopics ~= newTopicsToSub;
             }
         }
         catch (InterruptException e)
