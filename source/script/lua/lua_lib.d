@@ -183,11 +183,13 @@ static:
             register(&LuaLib.log, "", "log");
 
             // Led module
-            register(CommonLib.LedModule.count,          "led", "count"           );
-            register(&CommonLib.LedModule.maxBrightness, "led", "maxBrightness"   );
-            register(&CommonLib.LedModule.set,           "led", "set"             );
-            register(&CommonLib.LedModule.setSlice,      "led", "setSlice"        );
-            register(&CommonLib.LedModule.setAll,        "led", "setAll"          );
+            register(CommonLib.LedModule.count,          "led", "count"        );
+            register(&CommonLib.LedModule.maxBrightness, "led", "maxBrightness");
+            register(&CommonLib.LedModule.set,           "led", "set"          );
+            register(&CommonLib.LedModule.setSlice,      "led", "setSlice"     );
+            register(&CommonLib.LedModule.setAll,        "led", "setAll"       );
+            register(&CommonLib.LedModule.getShift,      "led", "getShift"     );
+            register(&CommonLib.LedModule.shift,         "led", "shift"        );
 
             // State module
             register(&CommonLib.StateModule.activeName,                       "state", "activeName"                      );

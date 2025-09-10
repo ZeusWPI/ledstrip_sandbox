@@ -76,6 +76,10 @@ static:
         uint count()
             => cast(uint) constLeds.length;
 
+        nothrow @nogc
+        ubyte maxBrightness()
+            => DataDir.sharedConfig.maxBrightness;
+
         void set(uint index, ubyte r, ubyte g, ubyte b)
         {
             enfContext(
@@ -109,9 +113,14 @@ static:
             setLedsChanged;
         }
 
-        nothrow @nogc
-        ubyte maxBrightness()
-            => DataDir.sharedConfig.maxBrightness;
+        size_t getShift()
+            => constScriptInstance.ledsShift;
+
+        void shift(int amount)
+        {
+            scriptInstance.shiftLeds(amount);
+            setLedsChanged;
+        }
     }
 
     class StateModule

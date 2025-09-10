@@ -136,22 +136,14 @@ class Ledstrip
                 {
                     const ScriptInstance scriptInstance
                         = changedScriptInstances[seg.scriptInstanceName];
-                    if (scriptInstance.ledCount == seg.end - seg.begin)
+                    size_t scriptIdx = scriptInstance.ledsShift;
+                    foreach (size_t physIdx; seg.begin .. seg.end)
                     {
-                        foreach (i; 0 .. scriptInstance.ledCount)
-                        {
-                            shared(Led) led = scriptInstance.leds[i];
-                            led = led.limitBrightness(maxBrightness);
-                            leds[seg.begin + i] = led;
-                        }
-                    }
-                    else
-                    {
-                        logWarn(
-                            `copySegmentLeds: Segment in state "%s" with begin "%u" and led count "%u"`
-                                ~ ` doesn't match the led count "%u" of script instance "%s"`,
-                            activeState.name, begin, seg.ledCount, scriptInstance.ledCount, scriptInstance.name,
-                        );
+                        if (++scriptIdx >= scriptInstance.ledCount)
+                            scriptIdx = 0; // Wrap around
+                        shared(Led) led = scriptInstance.leds[scriptIdx];
+                        led = led.limitBrightness(maxBrightness);
+                        leds[physIdx] = led;
                     }
                 }
             }

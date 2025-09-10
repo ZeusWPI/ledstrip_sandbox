@@ -234,9 +234,7 @@ function led.maxBrightness() end
 ---@param b number
 function led.set(index, r, g, b) end
 
----
 ---Sets the leds starting from index `begin` up to `end` (exclusive) to the color `r`, `g`, `b`.
----
 ---@param begin number
 ---@param end number
 ---@param r number
@@ -244,13 +242,31 @@ function led.set(index, r, g, b) end
 ---@param b number
 function led.setSlice(begin, end, r, g, b) end
 
----
 ---Sets all leds to the color `r`, `g`, `b`.
----
 ---@param r number
 ---@param g number
 ---@param b number
 function led.setAll(r, g, b) end
+
+---Returns the current shift.
+---`0` unless `shift` was used.
+---@return number
+function led.getShift() end
+
+---Shifts all leds `amount` positions to the right.
+---When `amount` is negative, shifts to the left instead.
+---The transformation is applied internally.
+---
+---For example:
+---```lua
+---   led.set(0, r, g, b) -- Sets the first led
+---   led.shift(-1)
+---   led.set(0, r, g, b) -- Sets the second led
+---   led.shift(2)
+---   led.set(0, r, g, b) -- Sets the last led
+---```
+---@param amount number
+function led.shift(amount) end
 
 
 ---State module.

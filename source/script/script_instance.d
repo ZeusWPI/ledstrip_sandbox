@@ -24,6 +24,7 @@ class ScriptInstance
 
     private string m_sourceCode;
     private Led[] m_leds;
+    private size_t m_ledsShift;
     private bool m_ledsChanged;
     private bool m_running;
     private bool m_startedOnce;
@@ -70,6 +71,16 @@ scope:
         inout(shared(Led[])) leds() inout
             => m_leds;
 
+        size_t ledsShift() const
+            => m_ledsShift;
+
+        void shiftLeds(int amount)
+        {
+            const int length = m_ledCount;
+            amount = amount % length;
+            m_ledsShift = (length + m_ledsShift + amount) % length;
+        }
+
         bool ledsChanged() const
             => m_ledsChanged;
 
@@ -97,6 +108,7 @@ scope:
 
         void setStopped()
         {
+            m_ledsShift = 0;
             m_running = false;
         }
     }
