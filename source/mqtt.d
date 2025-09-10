@@ -10,7 +10,7 @@ import core.time : seconds;
 import std.string : assumeUTF;
 import std.utf : UTFException, validateUTF = validate;
 
-import vibe.core.core : InterruptException, runTask, sleep;
+import vibe.core.core : InterruptException, runTask;
 import vibe.core.log;
 import vibe.core.sync : createManualEvent, createSharedManualEvent, LocalManualEvent, ManualEvent;
 

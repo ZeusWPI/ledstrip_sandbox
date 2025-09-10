@@ -9,13 +9,12 @@ import script.script_instance : ScriptInstance;
 import script.script_instance_thread : ScriptInstanceThread;
 import util : sleepFrameFraction;
 
+import core.thread : Thread;
 import core.time : msecs;
 
 import std.datetime : Clock;
 import std.exception : basicExceptionCtors, enforce;
 import std.format : f = format;
-
-import vibe.core.core : sleep;
 
 @safe:
 
@@ -165,6 +164,7 @@ static:
         long unixTimeSeconds()
             => Clock.currTime.toUnixTime;
 
+        @trusted
         void sleepMsecs(long msecs)
         {
             enfContext(
@@ -172,7 +172,7 @@ static:
                 "time.sleepMsecs",
                 f!`Cannot sleep for less than %d msecs`(msecs),
             );
-            sleep(msecs.msecs);
+            Thread.sleep(msecs.msecs);
         }
 
         /// waitFrames(0) just returns, waitFrames(1) waits until the next render...
