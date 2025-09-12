@@ -139,11 +139,11 @@ class Ledstrip
                     size_t scriptIdx = scriptInstance.ledsShift;
                     foreach (size_t physIdx; seg.begin .. seg.end)
                     {
-                        if (++scriptIdx >= scriptInstance.ledCount)
-                            scriptIdx = 0; // Wrap around
                         shared(Led) led = scriptInstance.leds[scriptIdx];
                         led = led.limitBrightness(maxBrightness);
                         leds[physIdx] = led;
+                        if (++scriptIdx >= scriptInstance.ledCount)
+                            scriptIdx = 0; // Wrap around
                     }
                 }
             }
