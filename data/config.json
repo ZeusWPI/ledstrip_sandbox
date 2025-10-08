@@ -31,6 +31,11 @@
 			"ledCount": 40,
 			"autoStart": true
 		},
+		"zodom_votes": {
+			"sourceFileName": "song_vote.lua",
+			"ledCount": 40,
+			"autoStart": true
+		},
 		"cammie_watch_count": {
 			"sourceFileName": "cammie_watch_count.lua",
 			"ledCount": 60,
@@ -64,11 +69,6 @@
 		"rainbow": {
 			"sourceFileName": "rainbow.lua",
 			"ledCount": 690,
-			"autoStart": true
-		},
-		"song_vote_test": {
-			"sourceFileName": "song_vote.lua",
-			"ledCount": 10,
 			"autoStart": true
 		},
 		"binary_clock": {
@@ -130,14 +130,14 @@
 					"scriptInstanceName": "music_progress"
 				},
 				{
-					"begin": 626,
-					"end": 636,
-					"scriptInstanceName": "song_vote_test"
-				},
-				{
 					"begin": 239,
 					"end": 279,
 					"scriptInstanceName": "rainbow_small"
+				},
+				{
+					"begin": 626,
+					"end": 666,
+					"scriptInstanceName": "zodom_votes"
 				}
 			]
 		},
@@ -156,6 +156,15 @@
 					"begin": 0,
 					"end": 690,
 					"scriptInstanceName": "sirens"
+				}
+			]
+		},
+		"esoterisch": {
+			"segments": [
+				{
+					"begin": 0,
+					"end": 30,
+					"scriptInstanceName": "binary_counter"
 				}
 			]
 		}

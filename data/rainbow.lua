@@ -11,6 +11,10 @@ function BuildColorPalette()
     for i = 0, led.count - 1 do
         local hue = i / led.count * 360
         hue = (hue * Rainbows) % 360
+        --hue = hue - 180
+        --hue = math.abs(hue)
+        --hue = hue / 2
+        --hue = hue + 180
         local c = led.maxBrightness()
         local x = c * (1 - math.abs((hue / 60) % 2 - 1))
         local r, g, b

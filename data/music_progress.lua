@@ -1,6 +1,7 @@
 BORDER_THICKNESS = 2
 BORDER_COLOR = {0xFF, 0xFF, 0xFF}
 BAR_COLOR = {0x00, 0xFF, 0x00}
+OFF_COLOR = {0x00, 0x01, 0x00}
 --BAR_COLOR = {0x20, 0x04, 0x00}   -- zoranje
 MAILBOX_TOPIC = "spotify_progress"
 
@@ -17,13 +18,12 @@ function SetSlice(startIndex, endIndex, color)
 end
 
 function Erase()
-    SetSlice(BORDER_THICKNESS, led.count - BORDER_THICKNESS, {0, 0, 0})
+    SetSlice(BORDER_THICKNESS, led.count - BORDER_THICKNESS, OFF_COLOR)
 end
 
 function DrawBorder()
     SetSlice(0, BORDER_THICKNESS, BORDER_COLOR)
     SetSlice(led.count - BORDER_THICKNESS, led.count, BORDER_COLOR)
-
 end
 
 function DrawProgress(progress)
