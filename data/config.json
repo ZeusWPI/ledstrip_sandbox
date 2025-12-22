@@ -16,6 +16,11 @@
 			"ledCount": 30,
 			"autoStart": true
 		},
+		"roulette": {
+			"sourceFileName": "roulette.lua",
+			"ledCount": 690,
+			"autoStart": true
+		},
 		"music_progress": {
 			"sourceFileName": "music_progress.lua",
 			"ledCount": 60,
@@ -31,14 +36,14 @@
 			"ledCount": 40,
 			"autoStart": true
 		},
-		"zodom_votes": {
-			"sourceFileName": "song_vote.lua",
-			"ledCount": 40,
-			"autoStart": true
-		},
 		"cammie_watch_count": {
 			"sourceFileName": "cammie_watch_count.lua",
 			"ledCount": 60,
+			"autoStart": true
+		},
+		"music_votes": {
+			"sourceFileName": "music_votes.lua",
+			"ledCount": 40,
 			"autoStart": true
 		},
 		"cammiechat_morse": {
@@ -137,7 +142,7 @@
 				{
 					"begin": 626,
 					"end": 666,
-					"scriptInstanceName": "zodom_votes"
+					"scriptInstanceName": "music_votes"
 				}
 			]
 		},
@@ -163,8 +168,8 @@
 			"segments": [
 				{
 					"begin": 0,
-					"end": 30,
-					"scriptInstanceName": "binary_counter"
+					"end": 690,
+					"scriptInstanceName": "roulette"
 				}
 			]
 		}

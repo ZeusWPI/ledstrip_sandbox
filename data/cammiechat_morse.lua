@@ -76,6 +76,7 @@ led.setAll(100, 0, 10)
 while true do
     local msg = mailbox.consume("morsemessage")
     if #msg > 0 then
+        state.setActiveByName("alarm")
         led.setAll(255, 255, 255)
         time.waitFrames(2)
 

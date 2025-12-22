@@ -12,6 +12,7 @@ while true do
             led.setAll(0x20, 0x00, 0x00)
             led.setSlice(0, math.floor(progress / 100 * led.count), 0x00, 0x20, 0x00)
         else
+            state.setActiveByName("alarm")
             for _ = 0, 9 do
                 led.setAll(0x00, 0x40, 0x00)
                 time.sleepMsecs(500)
