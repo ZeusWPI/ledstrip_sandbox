@@ -2,6 +2,8 @@
 
 Blogpost for the first version: https://zeus.ugent.be/blog/21-22/ledstrip_sandbox/.
 
+![](screenshot.png "Screenshot of the ledstrip script editor")
+
 ## Build for the raspberry pi 2
 
 Note that this will overwrite the `data` folder on the pi.
