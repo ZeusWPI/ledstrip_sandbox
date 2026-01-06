@@ -3,7 +3,7 @@ authors "Zeus WPI"
 copyright "Copyright © 2024, Zeus WPI"
 license "MIT"
 
-toolchainRequirements dmd="no" gdc="no" ldc="~>1.30.0"
+toolchainRequirements dmd="no" gdc="no" ldc=">=1.30.0"
 
 dependency "vibe-d" version="~>0.10.2"
 dependency "vibe-mqtt" version="~>1.1.0"
