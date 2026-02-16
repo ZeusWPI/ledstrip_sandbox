@@ -6,11 +6,16 @@ Blogpost for the first version: https://zeus.ugent.be/blog/21-22/ledstrip_sandbo
 
 ## Build for the raspberry pi 2
 
-Note that this will overwrite the `data` folder on the pi.
-So back up any changes.
+With a recent podman or docker version installed, run:
 
-With a recent docker version and rsync installed, run:
-
+```sh
+./build.sh
 ```
-./build-and-deploy.sh
+
+## Deploy
+
+With rsync installed and connected to the kelder network, run:
+
+```sh
+./deploy.sh
 ```

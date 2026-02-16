@@ -1,7 +1,6 @@
-#!/usr/bin/env bash
-set -e
+#!/bin/sh
+set -eu
+cd "$(dirname "$0")"
 
-cd "$(dirname "${BASH_SOURCE[0]}")"
-
-echo Running rsync...
-rsync -r root@ledstrip.kelder.local:ledstrip/data/ data/
+echo "Pulling server-side ledstrip/data/ folder..."
+rsync -rvP root@ledstrip.kelder.local:ledstrip/data/ data/
