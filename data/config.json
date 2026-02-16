@@ -61,6 +61,11 @@
 			"ledCount": 69,
 			"autoStart": true
 		},
+		"flashbang": {
+			"sourceFileName": "flashbang.lua",
+			"ledCount": 690,
+			"autoStart": true
+		},
 		"alarm": {
 			"sourceFileName": "alarm.lua",
 			"ledCount": 690,
@@ -83,12 +88,21 @@
 		}
 	},
 	"states": {
-		"alarm": {
+		"roulette": {
 			"segments": [
 				{
 					"begin": 0,
 					"end": 690,
-					"scriptInstanceName": "alarm"
+					"scriptInstanceName": "roulette"
+				}
+			]
+		},
+		"sirens": {
+			"segments": [
+				{
+					"begin": 0,
+					"end": 690,
+					"scriptInstanceName": "sirens"
 				}
 			]
 		},
@@ -146,30 +160,39 @@
 				}
 			]
 		},
-		"rainbow": {
-			"segments": [
-				{
-					"begin": 0,
-					"end": 690,
-					"scriptInstanceName": "rainbow"
-				}
-			]
-		},
-		"sirens": {
-			"segments": [
-				{
-					"begin": 0,
-					"end": 690,
-					"scriptInstanceName": "sirens"
-				}
-			]
-		},
 		"esoterisch": {
 			"segments": [
 				{
 					"begin": 0,
 					"end": 690,
 					"scriptInstanceName": "roulette"
+				}
+			]
+		},
+		"flashbang": {
+			"segments": [
+				{
+					"begin": 0,
+					"end": 690,
+					"scriptInstanceName": "flashbang"
+				}
+			]
+		},
+		"alarm": {
+			"segments": [
+				{
+					"begin": 0,
+					"end": 690,
+					"scriptInstanceName": "alarm"
+				}
+			]
+		},
+		"rainbow": {
+			"segments": [
+				{
+					"begin": 0,
+					"end": 690,
+					"scriptInstanceName": "rainbow"
 				}
 			]
 		}

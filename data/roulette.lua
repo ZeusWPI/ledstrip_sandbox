@@ -31,7 +31,7 @@ function roulettespin(msg)
 
     for i = ballpos,ballpos + ballwidth,1
     do
-        led.set(i, 255, 0, 0)
+        led.set(i % led.count, 255, 0, 0)
     end
 
     beginspeed = 200.0
@@ -72,7 +72,7 @@ end
 while true do
     local msg = mailbox.consume("tap_jackpot/roulette")
     if #msg > 0 then
-        state.setActiveByName("esoterisch")
+        state.setActiveByName("roulette")
         log("Got msg: ", msg)
         roulettespin(msg)
         log("Reverting state")
